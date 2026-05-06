@@ -1,0 +1,131 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { PublicHeader } from "@/components/PublicHeader";
+import { PublicFooter } from "@/components/PublicFooter";
+import { PublicChatbot } from "@/components/PublicChatbot";
+import { Icon } from "@/components/Icon";
+import { fmtMXN } from "@/lib/utils";
+import type { Property, PropertyImage, Profile } from "@/lib/supabase/types";
+
+const PLACEHOLDER_EMOJI: Record<string, string> = {
+  Casa: "🏡", Departamento: "🏢", Oficina: "🏢", Local: "🏬", Terreno: "🌳", Bodega: "🏭",
+};
+
+export default async function PropiedadDetailPage({ params }: { params: { id: string } }) {
+  const supabase = createClient();
+  const { data: p } = await supabase.from("properties").select("*").eq("id", params.id).single();
+  if (!p || !p.is_published) notFound();
+
+  const { data: imgs } = await supabase.from("property_images").select("*").eq("property_id", params.id).order("position");
+  const { data: agent } = p.agent_id
+    ? await supabase.from("profiles").select("*").eq("id", p.agent_id).single()
+    : { data: null };
+
+  const property = p as Property;
+  const images = (imgs || []) as PropertyImage[];
+  const cover = images.find(i => i.is_cover) || images[0];
+
+  return (
+    <>
+      <PublicHeader />
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">← Regresar</Link>
+
+        <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl relative overflow-hidden mt-4">
+          {cover ? (
+            <img src={cover.url} alt={property.title} className="w-full h-full object-cover" />
+          ) : (
+            <span>{PLACEHOLDER_EMOJI[property.type] || "🏠"}</span>
+          )}
+        </div>
+
+        {images.length > 1 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            {images.slice(0, 4).map(img => (
+              <div key={img.id} className="aspect-[4/3] rounded-xl bg-ink-ghost overflow-hidden">
+                <img src={img.url} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10">
+          <div className="lg:col-span-2 space-y-8">
+            <div>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand-600 font-semibold">{property.type} · {property.operation}</div>
+              <h1 className="text-4xl font-semibold text-ink tracking-tight mt-2">{property.title}</h1>
+              <div className="flex items-center gap-1.5 text-ink-muted mt-2">
+                <Icon name="pin" className="w-4 h-4" /> <span className="text-sm">{property.address || `${property.zone}, ${property.city}, ${property.state}`}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-6 text-sm text-ink py-6 border-y border-ink-line">
+              {property.bedrooms > 0 && <div className="flex items-center gap-2"><Icon name="bed" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bedrooms}</span> recámaras</span></div>}
+              {property.bathrooms > 0 && <div className="flex items-center gap-2"><Icon name="bath" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bathrooms}</span> baños</span></div>}
+              {property.m2_construction && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_construction}</span> m² construcción</span></div>}
+              {property.m2_land && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_land}</span> m² terreno</span></div>}
+              {property.parking > 0 && <div className="flex items-center gap-2"><Icon name="car" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.parking}</span> estac.</span></div>}
+            </div>
+
+            {property.description && (
+              <div>
+                <h3 className="font-semibold text-ink tracking-tight">Descripción</h3>
+                <p className="text-ink-muted mt-3 leading-relaxed whitespace-pre-line">{property.description}</p>
+              </div>
+            )}
+
+            {property.amenities && property.amenities.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-ink tracking-tight">Características</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                  {property.amenities.map(a => (
+                    <div key={a} className="flex items-center gap-2 text-sm text-ink-muted">
+                      <Icon name="check" className="w-4 h-4 text-brand-500" /> {a}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="lg:sticky lg:top-24 self-start">
+            <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+              <div className="text-3xl font-semibold text-ink tracking-tight">
+                {fmtMXN(Number(property.price))}
+                {property.operation === "Renta" && <span className="text-base text-ink-muted font-normal"> /mes</span>}
+              </div>
+
+              <a href={`https://wa.me/${process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272"}?text=${encodeURIComponent(`Hola, me interesa la propiedad: ${property.title}`)}`}
+                 target="_blank" rel="noopener noreferrer"
+                 className="block w-full mt-6 bg-brand-500 hover:bg-brand-600 text-white text-center font-medium py-3 rounded-full">
+                Contactar por WhatsApp
+              </a>
+              <a href={`mailto:${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com"}?subject=${encodeURIComponent(property.title)}`}
+                 className="block w-full mt-2 bg-white border border-ink-line text-ink text-center font-medium py-3 rounded-full hover:border-ink-soft">
+                Solicitar información
+              </a>
+
+              {agent && (
+                <div className="mt-6 pt-6 border-t border-ink-line">
+                  <div className="text-xs text-ink-muted">Asesor a cargo</div>
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
+                      {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm text-ink">{(agent as Profile).full_name}</div>
+                      <div className="text-xs text-ink-muted">Inmobiliaria BS Mérida</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <PublicFooter />
+      <PublicChatbot />
+    </>
+  );
+}

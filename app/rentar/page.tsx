@@ -11,12 +11,12 @@ export default async function RentarPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from("properties")
-    .select("*")
+    .select("*, property_images(url, position, is_cover)")
     .eq("is_published", true)
     .eq("operation", "Renta")
     .neq("status", "Rentada")
     .order("created_at", { ascending: false });
-  const props = (data || []) as Property[];
+  const props = (data || []) as any[];
 
   return (
     <>
@@ -30,7 +30,12 @@ export default async function RentarPage() {
           <div className="text-center py-20 text-ink-muted text-sm">No hay propiedades en renta publicadas todavía.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {props.map(p => <PropertyCard key={p.id} p={p} />)}
+            {props.map(p => {
+              const cover = p.property_images?.find((i: any) => i.is_cover)?.url
+                || p.property_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url
+                || null;
+              return <PropertyCard key={p.id} p={p} coverUrl={cover} />;
+            })}
           </div>
         )}
       </div>

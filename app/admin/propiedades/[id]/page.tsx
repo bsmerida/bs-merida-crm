@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PropertyForm } from "@/components/PropertyForm";
+import { PropertyImageManager } from "@/components/PropertyImageManager";
 import type { Property } from "@/lib/supabase/types";
 
 export default async function EditarPropiedadPage({ params }: { params: { id: string } }) {
@@ -19,7 +20,10 @@ export default async function EditarPropiedadPage({ params }: { params: { id: st
           📄 Descargar ficha PDF
         </a>
       </div>
-      <PropertyForm property={data as Property} />
+      <div className="space-y-6">
+        <PropertyImageManager propertyId={(data as Property).id} />
+        <PropertyForm property={data as Property} />
+      </div>
     </div>
   );
 }

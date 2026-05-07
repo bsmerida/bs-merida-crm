@@ -1,0 +1,53 @@
+import { NextRequest } from "next/server";
+import { renderToStream } from "@react-pdf/renderer";
+import { createClient } from "@/lib/supabase/server";
+import { PropertyPDF } from "@/components/PropertyPDF";
+import React from "react";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const supabase = createClient();
+
+  const [{ data: prop }, { data: imgs }] = await Promise.all([
+    supabase.from("properties").select("*").eq("id", params.id).single(),
+    supabase.from("property_images").select("url, position, is_cover").eq("property_id", params.id).order("position"),
+  ]);
+
+  if (!prop) return new Response("Not found", { status: 404 });
+
+  const { data: agent } = prop.agent_id
+    ? await supabase.from("profiles").select("full_name, phone, email").eq("id", prop.agent_id).single()
+    : { data: null };
+
+  const sortedImages = (imgs || []).sort((a, b) => (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.position - b.position);
+
+  const biz = {
+    name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "Inmobiliaria BS Mérida",
+    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815",
+    email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com",
+    whatsapp: process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272",
+    web: "bsmerida.com",
+  };
+
+  const element: any = React.createElement(PropertyPDF as any, { property: prop, images: sortedImages, agent, biz });
+  const stream = await renderToStream(element);
+
+  // Convertir Node Readable a Web Stream
+  const webStream = new ReadableStream({
+    start(controller) {
+      stream.on("data", chunk => controller.enqueue(chunk));
+      stream.on("end", () => controller.close());
+      stream.on("error", err => controller.error(err));
+    },
+  });
+
+  const filename = `BS-${prop.reference || prop.id.slice(0, 8)}.pdf`;
+  return new Response(webStream, {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
+}

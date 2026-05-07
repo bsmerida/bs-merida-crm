@@ -49,7 +49,6 @@ const TYPE_MAP: Record<string, string> = {
   "Bodega": "Bodega", "Galpón": "Bodega", "Warehouse": "Bodega",
 };
 
-// Tokko usa códigos numéricos para status: 2=Disponible, 3=Reservada, 4=Vendida
 const STATUS_MAP: Record<number, string> = {
   1: "Pausada",
   2: "Disponible",
@@ -57,14 +56,12 @@ const STATUS_MAP: Record<number, string> = {
   4: "Vendida",
 };
 
-/**
- * Llama a la API de Tokko paginadamente y devuelve TODAS las propiedades.
- */
 export async function fetchAllTokkoProperties(apiKey: string, agencyId?: string): Promise<TokkoProperty[]> {
   const all: TokkoProperty[] = [];
   let offset = 0;
   const limit = 50;
 
+  // 1) Traer lista paginada
   while (true) {
     const params = new URLSearchParams({ key: apiKey, limit: String(limit), offset: String(offset), format: "json" });
     const url = `${TOKKO_BASE}/property/?${params.toString()}`;
@@ -78,21 +75,30 @@ export async function fetchAllTokkoProperties(apiKey: string, agencyId?: string)
     all.push(...objects);
     if (objects.length < limit) break;
     offset += limit;
-    if (offset > 5000) break; // guardrail
+    if (offset > 5000) break;
   }
-  return all;
+
+  // 2) Consultar detalle de cada propiedad (trae descripción y fotos)
+  const detailed: TokkoProperty[] = [];
+  for (const prop of all) {
+    try {
+      const url = `${TOKKO_BASE}/property/${prop.id}/?key=${apiKey}&format=json`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) { detailed.push(prop); continue; }
+      const full = await res.json();
+      detailed.push(full);
+    } catch {
+      detailed.push(prop);
+    }
+  }
+
+  return detailed;
 }
 
-/**
- * Mapea una propiedad de Tokko al schema interno del CRM.
- * Devuelve la propiedad y un array de URLs de imágenes (en orden).
- */
 export function mapTokkoProperty(t: TokkoProperty): { data: any; images: string[] } {
-  // Tipo
   const typeName = t.type?.name || "";
   const type = TYPE_MAP[typeName] || "Casa";
 
-  // Operación + precio (en Tokko hay operations[]; agarrar la primera con precio MXN)
   let operation = "Venta";
   let price = 0;
   for (const op of t.operations || []) {
@@ -105,30 +111,26 @@ export function mapTokkoProperty(t: TokkoProperty): { data: any; images: string[
     }
   }
 
-  // Ubicación: full_location suele venir como "México | Yucatán | Mérida | Cholul"
   const locStr = t.location?.full_location || "";
   const locParts = locStr.split("|").map(s => s.trim()).filter(Boolean);
-  const country = locParts[0] || "México";
   const state = locParts[1] || t.location?.state || "Yucatán";
   const city = locParts[2] || t.location?.division || "Mérida";
   const zone = locParts[3] || t.location?.name || null;
 
-  // Baños: completos + medios (cuentan 0.5)
   const bathrooms = num0(t.bathroom_amount) + (num0(t.toilet_amount) * 0.5);
 
-  // Imágenes ordenadas
-  const photos = (t.photos || []).filter(p => !p.is_blueprint && p.image).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const photos = (t.photos || [])
+    .filter(p => !p.is_blueprint && p.image)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
   const imageUrls = photos.map(p => p.image as string);
 
-  // Amenidades desde tags
   const amenities = (t.tags || []).map(tag => tag.name).filter(Boolean) as string[];
 
-  const reference = t.reference_code || null;
   const titleBase = t.publication_title?.trim() || `${type} en ${zone || city}`;
 
   const data = {
     external_id: String(t.id),
-    reference,
+    reference: t.reference_code || null,
     title: titleBase,
     type,
     operation,

@@ -61,7 +61,6 @@ export async function fetchAllTokkoProperties(apiKey: string, agencyId?: string)
   let offset = 0;
   const limit = 50;
 
-  // 1) Traer lista paginada
   while (true) {
     const params = new URLSearchParams({ key: apiKey, limit: String(limit), offset: String(offset), format: "json" });
     const url = `${TOKKO_BASE}/property/?${params.toString()}`;
@@ -78,18 +77,23 @@ export async function fetchAllTokkoProperties(apiKey: string, agencyId?: string)
     if (offset > 5000) break;
   }
 
-  // 2) Consultar detalle de cada propiedad (trae descripción y fotos)
+  // Consultar detalles en paralelo (grupos de 10)
   const detailed: TokkoProperty[] = [];
-  for (const prop of all) {
-    try {
-      const url = `${TOKKO_BASE}/property/${prop.id}/?key=${apiKey}&format=json`;
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) { detailed.push(prop); continue; }
-      const full = await res.json();
-      detailed.push(full);
-    } catch {
-      detailed.push(prop);
-    }
+  for (let i = 0; i < all.length; i += 10) {
+    const batch = all.slice(i, i + 10);
+    const results = await Promise.all(
+      batch.map(async (prop) => {
+        try {
+          const url = `${TOKKO_BASE}/property/${prop.id}/?key=${apiKey}&format=json`;
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) return prop;
+          return await res.json();
+        } catch {
+          return prop;
+        }
+      })
+    );
+    detailed.push(...results);
   }
 
   return detailed;

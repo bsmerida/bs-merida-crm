@@ -5,13 +5,12 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyCard } from "@/components/PropertyCard";
 import { Icon } from "@/components/Icon";
-import type { Property } from "@/lib/supabase/types";
 
 export default async function HomePage() {
   const supabase = createClient();
   const { data: properties } = await supabase
     .from("properties")
-    .select("*")
+    .select("*, property_images(url, position, is_cover)")
     .eq("is_published", true)
     .eq("status", "Disponible")
     .order("featured", { ascending: false })
@@ -55,7 +54,12 @@ export default async function HomePage() {
         </div>
         {properties && properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(properties as Property[]).map(p => <PropertyCard key={p.id} p={p} />)}
+            {(properties as any[]).map(p => {
+              const cover = p.property_images?.find((i: any) => i.is_cover)?.url
+                || p.property_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url
+                || null;
+              return <PropertyCard key={p.id} p={p} coverUrl={cover} />;
+            })}
           </div>
         ) : (
           <div className="text-center py-20 text-ink-muted">

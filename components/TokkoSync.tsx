@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function TokkoSync({ apiKeyConfigured }: { apiKeyConfigured: boolean }) {
   const [syncing, setSyncing] = useState(false);

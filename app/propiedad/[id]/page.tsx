@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
+import { PropertyContactButtons } from "@/components/PropertyContactButtons";
 import { Icon } from "@/components/Icon";
 import { fmtMXN } from "@/lib/utils";
 import type { Property, PropertyImage, Profile } from "@/lib/supabase/types";
@@ -17,7 +18,12 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
   const { data: p } = await supabase.from("properties").select("*").eq("id", params.id).single();
   if (!p || !p.is_published) notFound();
 
-  const { data: imgs } = await supabase.from("property_images").select("*").eq("property_id", params.id).order("position");
+  const { data: imgs } = await supabase
+    .from("property_images")
+    .select("*")
+    .eq("property_id", params.id)
+    .order("position");
+
   const { data: agent } = p.agent_id
     ? await supabase.from("profiles").select("*").eq("id", p.agent_id).single()
     : { data: null };
@@ -29,16 +35,17 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bsmerida.com";
   const propUrl = `${baseUrl}/propiedad/${property.id}`;
   const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
-
-  // Mensaje de WhatsApp con link de la propiedad
   const waMsg = `Hola, me interesa esta propiedad:\n\n*${property.title}*\n${propUrl}\n\n¿Me pueden dar más información?`;
 
   return (
     <>
       <PublicHeader />
       <div className="max-w-7xl mx-auto px-8 py-8">
-        <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">← Regresar</Link>
+        <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">
+          ← Regresar
+        </Link>
 
+        {/* Hero */}
         <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl relative overflow-hidden mt-4">
           {cover ? (
             <img src={cover.url} alt={property.title} className="w-full h-full object-cover" />
@@ -47,9 +54,10 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
           )}
         </div>
 
+        {/* Galería */}
         {images.length > 1 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-            {images.slice(0, 4).map(img => (
+            {images.slice(1, 5).map(img => (
               <div key={img.id} className="aspect-[4/3] rounded-xl bg-ink-ghost overflow-hidden">
                 <img src={img.url} alt="" className="w-full h-full object-cover" />
               </div>
@@ -58,23 +66,62 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10">
+          {/* Columna principal */}
           <div className="lg:col-span-2 space-y-8">
             <div>
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand-600 font-semibold">{property.type} · {property.operation}</div>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand-600 font-semibold">
+                {property.type} · {property.operation}
+                {property.development && (
+                  <span className="ml-2 text-ink-muted normal-case">· {property.development}</span>
+                )}
+              </div>
               <h1 className="text-4xl font-semibold text-ink tracking-tight mt-2">{property.title}</h1>
+              {property.reference && (
+                <div className="text-xs font-mono text-ink-soft mt-1">{property.reference}</div>
+              )}
               <div className="flex items-center gap-1.5 text-ink-muted mt-2">
-                <Icon name="pin" className="w-4 h-4" /> <span className="text-sm">{property.address || `${property.zone}, ${property.city}, ${property.state}`}</span>
+                <Icon name="pin" className="w-4 h-4" />
+                <span className="text-sm">
+                  {property.address || [property.zone, property.city, property.state].filter(Boolean).join(", ")}
+                </span>
               </div>
             </div>
 
+            {/* Características */}
             <div className="flex flex-wrap gap-6 text-sm text-ink py-6 border-y border-ink-line">
-              {property.bedrooms > 0 && <div className="flex items-center gap-2"><Icon name="bed" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bedrooms}</span> recámaras</span></div>}
-              {property.bathrooms > 0 && <div className="flex items-center gap-2"><Icon name="bath" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bathrooms}</span> baños</span></div>}
-              {property.m2_construction && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_construction}</span> m² construcción</span></div>}
-              {property.m2_land && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_land}</span> m² terreno</span></div>}
-              {property.parking > 0 && <div className="flex items-center gap-2"><Icon name="car" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.parking}</span> cajones</span></div>}
+              {property.bedrooms > 0 && (
+                <div className="flex items-center gap-2">
+                  <Icon name="bed" className="w-5 h-5 text-ink-muted" />
+                  <span><span className="font-semibold">{property.bedrooms}</span> recámaras</span>
+                </div>
+              )}
+              {property.bathrooms > 0 && (
+                <div className="flex items-center gap-2">
+                  <Icon name="bath" className="w-5 h-5 text-ink-muted" />
+                  <span><span className="font-semibold">{property.bathrooms}</span> baños</span>
+                </div>
+              )}
+              {property.m2_construction && (
+                <div className="flex items-center gap-2">
+                  <Icon name="sqm" className="w-5 h-5 text-ink-muted" />
+                  <span><span className="font-semibold">{property.m2_construction}</span> m² construcción</span>
+                </div>
+              )}
+              {property.m2_land && (
+                <div className="flex items-center gap-2">
+                  <Icon name="sqm" className="w-5 h-5 text-ink-muted" />
+                  <span><span className="font-semibold">{property.m2_land}</span> m² terreno</span>
+                </div>
+              )}
+              {property.parking > 0 && (
+                <div className="flex items-center gap-2">
+                  <Icon name="car" className="w-5 h-5 text-ink-muted" />
+                  <span><span className="font-semibold">{property.parking}</span> cajones</span>
+                </div>
+              )}
             </div>
 
+            {/* Descripción */}
             {property.description && (
               <div>
                 <h2 className="text-xl font-semibold text-ink mb-4">Descripción</h2>
@@ -82,14 +129,27 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               </div>
             )}
 
+            {/* Amenidades */}
             {property.amenities?.length > 0 && (
               <div>
                 <h2 className="text-xl font-semibold text-ink mb-4">Amenidades</h2>
                 <div className="flex flex-wrap gap-2">
                   {property.amenities.map((a: string) => (
-                    <span key={a} className="bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full text-sm">{a}</span>
+                    <span key={a} className="bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full text-sm">
+                      {a}
+                    </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Precio por m² */}
+            {property.m2_construction && property.price > 0 && (
+              <div className="bg-ink-ghost rounded-2xl p-4 text-sm text-ink-muted">
+                Precio por m²:{" "}
+                <span className="font-semibold text-ink">
+                  {fmtMXN(Math.round(property.price / property.m2_construction))} / m²
+                </span>
               </div>
             )}
           </div>
@@ -97,61 +157,30 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
           {/* Sidebar */}
           <div>
             <div className="bg-white rounded-3xl border border-ink-line shadow-card p-6 sticky top-24">
-              <div className="text-3xl font-semibold text-ink tracking-tight">{fmtMXN(property.price)}</div>
-              {property.operation === "Renta" && <div className="text-sm text-ink-muted mt-1">por mes</div>}
-              {property.reference && (
-                <div className="text-xs text-ink-soft mt-2 font-mono">{property.reference}</div>
+              <div className="text-3xl font-semibold text-ink tracking-tight">
+                {fmtMXN(property.price)}
+              </div>
+              {property.operation === "Renta" && (
+                <div className="text-sm text-ink-muted mt-1">por mes</div>
               )}
 
-              {/* WhatsApp — con link de la propiedad */}
-              <a
-                href={`https://wa.me/${wa}?text=${encodeURIComponent(waMsg)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full mt-6 bg-brand-500 hover:bg-brand-600 text-white text-center font-medium py-3 rounded-full"
-              >
-                Contactar por WhatsApp
-              </a>
+              {/* Botones interactivos — Client Component separado */}
+              <PropertyContactButtons
+                propertyId={property.id}
+                propertyTitle={property.title}
+                propertyUrl={propUrl}
+                waNumber={wa}
+                waMsg={waMsg}
+              />
 
-              {/* Solicitar info — abre Sofía con contexto de la propiedad */}
-              <button
-                id="btn-solicitar-info"
-                data-property-id={property.id}
-                data-property-title={property.title}
-                data-property-url={propUrl}
-                onClick={() => {
-                  // Disparar evento para que PublicChatbot lo escuche
-                  window.dispatchEvent(new CustomEvent("sofia:open", {
-                    detail: { id: property.id, title: property.title, url: propUrl }
-                  }));
-                }}
-                className="block w-full mt-2 bg-white border border-ink-line text-ink text-center font-medium py-3 rounded-full hover:border-ink-soft cursor-pointer"
-              >
-                Consultar con Sofía
-              </button>
-
-              {/* PDF con/sin datos */}
-              <div className="flex gap-2 mt-2">
-                <a
-                  href={`/api/propiedad/${property.id}/pdf?mode=internal`}
-                  className="flex-1 bg-white border border-ink-line text-ink text-center font-medium py-2.5 rounded-full hover:border-ink-soft text-sm"
-                >
-                  📄 Ficha completa
-                </a>
-                <a
-                  href={`/api/propiedad/${property.id}/pdf?mode=public`}
-                  className="flex-1 bg-white border border-ink-line text-ink text-center font-medium py-2.5 rounded-full hover:border-ink-soft text-sm"
-                >
-                  📄 Para cliente
-                </a>
-              </div>
-
+              {/* Asesor */}
               {agent && (
                 <div className="mt-6 pt-6 border-t border-ink-line">
                   <div className="text-xs text-ink-muted">Asesor a cargo</div>
                   <div className="flex items-center gap-3 mt-3">
                     <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
-                      {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
+                      {(agent as Profile).initials ||
+                        (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
                     </div>
                     <div>
                       <div className="font-medium text-sm text-ink">{(agent as Profile).full_name}</div>

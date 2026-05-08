@@ -10,8 +10,8 @@ export const runtime = "nodejs";
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient();
  
-  // ?mode=public → oculta datos de contacto (para compartir con cliente externo)
-  // ?mode=internal (default) → muestra todo
+  // ?mode=public  → sin datos de contacto (para compartir con cliente)
+  // ?mode=internal → con todos los datos (default)
   const mode = _req.nextUrl.searchParams.get("mode") || "internal";
   const showContactInfo = mode !== "public";
  
@@ -32,25 +32,20 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
  
   const biz = {
     name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "Inmobiliaria BS Mérida",
-    phone: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815") : null,
-    email: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com") : null,
-    whatsapp: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272") : null,
+    phone: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815") : "",
+    email: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com") : "",
+    whatsapp: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272") : "",
     web: "bsmerida.com",
   };
- 
-  // Si es modo público, no pasar datos del asesor
-  const agentData = showContactInfo ? agent : null;
  
   const element: any = React.createElement(PropertyPDF as any, {
     property: prop,
     images: sortedImages,
-    agent: agentData,
+    agent: showContactInfo ? agent : null,
     biz,
-    showContactInfo,
   });
  
   const stream = await renderToStream(element);
- 
   const webStream = new ReadableStream({
     start(controller) {
       stream.on("data", chunk => controller.enqueue(chunk));

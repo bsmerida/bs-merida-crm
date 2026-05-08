@@ -26,13 +26,13 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ error: `Error al consultar Tokko: ${e.message}` }, { status: 500 });
   }
  
-  // Pre-cargar descriptions existentes para no sobreescribirlas
+  // Pre-cargar descriptions ya guardadas manualmente en CRM para no pisarlas
   const { data: existingProps } = await supabase
     .from("properties")
     .select("external_id, description");
   const existingDescMap: Record<string, string | null> = {};
   for (const p of existingProps || []) {
-    if (p.external_id) existingDescMap[p.external_id] = p.description;
+    if (p.external_id) existingDescMap[String(p.external_id)] = p.description;
   }
  
   let synced = 0;
@@ -43,14 +43,12 @@ export async function POST(_req: NextRequest) {
     try {
       const { data, images } = mapTokkoProperty(tp);
  
-      // Si ya existe una description guardada manualmente en el CRM, preservarla
-      const existingDesc = existingDescMap[data.external_id];
+      // Si hay descripción guardada manualmente en CRM → preservarla (no sobreescribir)
+      const existingDesc = existingDescMap[String(data.external_id)];
       if (existingDesc && existingDesc.trim().length > 0) {
-        // Hay descripción manual → no la sobreescribimos aunque Tokko traiga algo
         delete data.description;
-      }
-      // Si no hay descripción en CRM y Tokko tampoco trae → omitir el campo
-      if (!data.description) {
+      } else if (!data.description) {
+        // Tampoco hay en Tokko → omitir el campo para no sobreescribir con null
         delete data.description;
       }
  
@@ -62,9 +60,8 @@ export async function POST(_req: NextRequest) {
  
       if (upErr || !prop) { failed++; continue; }
  
-      // Limpiar imágenes anteriores y reemplazar con las de Tokko
+      // Reemplazar imágenes con las actuales de Tokko
       await supabase.from("property_images").delete().eq("property_id", prop.id);
- 
       if (images.length > 0) {
         const imgRows = images.map((url, i) => ({
           property_id: prop.id,
@@ -82,10 +79,5 @@ export async function POST(_req: NextRequest) {
     }
   }
  
-  return NextResponse.json({
-    total: tokkoProps.length,
-    synced,
-    failed,
-    images: imagesTotal,
-  });
+  return NextResponse.json({ total: tokkoProps.length, synced, failed, images: imagesTotal });
 }

@@ -26,6 +26,13 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
   const images = (imgs || []) as PropertyImage[];
   const cover = images.find(i => i.is_cover) || images[0];
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bsmerida.com";
+  const propUrl = `${baseUrl}/propiedad/${property.id}`;
+  const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
+
+  // Mensaje de WhatsApp con link de la propiedad
+  const waMsg = `Hola, me interesa esta propiedad:\n\n*${property.title}*\n${propUrl}\n\n¿Me pueden dar más información?`;
+
   return (
     <>
       <PublicHeader />
@@ -65,57 +72,86 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               {property.bathrooms > 0 && <div className="flex items-center gap-2"><Icon name="bath" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bathrooms}</span> baños</span></div>}
               {property.m2_construction && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_construction}</span> m² construcción</span></div>}
               {property.m2_land && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_land}</span> m² terreno</span></div>}
-              {property.parking > 0 && <div className="flex items-center gap-2"><Icon name="car" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.parking}</span> estac.</span></div>}
+              {property.parking > 0 && <div className="flex items-center gap-2"><Icon name="car" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.parking}</span> cajones</span></div>}
             </div>
 
             {property.description && (
               <div>
-                <h3 className="font-semibold text-ink tracking-tight">Descripción</h3>
-                <p className="text-ink-muted mt-3 leading-relaxed whitespace-pre-line">{property.description}</p>
+                <h2 className="text-xl font-semibold text-ink mb-4">Descripción</h2>
+                <p className="text-ink-muted leading-relaxed whitespace-pre-line">{property.description}</p>
               </div>
             )}
 
-            {property.amenities && property.amenities.length > 0 && (
+            {property.amenities?.length > 0 && (
               <div>
-                <h3 className="font-semibold text-ink tracking-tight">Características</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                  {property.amenities.map(a => (
-                    <div key={a} className="flex items-center gap-2 text-sm text-ink-muted">
-                      <Icon name="check" className="w-4 h-4 text-brand-500" /> {a}
-                    </div>
+                <h2 className="text-xl font-semibold text-ink mb-4">Amenidades</h2>
+                <div className="flex flex-wrap gap-2">
+                  {property.amenities.map((a: string) => (
+                    <span key={a} className="bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full text-sm">{a}</span>
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="lg:sticky lg:top-24 self-start">
-            <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-              <div className="text-3xl font-semibold text-ink tracking-tight">
-                {fmtMXN(Number(property.price))}
-                {property.operation === "Renta" && <span className="text-base text-ink-muted font-normal"> /mes</span>}
-              </div>
+          {/* Sidebar */}
+          <div>
+            <div className="bg-white rounded-3xl border border-ink-line shadow-card p-6 sticky top-24">
+              <div className="text-3xl font-semibold text-ink tracking-tight">{fmtMXN(property.price)}</div>
+              {property.operation === "Renta" && <div className="text-sm text-ink-muted mt-1">por mes</div>}
+              {property.reference && (
+                <div className="text-xs text-ink-soft mt-2 font-mono">{property.reference}</div>
+              )}
 
-              <a href={`https://wa.me/${process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272"}?text=${encodeURIComponent(`Hola, me interesa la propiedad: ${property.title}`)}`}
-                 target="_blank" rel="noopener noreferrer"
-                 className="block w-full mt-6 bg-brand-500 hover:bg-brand-600 text-white text-center font-medium py-3 rounded-full">
+              {/* WhatsApp — con link de la propiedad */}
+              <a
+                href={`https://wa.me/${wa}?text=${encodeURIComponent(waMsg)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full mt-6 bg-brand-500 hover:bg-brand-600 text-white text-center font-medium py-3 rounded-full"
+              >
                 Contactar por WhatsApp
               </a>
-              <a href={`mailto:${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com"}?subject=${encodeURIComponent(property.title)}`}
-                 className="block w-full mt-2 bg-white border border-ink-line text-ink text-center font-medium py-3 rounded-full hover:border-ink-soft">
-                Solicitar información
-              </a>
-              <a href={`/api/propiedad/${property.id}/pdf`}
-                 className="block w-full mt-2 bg-white border border-ink-line text-ink text-center font-medium py-3 rounded-full hover:border-ink-soft text-sm">
-                Descargar ficha PDF
-              </a>
+
+              {/* Solicitar info — abre Sofía con contexto de la propiedad */}
+              <button
+                id="btn-solicitar-info"
+                data-property-id={property.id}
+                data-property-title={property.title}
+                data-property-url={propUrl}
+                onClick={() => {
+                  // Disparar evento para que PublicChatbot lo escuche
+                  window.dispatchEvent(new CustomEvent("sofia:open", {
+                    detail: { id: property.id, title: property.title, url: propUrl }
+                  }));
+                }}
+                className="block w-full mt-2 bg-white border border-ink-line text-ink text-center font-medium py-3 rounded-full hover:border-ink-soft cursor-pointer"
+              >
+                Consultar con Sofía
+              </button>
+
+              {/* PDF con/sin datos */}
+              <div className="flex gap-2 mt-2">
+                <a
+                  href={`/api/propiedad/${property.id}/pdf?mode=internal`}
+                  className="flex-1 bg-white border border-ink-line text-ink text-center font-medium py-2.5 rounded-full hover:border-ink-soft text-sm"
+                >
+                  📄 Ficha completa
+                </a>
+                <a
+                  href={`/api/propiedad/${property.id}/pdf?mode=public`}
+                  className="flex-1 bg-white border border-ink-line text-ink text-center font-medium py-2.5 rounded-full hover:border-ink-soft text-sm"
+                >
+                  📄 Para cliente
+                </a>
+              </div>
 
               {agent && (
                 <div className="mt-6 pt-6 border-t border-ink-line">
                   <div className="text-xs text-ink-muted">Asesor a cargo</div>
                   <div className="flex items-center gap-3 mt-3">
                     <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
-                      {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                      {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
                     </div>
                     <div>
                       <div className="font-medium text-sm text-ink">{(agent as Profile).full_name}</div>

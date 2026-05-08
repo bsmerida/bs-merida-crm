@@ -2,19 +2,7 @@
 import { useState, useMemo } from "react";
 import { PropertyCard } from "@/components/PropertyCard";
 
-type Prop = {
-  id: string;
-  title: string;
-  type: string;
-  operation: string;
-  status: string;
-  price: number;
-  zone: string | null;
-  city: string;
-  bedrooms: number;
-  cover: string | null;
-  [key: string]: any;
-};
+type Prop = any;
 
 export function PropertyListWithFilters({ props, operation }: { props: Prop[]; operation: "Venta" | "Renta" }) {
   const [filterType, setFilterType] = useState("Todos");

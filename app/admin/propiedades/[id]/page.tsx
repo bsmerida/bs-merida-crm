@@ -10,7 +10,6 @@ export default async function EditarPropiedadPage({ params }: { params: { id: st
   const { data } = await supabase.from("properties").select("*").eq("id", params.id).single();
   if (!data) notFound();
   const property = data as Property;
-
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
@@ -25,23 +24,23 @@ export default async function EditarPropiedadPage({ params }: { params: { id: st
             </span>
           )}
         </div>
-        {/* PDF doble: ficha completa vs para cliente */}
         <div className="flex items-center gap-2">
-          <a href={`/api/propiedad/${property.id}/pdf?mode=internal`}
-            className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft inline-flex items-center gap-1.5">
-            📄 Ficha completa
-          </a>
-          <a href={`/api/propiedad/${property.id}/pdf?mode=public`}
+          <a href={`/api/propiedad/${property.id}/pdf?mode=cliente`}
             className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft inline-flex items-center gap-1.5">
             📄 Para cliente
+          </a>
+          <a href={`/api/propiedad/${property.id}/pdf?mode=asesor`}
+            className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft inline-flex items-center gap-1.5">
+            📄 Para asesor
           </a>
         </div>
       </div>
 
       <div className="space-y-6">
+        {/* Notas internas ARRIBA */}
+        <PropertyNotes propertyId={property.id} userId={user?.id || ""} />
         <PropertyImageManager propertyId={property.id} />
         <PropertyForm property={property} />
-        <PropertyNotes propertyId={property.id} userId={user?.id || ""} />
       </div>
     </div>
   );

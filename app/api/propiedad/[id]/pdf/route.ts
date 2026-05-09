@@ -10,10 +10,10 @@ export const runtime = "nodejs";
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient();
 
-  // ?mode=public  → sin datos de contacto (para cliente)
-  // ?mode=internal → con todos los datos (default)
-  const mode = _req.nextUrl.searchParams.get("mode") || "internal";
-  const showContactInfo = mode !== "public";
+  // ?mode=cliente → con datos de la inmobiliaria (teléfono, email, nombre, etc.)
+  // ?mode=asesor  → solo info de la propiedad, sin nada de la inmobiliaria
+  const mode = _req.nextUrl.searchParams.get("mode") || "cliente";
+  const isAsesor = mode === "asesor";
 
   const [{ data: prop }, { data: imgs }] = await Promise.all([
     supabase.from("properties").select("*").eq("id", params.id).single(),
@@ -30,19 +30,28 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     (a, b) => (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.position - b.position
   );
 
-  const biz = {
+  // Modo asesor: biz vacío para que PropertyPDF no muestre nada de la inmobiliaria
+  const biz = isAsesor ? {
+    name: "",
+    phone: "",
+    email: "",
+    whatsapp: "",
+    web: "",
+  } : {
     name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "Inmobiliaria BS Mérida",
-    phone: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815") : "",
-    email: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com") : "",
-    whatsapp: showContactInfo ? (process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272") : "",
+    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815",
+    email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com",
+    whatsapp: process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272",
     web: "bsmerida.com",
   };
 
   const element: any = React.createElement(PropertyPDF as any, {
     property: prop,
     images: sortedImages,
-    agent: showContactInfo ? agent : null,
+    // Modo asesor: tampoco mostrar datos del asesor asignado
+    agent: isAsesor ? null : agent,
     biz,
+    hideHeader: isAsesor, // PropertyPDF usa esto para ocultar el header "BS | INMOBILIARIA"
   });
 
   const stream = await renderToStream(element);
@@ -54,7 +63,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     },
   });
 
-  const suffix = mode === "public" ? "-cliente" : "";
+  const suffix = isAsesor ? "-asesor" : "-cliente";
   const filename = `BS-${prop.reference || prop.id.slice(0, 8)}${suffix}.pdf`;
 
   return new Response(webStream, {

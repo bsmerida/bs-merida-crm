@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyImageManager } from "@/components/PropertyImageManager";
 import { PropertyNotes } from "@/components/PropertyNotes";
+import { PropertyStats } from "@/components/PropertyStats";
 import type { Property } from "@/lib/supabase/types";
 
 export default async function EditarPropiedadPage({ params }: { params: { id: string } }) {
@@ -26,20 +27,24 @@ export default async function EditarPropiedadPage({ params }: { params: { id: st
         </div>
         <div className="flex items-center gap-2">
           <a href={`/api/propiedad/${property.id}/pdf?mode=cliente`}
-            className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft inline-flex items-center gap-1.5">
+            className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft">
             📄 Para cliente
           </a>
           <a href={`/api/propiedad/${property.id}/pdf?mode=asesor`}
-            className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft inline-flex items-center gap-1.5">
+            className="bg-white border border-ink-line text-ink text-sm font-medium px-4 py-2 rounded-full hover:border-ink-soft">
             📄 Para asesor
           </a>
         </div>
       </div>
 
       <div className="space-y-6">
-        {/* Notas internas ARRIBA */}
+        {/* 1. Estadísticas */}
+        <PropertyStats propertyId={property.id} />
+        {/* 2. Notas internas */}
         <PropertyNotes propertyId={property.id} userId={user?.id || ""} />
+        {/* 3. Imágenes */}
         <PropertyImageManager propertyId={property.id} />
+        {/* 4. Formulario */}
         <PropertyForm property={property} />
       </div>
     </div>

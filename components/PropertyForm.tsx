@@ -24,11 +24,13 @@ export function PropertyForm({ property }: Props) {
     operation: property?.operation || "Venta",
     status: property?.status || "Disponible",
     price: property?.price?.toString() || "",
-    price_per_m2_land: "",           // precio por m² de terreno (solo para terrenos)
+    price_type: (property as any)?.price_type || "total",
     address: property?.address || "",
     zone: property?.zone || "",
     city: property?.city || "Mérida",
     state: property?.state || "Yucatán",
+    lat: (property as any)?.lat?.toString() || "",
+    lng: (property as any)?.lng?.toString() || "",
     bedrooms: property?.bedrooms?.toString() || "0",
     bathrooms: property?.bathrooms?.toString() || "0",
     m2_construction: property?.m2_construction?.toString() || "",
@@ -41,37 +43,26 @@ export function PropertyForm({ property }: Props) {
     development: (property as any)?.development || "",
   });
 
-  // Autogenerar código de referencia
   const generateReference = async () => {
     const now = new Date();
     const ym = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}`;
     const { count } = await supabase
-      .from("properties")
-      .select("*", { count: "exact", head: true })
+      .from("properties").select("*", { count: "exact", head: true })
       .like("reference", `BS-${ym}-%`);
     const seq = String((count || 0) + 1).padStart(3, "0");
     setForm(f => ({ ...f, reference: `BS-${ym}-${seq}` }));
   };
 
-  // Precio por m² de terreno → calcula precio total
-  const handlePricePerM2Land = (val: string) => {
-    setForm(f => {
-      const m2 = Number(f.m2_land);
-      const total = m2 > 0 && val ? String(Math.round(Number(val) * m2)) : f.price;
-      return { ...f, price_per_m2_land: val, price: total };
-    });
+  const geocode = async () => {
+    const q = [form.address, form.zone, form.city, form.state].filter(Boolean).join(", ");
+    if (!q) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
+      const data = await res.json();
+      if (data[0]) setForm(f => ({ ...f, lat: data[0].lat, lng: data[0].lon }));
+    } catch { /* silencioso */ }
   };
 
-  // Cuando cambia m² terreno y ya había precio/m², recalcula
-  const handleM2Land = (val: string) => {
-    setForm(f => {
-      const ppm2 = Number(f.price_per_m2_land);
-      const total = ppm2 > 0 && val ? String(Math.round(ppm2 * Number(val))) : f.price;
-      return { ...f, m2_land: val, price: total };
-    });
-  };
-
-  // Imágenes (solo nueva propiedad)
   const handleFileSelect = (files: FileList) => {
     const arr = Array.from(files);
     setPendingFiles(prev => [...prev, ...arr]);
@@ -81,10 +72,12 @@ export function PropertyForm({ property }: Props) {
       reader.readAsDataURL(f);
     });
   };
+
   const removePending = (i: number) => {
     setPendingFiles(prev => prev.filter((_, idx) => idx !== i));
     setPreviews(prev => prev.filter((_, idx) => idx !== i));
   };
+
   const uploadImages = async (propertyId: string) => {
     for (let i = 0; i < pendingFiles.length; i++) {
       const file = pendingFiles[i];
@@ -109,10 +102,13 @@ export function PropertyForm({ property }: Props) {
       operation: form.operation,
       status: form.status,
       price: Number(form.price),
+      price_type: form.price_type,
       address: form.address || null,
       zone: form.zone || null,
       city: form.city,
       state: form.state,
+      lat: form.lat ? Number(form.lat) : null,
+      lng: form.lng ? Number(form.lng) : null,
       bedrooms: Number(form.bedrooms),
       bathrooms: Number(form.bathrooms),
       m2_construction: form.m2_construction ? Number(form.m2_construction) : null,
@@ -129,22 +125,16 @@ export function PropertyForm({ property }: Props) {
       const { error: err } = await supabase.from("properties").update(payload).eq("id", property.id);
       setSubmitting(false);
       if (err) { setError(err.message); return; }
+      router.push("/admin/propiedades");
+      router.refresh();
     } else {
       const { data: newProp, error: err } = await supabase.from("properties").insert(payload).select("id").single();
       if (err || !newProp) { setSubmitting(false); setError(err?.message || "Error al crear"); return; }
-      if (pendingFiles.length > 0) {
-        setUploading(true);
-        await uploadImages(newProp.id);
-        setUploading(false);
-      }
+      if (pendingFiles.length > 0) { setUploading(true); await uploadImages(newProp.id); setUploading(false); }
       setSubmitting(false);
       router.push(`/admin/propiedades/${newProp.id}`);
       router.refresh();
-      return;
     }
-
-    router.push("/admin/propiedades");
-    router.refresh();
   };
 
   const remove = async () => {
@@ -159,49 +149,49 @@ export function PropertyForm({ property }: Props) {
   const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div><label className="text-xs text-ink-muted">{label}</label><div className="mt-1.5">{children}</div></div>
   );
-  const inputCls = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
 
-  const isTerreno = form.type === "Terreno";
+  const priceLabel = form.price_type === "m2" ? "Precio por m² MXN *" : form.price_type === "lineal" ? "Precio por metro lineal MXN *" : "Precio total MXN *";
 
   return (
     <form onSubmit={submit} className="space-y-6">
 
-      {/* Información básica */}
+      {/* Básico */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Información básica</h3>
         <Field label="Título *">
           <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-            placeholder="Ej. Casa en Provincia Residencial" className={inputCls} />
+            placeholder="Ej. Casa en Provincia Residencial" className={inp} />
         </Field>
         <Field label="Descripción">
           <textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-            className={`${inputCls} resize-none`} />
+            className={`${inp} resize-none`} />
         </Field>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Field label="Tipo *">
-            <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className={inputCls}>
+            <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className={inp}>
               {TIPOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
           <Field label="Operación *">
-            <select value={form.operation} onChange={e => setForm({ ...form, operation: e.target.value })} className={inputCls}>
+            <select value={form.operation} onChange={e => setForm({ ...form, operation: e.target.value })} className={inp}>
               {OPERACIONES.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
           <Field label="Estado *">
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls}>
+            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inp}>
               {ESTADOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
         </div>
         <Field label="Desarrollador / Proyecto">
           <input value={form.development} onChange={e => setForm({ ...form, development: e.target.value })}
-            placeholder="Ej. Grupo Dicas" className={inputCls} />
+            placeholder="Ej. Grupo Dicas" className={inp} />
         </Field>
         <Field label="Código identificador">
           <div className="flex gap-2">
             <input value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })}
-              placeholder="Ej. BS-2505-001" className={`${inputCls} flex-1`} />
+              placeholder="Ej. BS-2505-001" className={`${inp} flex-1`} />
             <button type="button" onClick={generateReference}
               className="px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm whitespace-nowrap">
               ✨ Generar
@@ -213,28 +203,26 @@ export function PropertyForm({ property }: Props) {
       {/* Precio */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Precio</h3>
-        <Field label="Precio total MXN *">
+        <div className="flex items-center gap-2 flex-wrap">
+          {(["total", "m2", "lineal"] as const).map(t => (
+            <button key={t} type="button"
+              onClick={() => setForm(f => ({ ...f, price_type: t }))}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                form.price_type === t
+                  ? "bg-brand-500 text-white border-brand-500"
+                  : "bg-white text-ink border-ink-line hover:border-brand-300"
+              }`}>
+              {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
+            </button>
+          ))}
+        </div>
+        <Field label={priceLabel}>
           <input required type="number" min="0" value={form.price}
-            onChange={e => setForm({ ...form, price: e.target.value })} className={inputCls} />
+            onChange={e => setForm({ ...form, price: e.target.value })} className={inp} />
         </Field>
-        {/* Solo para terrenos: campo de precio por m² que calcula automáticamente */}
-        {isTerreno && (
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="m² de terreno">
-              <input type="number" min="0" value={form.m2_land}
-                onChange={e => handleM2Land(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Precio por m² (calcula precio total)">
-              <input type="number" min="0" value={form.price_per_m2_land}
-                onChange={e => handlePricePerM2Land(e.target.value)}
-                placeholder="Ej. 2500" className={inputCls} />
-            </Field>
-          </div>
-        )}
-        {isTerreno && form.m2_land && form.price && (
-          <p className="text-xs text-ink-muted">
-            ≈ {new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 })
-              .format(Math.round(Number(form.price) / Number(form.m2_land)))} / m²
+        {form.price_type !== "total" && (
+          <p className="text-xs text-ink-muted bg-ink-ghost rounded-lg px-3 py-2">
+            Este precio se mostrará como <strong>{fmtPrice(form.price, form.price_type)}</strong> en el sitio y en la ficha.
           </p>
         )}
       </div>
@@ -243,59 +231,73 @@ export function PropertyForm({ property }: Props) {
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Ubicación</h3>
         <Field label="Dirección">
-          <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className={inputCls} />
+          <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className={inp} />
         </Field>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field label="Zona o colonia">
             <input value={form.zone} onChange={e => setForm({ ...form, zone: e.target.value })}
-              placeholder="Ej. Provincia, Cholul" className={inputCls} />
+              placeholder="Ej. Provincia, Cholul" className={inp} />
           </Field>
           <Field label="Ciudad">
-            <input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className={inputCls} />
+            <input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className={inp} />
           </Field>
           <Field label="Estado">
-            <input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className={inputCls} />
+            <input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className={inp} />
           </Field>
         </div>
+        {/* Coordenadas para el mapa */}
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Latitud">
+            <input type="number" step="any" value={form.lat}
+              onChange={e => setForm({ ...form, lat: e.target.value })}
+              placeholder="Ej. 20.9674" className={inp} />
+          </Field>
+          <Field label="Longitud">
+            <input type="number" step="any" value={form.lng}
+              onChange={e => setForm({ ...form, lng: e.target.value })}
+              placeholder="Ej. -89.6235" className={inp} />
+          </Field>
+        </div>
+        <button type="button" onClick={geocode}
+          className="text-xs text-brand-600 hover:text-brand-700 hover:underline">
+          📍 Obtener coordenadas desde la dirección automáticamente
+        </button>
+        {form.lat && form.lng && (
+          <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer"
+            className="text-xs text-ink-muted hover:underline block">
+            Ver en Google Maps ↗
+          </a>
+        )}
       </div>
 
       {/* Características */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {!isTerreno && (
-            <>
-              <Field label="Recámaras">
-                <input type="number" min="0" value={form.bedrooms}
-                  onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inputCls} />
-              </Field>
-              <Field label="Baños">
-                <input type="number" min="0" step="0.5" value={form.bathrooms}
-                  onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inputCls} />
-              </Field>
-              <Field label="m² construcción">
-                <input type="number" min="0" value={form.m2_construction}
-                  onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inputCls} />
-              </Field>
-            </>
-          )}
-          {/* m² terreno en características solo si NO es terreno (los terrenos lo tienen en precio) */}
-          {!isTerreno && (
-            <Field label="m² terreno">
-              <input type="number" min="0" value={form.m2_land}
-                onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inputCls} />
-            </Field>
-          )}
-          {!isTerreno && (
-            <Field label="Estacionamientos">
-              <input type="number" min="0" value={form.parking}
-                onChange={e => setForm({ ...form, parking: e.target.value })} className={inputCls} />
-            </Field>
-          )}
+          <Field label="Recámaras">
+            <input type="number" min="0" value={form.bedrooms}
+              onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inp} />
+          </Field>
+          <Field label="Baños">
+            <input type="number" min="0" step="0.5" value={form.bathrooms}
+              onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inp} />
+          </Field>
+          <Field label="m² construcción">
+            <input type="number" min="0" value={form.m2_construction}
+              onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inp} />
+          </Field>
+          <Field label="m² terreno">
+            <input type="number" min="0" value={form.m2_land}
+              onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inp} />
+          </Field>
+          <Field label="Estacionamientos">
+            <input type="number" min="0" value={form.parking}
+              onChange={e => setForm({ ...form, parking: e.target.value })} className={inp} />
+          </Field>
         </div>
         <Field label="Amenidades (separadas por coma)">
           <input value={form.amenities} onChange={e => setForm({ ...form, amenities: e.target.value })}
-            placeholder="Alberca, Jardín, Seguridad 24/7" className={inputCls} />
+            placeholder="Alberca, Jardín, Seguridad 24/7" className={inp} />
         </Field>
       </div>
 
@@ -346,7 +348,8 @@ export function PropertyForm({ property }: Props) {
 
       <div className="flex items-center justify-between">
         {property && (
-          <button type="button" onClick={remove} disabled={submitting} className="text-sm text-red-600 hover:text-red-700">
+          <button type="button" onClick={remove} disabled={submitting}
+            className="text-sm text-red-600 hover:text-red-700">
             Eliminar propiedad
           </button>
         )}
@@ -363,4 +366,13 @@ export function PropertyForm({ property }: Props) {
       </div>
     </form>
   );
+}
+
+// Helper para mostrar preview del precio con sufijo
+function fmtPrice(price: string, type: string) {
+  if (!price) return "—";
+  const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(price));
+  if (type === "m2") return `${n} / m²`;
+  if (type === "lineal") return `${n} / ml`;
+  return n;
 }

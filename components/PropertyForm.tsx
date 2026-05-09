@@ -11,12 +11,10 @@ export function PropertyForm({ property }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [priceModeM2, setPriceModeM2] = useState(false);
-  const [pricePerM2, setPricePerM2] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -26,6 +24,7 @@ export function PropertyForm({ property }: Props) {
     operation: property?.operation || "Venta",
     status: property?.status || "Disponible",
     price: property?.price?.toString() || "",
+    price_per_m2_land: "",           // precio por m² de terreno (solo para terrenos)
     address: property?.address || "",
     zone: property?.zone || "",
     city: property?.city || "Mérida",
@@ -42,6 +41,7 @@ export function PropertyForm({ property }: Props) {
     development: (property as any)?.development || "",
   });
 
+  // Autogenerar código de referencia
   const generateReference = async () => {
     const now = new Date();
     const ym = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -53,18 +53,25 @@ export function PropertyForm({ property }: Props) {
     setForm(f => ({ ...f, reference: `BS-${ym}-${seq}` }));
   };
 
-  const handlePriceM2Change = (val: string) => {
-    setPricePerM2(val);
-    const m2 = Number(form.m2_construction);
-    if (m2 > 0 && val) setForm(f => ({ ...f, price: String(Math.round(Number(val) * m2)) }));
+  // Precio por m² de terreno → calcula precio total
+  const handlePricePerM2Land = (val: string) => {
+    setForm(f => {
+      const m2 = Number(f.m2_land);
+      const total = m2 > 0 && val ? String(Math.round(Number(val) * m2)) : f.price;
+      return { ...f, price_per_m2_land: val, price: total };
+    });
   };
 
-  const handlePriceChange = (val: string) => {
-    setForm(f => ({ ...f, price: val }));
-    const m2 = Number(form.m2_construction);
-    if (m2 > 0 && val) setPricePerM2(String(Math.round(Number(val) / m2)));
+  // Cuando cambia m² terreno y ya había precio/m², recalcula
+  const handleM2Land = (val: string) => {
+    setForm(f => {
+      const ppm2 = Number(f.price_per_m2_land);
+      const total = ppm2 > 0 && val ? String(Math.round(ppm2 * Number(val))) : f.price;
+      return { ...f, m2_land: val, price: total };
+    });
   };
 
+  // Imágenes (solo nueva propiedad)
   const handleFileSelect = (files: FileList) => {
     const arr = Array.from(files);
     setPendingFiles(prev => [...prev, ...arr]);
@@ -74,28 +81,19 @@ export function PropertyForm({ property }: Props) {
       reader.readAsDataURL(f);
     });
   };
-
   const removePending = (i: number) => {
     setPendingFiles(prev => prev.filter((_, idx) => idx !== i));
     setPreviews(prev => prev.filter((_, idx) => idx !== i));
   };
-
   const uploadImages = async (propertyId: string) => {
     for (let i = 0; i < pendingFiles.length; i++) {
       const file = pendingFiles[i];
       const ext = file.name.split(".").pop();
       const path = `${propertyId}/${Date.now()}_${i}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("property-images")
-        .upload(path, file, { contentType: file.type });
+      const { error: upErr } = await supabase.storage.from("property-images").upload(path, file, { contentType: file.type });
       if (upErr) continue;
       const { data: urlData } = supabase.storage.from("property-images").getPublicUrl(path);
-      await supabase.from("property_images").insert({
-        property_id: propertyId,
-        url: urlData.publicUrl,
-        position: i,
-        is_cover: i === 0,
-      });
+      await supabase.from("property_images").insert({ property_id: propertyId, url: urlData.publicUrl, position: i, is_cover: i === 0 });
     }
   };
 
@@ -132,8 +130,7 @@ export function PropertyForm({ property }: Props) {
       setSubmitting(false);
       if (err) { setError(err.message); return; }
     } else {
-      const { data: newProp, error: err } = await supabase
-        .from("properties").insert(payload).select("id").single();
+      const { data: newProp, error: err } = await supabase.from("properties").insert(payload).select("id").single();
       if (err || !newProp) { setSubmitting(false); setError(err?.message || "Error al crear"); return; }
       if (pendingFiles.length > 0) {
         setUploading(true);
@@ -141,6 +138,9 @@ export function PropertyForm({ property }: Props) {
         setUploading(false);
       }
       setSubmitting(false);
+      router.push(`/admin/propiedades/${newProp.id}`);
+      router.refresh();
+      return;
     }
 
     router.push("/admin/propiedades");
@@ -157,12 +157,11 @@ export function PropertyForm({ property }: Props) {
   };
 
   const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div>
-      <label className="text-xs text-ink-muted">{label}</label>
-      <div className="mt-1.5">{children}</div>
-    </div>
+    <div><label className="text-xs text-ink-muted">{label}</label><div className="mt-1.5">{children}</div></div>
   );
   const inputCls = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+
+  const isTerreno = form.type === "Terreno";
 
   return (
     <form onSubmit={submit} className="space-y-6">
@@ -197,7 +196,7 @@ export function PropertyForm({ property }: Props) {
         </div>
         <Field label="Desarrollador / Proyecto">
           <input value={form.development} onChange={e => setForm({ ...form, development: e.target.value })}
-            placeholder="Ej. Grupo Dicas, Inmobiliaria X" className={inputCls} />
+            placeholder="Ej. Grupo Dicas" className={inputCls} />
         </Field>
         <Field label="Código identificador">
           <div className="flex gap-2">
@@ -213,34 +212,29 @@ export function PropertyForm({ property }: Props) {
 
       {/* Precio */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-ink">Precio</h3>
-          <label className="flex items-center gap-2 text-xs text-ink-muted cursor-pointer select-none">
-            <input type="checkbox" checked={priceModeM2} onChange={e => setPriceModeM2(e.target.checked)}
-              className="w-3.5 h-3.5 accent-brand-500" />
-            Ingresar por m²
-          </label>
-        </div>
-        {priceModeM2 ? (
+        <h3 className="font-semibold text-ink">Precio</h3>
+        <Field label="Precio total MXN *">
+          <input required type="number" min="0" value={form.price}
+            onChange={e => setForm({ ...form, price: e.target.value })} className={inputCls} />
+        </Field>
+        {/* Solo para terrenos: campo de precio por m² que calcula automáticamente */}
+        {isTerreno && (
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Precio por m² (MXN) *">
-              <input type="number" min="0" value={pricePerM2} onChange={e => handlePriceM2Change(e.target.value)}
-                placeholder="Ej. 25000" className={inputCls} />
+            <Field label="m² de terreno">
+              <input type="number" min="0" value={form.m2_land}
+                onChange={e => handleM2Land(e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Precio total (calculado)">
-              <input type="number" readOnly value={form.price} className={`${inputCls} opacity-60`} />
+            <Field label="Precio por m² (calcula precio total)">
+              <input type="number" min="0" value={form.price_per_m2_land}
+                onChange={e => handlePricePerM2Land(e.target.value)}
+                placeholder="Ej. 2500" className={inputCls} />
             </Field>
           </div>
-        ) : (
-          <Field label="Precio total MXN *">
-            <input required type="number" min="0" value={form.price}
-              onChange={e => handlePriceChange(e.target.value)} className={inputCls} />
-          </Field>
         )}
-        {form.m2_construction && form.price && (
+        {isTerreno && form.m2_land && form.price && (
           <p className="text-xs text-ink-muted">
             ≈ {new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 })
-              .format(Math.round(Number(form.price) / Number(form.m2_construction)))} / m²
+              .format(Math.round(Number(form.price) / Number(form.m2_land)))} / m²
           </p>
         )}
       </div>
@@ -269,26 +263,35 @@ export function PropertyForm({ property }: Props) {
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Field label="Recámaras">
-            <input type="number" min="0" value={form.bedrooms}
-              onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inputCls} />
-          </Field>
-          <Field label="Baños">
-            <input type="number" min="0" step="0.5" value={form.bathrooms}
-              onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inputCls} />
-          </Field>
-          <Field label="m² construcción">
-            <input type="number" min="0" value={form.m2_construction}
-              onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inputCls} />
-          </Field>
-          <Field label="m² terreno">
-            <input type="number" min="0" value={form.m2_land}
-              onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inputCls} />
-          </Field>
-          <Field label="Estacionamientos">
-            <input type="number" min="0" value={form.parking}
-              onChange={e => setForm({ ...form, parking: e.target.value })} className={inputCls} />
-          </Field>
+          {!isTerreno && (
+            <>
+              <Field label="Recámaras">
+                <input type="number" min="0" value={form.bedrooms}
+                  onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inputCls} />
+              </Field>
+              <Field label="Baños">
+                <input type="number" min="0" step="0.5" value={form.bathrooms}
+                  onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inputCls} />
+              </Field>
+              <Field label="m² construcción">
+                <input type="number" min="0" value={form.m2_construction}
+                  onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inputCls} />
+              </Field>
+            </>
+          )}
+          {/* m² terreno en características solo si NO es terreno (los terrenos lo tienen en precio) */}
+          {!isTerreno && (
+            <Field label="m² terreno">
+              <input type="number" min="0" value={form.m2_land}
+                onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inputCls} />
+            </Field>
+          )}
+          {!isTerreno && (
+            <Field label="Estacionamientos">
+              <input type="number" min="0" value={form.parking}
+                onChange={e => setForm({ ...form, parking: e.target.value })} className={inputCls} />
+            </Field>
+          )}
         </div>
         <Field label="Amenidades (separadas por coma)">
           <input value={form.amenities} onChange={e => setForm({ ...form, amenities: e.target.value })}
@@ -296,7 +299,7 @@ export function PropertyForm({ property }: Props) {
         </Field>
       </div>
 
-      {/* Imágenes — solo al crear nueva propiedad */}
+      {/* Imágenes — solo al crear */}
       {!property && (
         <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
           <h3 className="font-semibold text-ink">Imágenes</h3>
@@ -312,13 +315,9 @@ export function PropertyForm({ property }: Props) {
               {previews.map((src, i) => (
                 <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-ink-ghost">
                   <img src={src} alt="" className="w-full h-full object-cover" />
-                  {i === 0 && (
-                    <span className="absolute top-1 left-1 bg-brand-500 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Portada</span>
-                  )}
+                  {i === 0 && <span className="absolute top-1 left-1 bg-brand-500 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Portada</span>}
                   <button type="button" onClick={() => removePending(i)}
-                    className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-xs hover:bg-red-500 flex items-center justify-center">
-                    ×
-                  </button>
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-xs hover:bg-red-500 flex items-center justify-center">×</button>
                 </div>
               ))}
             </div>
@@ -339,18 +338,15 @@ export function PropertyForm({ property }: Props) {
           <input type="checkbox" checked={form.featured}
             onChange={e => setForm({ ...form, featured: e.target.checked })}
             className="w-4 h-4 accent-brand-500" />
-          Destacada (aparece primero en el inicio)
+          Destacada (aparece primero)
         </label>
       </div>
 
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>
-      )}
+      {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>}
 
       <div className="flex items-center justify-between">
         {property && (
-          <button type="button" onClick={remove} disabled={submitting}
-            className="text-sm text-red-600 hover:text-red-700">
+          <button type="button" onClick={remove} disabled={submitting} className="text-sm text-red-600 hover:text-red-700">
             Eliminar propiedad
           </button>
         )}

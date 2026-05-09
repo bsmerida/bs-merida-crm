@@ -4,37 +4,50 @@ import { Icon } from "./Icon";
 import { createClient } from "@/lib/supabase/client";
 
 type Msg = { from_bot: boolean; message: string };
-type PropertyContext = { id: string; title: string; url: string } | null;
+type PropertyContext = { id: string; title: string; url: string; operation: string } | null;
 type Captured = {
-  operation?: string;
-  type?: string;
+  name?: string;
+  phone?: string;
   zone?: string;
   budget?: string;
   financing?: string;
-  name?: string;
-  phone?: string;
+  type?: string;
+  operation?: string;
 };
 
-function getStepQuestion(stepIndex: number, captured: Captured, ctx: PropertyContext): string {
-  const isRenta = (captured.operation || "").toLowerCase().includes("rent");
-  switch (stepIndex) {
-    case 0:
-      return ctx
-        ? `¡Hola! Veo que te interesa *${ctx.title}*. Soy Sofía, asistente IA de BS Mérida. ¿Buscas comprarla o rentarla?`
-        : "Hola, soy Sofía 👋 ¿Buscas comprar o rentar una propiedad?";
-    case 1: return "Perfecto. ¿Qué tipo de propiedad? (casa, departamento, oficina, terreno...)";
-    case 2: return "¿En qué zona o ciudad te interesa?";
-    case 3: return "¿Cuál es tu presupuesto aproximado?";
-    case 4: return isRenta
-      ? "¿Cuentas con aval y/o puedes cubrir doble depósito para la renta?"
-      : "¿Cuentas con crédito hipotecario aprobado, o lo cubres con recurso propio?";
-    case 5: return "¡Casi listo! ¿Cuál es tu nombre?";
-    case 6: return "Por último, ¿cuál es tu teléfono o WhatsApp?";
-    default: return "";
-  }
+// Flujo cuando viene desde una propiedad específica
+function getPropertySteps(ctx: PropertyContext) {
+  const isRenta = ctx?.operation?.toLowerCase().includes("rent");
+  return [
+    { field: "name" as const,     ask: `¡Hola! Veo que te interesa *${ctx?.title}*. Soy Sofía 👋 ¿Cuál es tu nombre?` },
+    { field: "phone" as const,    ask: "Perfecto. ¿Cuál es tu WhatsApp para que un asesor te contacte?" },
+    { field: "budget" as const,   ask: isRenta ? "¿Cuál es tu presupuesto mensual para la renta?" : "¿Cuál es tu presupuesto aproximado?" },
+    { field: "financing" as const, ask: isRenta
+        ? "¿Cuentas con aval y/o puedes cubrir doble depósito?"
+        : "¿Cuentas con crédito hipotecario aprobado, o lo pagas con recurso propio?" },
+  ];
 }
 
-const TOTAL_STEPS = 7;
+// Flujo general (sin propiedad)
+const GENERAL_STEPS = [
+  { field: "operation" as const, ask: "Hola, soy Sofía 👋 ¿Buscas comprar o rentar una propiedad?" },
+  { field: "type" as const,      ask: "¿Qué tipo de propiedad? (casa, departamento, terreno...)" },
+  { field: "zone" as const,      ask: "¿En qué zona o ciudad te interesa?" },
+  { field: "budget" as const,    ask: "¿Cuál es tu presupuesto aproximado?" },
+  { field: "financing" as const, ask: "" }, // se llena dinámicamente
+  { field: "name" as const,      ask: "¡Casi listo! ¿Cuál es tu nombre?" },
+  { field: "phone" as const,     ask: "¿Cuál es tu teléfono o WhatsApp?" },
+];
+
+function getGeneralQuestion(stepIndex: number, captured: Captured): string {
+  if (stepIndex === 4) {
+    const isRenta = (captured.operation || "").toLowerCase().includes("rent");
+    return isRenta
+      ? "¿Cuentas con aval y/o puedes cubrir doble depósito?"
+      : "¿Cuentas con crédito hipotecario aprobado, o lo pagas con recurso propio?";
+  }
+  return GENERAL_STEPS[stepIndex].ask;
+}
 
 export function PublicChatbot() {
   const [open, setOpen] = useState(false);
@@ -53,14 +66,14 @@ export function PublicChatbot() {
   const businessWa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
 
   const initConv = (ctx: PropertyContext) => {
-    const firstMsg = getStepQuestion(0, {}, ctx);
+    const steps = ctx ? getPropertySteps(ctx) : GENERAL_STEPS;
+    const firstMsg = ctx ? steps[0].ask : getGeneralQuestion(0, {});
     setConv([{ from_bot: true, message: firstMsg }]);
     setStep(0);
-    setCaptured({});
+    setCaptured(ctx ? { operation: ctx.operation } : {});
     setDone(false);
   };
 
-  // Escucha el evento disparado por PropertyContactButtons
   useEffect(() => {
     const handler = (e: Event) => {
       const ctx = (e as CustomEvent).detail as PropertyContext;
@@ -85,20 +98,6 @@ export function PublicChatbot() {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [conv, typing, open]);
 
-  const startSession = async (firstMsg: string) => {
-    const { data } = await supabase
-      .from("chatbot_sessions")
-      .insert({ visitor_id: crypto.randomUUID() })
-      .select()
-      .single();
-    if (data) {
-      setSessionId(data.id);
-      await supabase.from("chatbot_messages").insert({ session_id: data.id, from_bot: true, message: firstMsg });
-      return data.id;
-    }
-    return null;
-  };
-
   const persistMsg = async (m: Msg) => {
     if (sessionId) await supabase.from("chatbot_messages").insert({ session_id: sessionId, ...m });
   };
@@ -106,28 +105,21 @@ export function PublicChatbot() {
   const finalize = async (data: Captured, ctx: PropertyContext) => {
     if (sessionId) {
       await supabase.from("chatbot_sessions").update({
-        visitor_name: data.name,
-        visitor_phone: data.phone,
-        visitor_data: data,
-        qualified: true,
+        visitor_name: data.name, visitor_phone: data.phone, visitor_data: data, qualified: true,
       }).eq("id", sessionId);
     }
     if (data.name && data.phone) {
       const interest = ctx
-        ? `Propiedad: ${ctx.title} (${ctx.url}) | ${data.operation} ${data.type} en ${data.zone} | presupuesto ${data.budget} | financiamiento: ${data.financing}`
-        : `${data.operation} ${data.type} en ${data.zone} | presupuesto ${data.budget} | financiamiento: ${data.financing}`;
+        ? `Propiedad: ${ctx.title} (${ctx.url}) | ${ctx.operation} | presupuesto: ${data.budget} | financiamiento: ${data.financing}`
+        : `${data.operation} de ${data.type} en ${data.zone} | presupuesto: ${data.budget} | financiamiento: ${data.financing}`;
       const { data: lead } = await supabase.from("leads").insert({
-        name: data.name,
-        phone: data.phone,
+        name: data.name, phone: data.phone,
         source: ctx ? "Chatbot IA – propiedad" : "Chatbot IA",
-        interest,
-        budget_text: data.budget,
-        consent_privacy: true,
-        consent_at: new Date().toISOString(),
+        interest, budget_text: data.budget,
+        consent_privacy: true, consent_at: new Date().toISOString(),
       }).select().single();
-      if (lead && sessionId) {
+      if (lead && sessionId)
         await supabase.from("chatbot_sessions").update({ lead_id: lead.id }).eq("id", sessionId);
-      }
     }
     setDone(true);
   };
@@ -140,24 +132,27 @@ export function PublicChatbot() {
     persistMsg(userMsg);
     setInput("");
 
-    const fields: (keyof Captured)[] = ["operation", "type", "zone", "budget", "financing", "name", "phone"];
-    const newCaptured = { ...captured, [fields[step]]: userText };
+    const steps = propertyCtx ? getPropertySteps(propertyCtx) : GENERAL_STEPS;
+    const currentField = steps[step].field;
+    const newCaptured = { ...captured, [currentField]: userText };
     setCaptured(newCaptured);
 
     setTyping(true);
     setTimeout(async () => {
       setTyping(false);
       const nextStep = step + 1;
-      if (nextStep < TOTAL_STEPS) {
-        const question = getStepQuestion(nextStep, newCaptured, propertyCtx);
+      if (nextStep < steps.length) {
+        const question = propertyCtx
+          ? steps[nextStep].ask
+          : getGeneralQuestion(nextStep, newCaptured);
         const next: Msg = { from_bot: true, message: question };
         setConv(prev => [...prev, next]);
         persistMsg(next);
         setStep(nextStep);
       } else {
         const summary = propertyCtx
-          ? `¡Perfecto, ${newCaptured.name}! Registré tu interés en *${propertyCtx.title}*. Un asesor te contactará por WhatsApp con todos los detalles.`
-          : `¡Perfecto, ${newCaptured.name}! Ya tengo tu información. Un asesor te mostrará las mejores opciones. ¡Da clic en el botón de abajo!`;
+          ? `¡Listo, ${newCaptured.name}! Un asesor te va a contactar por WhatsApp para darte todos los detalles de *${propertyCtx.title}*.`
+          : `¡Listo, ${newCaptured.name}! Un asesor te contactará pronto con opciones que se ajusten a lo que buscas. Da clic abajo para continuar.`;
         const finalMsg: Msg = { from_bot: true, message: summary };
         setConv(prev => [...prev, finalMsg]);
         persistMsg(finalMsg);
@@ -172,26 +167,25 @@ export function PublicChatbot() {
     setShowTeaser(false);
     setTeaserDismissed(true);
     if (!sessionId) {
-      const firstMsg = getStepQuestion(0, {}, propertyCtx);
-      await startSession(firstMsg);
+      const firstMsg = propertyCtx ? getPropertySteps(propertyCtx)[0].ask : getGeneralQuestion(0, {});
+      const { data } = await supabase.from("chatbot_sessions").insert({ visitor_id: crypto.randomUUID() }).select().single();
+      if (data) {
+        setSessionId(data.id);
+        await supabase.from("chatbot_messages").insert({ session_id: data.id, from_bot: true, message: firstMsg });
+      }
     }
   };
 
   const buildWaLink = () => {
-    const propLine = propertyCtx
-      ? `\n*Propiedad:* ${propertyCtx.title}\n${propertyCtx.url}`
-      : "";
+    const propLine = propertyCtx ? `\n*Propiedad:* ${propertyCtx.title}\n${propertyCtx.url}` : "";
     const msg =
-      `Hola Inmobiliaria BS Mérida, vengo del sitio web. Mi info:\n\n` +
+      `Hola Inmobiliaria BS Mérida, vengo del sitio web.\n\n` +
       `*Nombre:* ${captured.name || "—"}\n` +
       `*Teléfono:* ${captured.phone || "—"}\n` +
-      `*Operación:* ${captured.operation || "—"}\n` +
-      `*Tipo:* ${captured.type || "—"}\n` +
-      `*Zona:* ${captured.zone || "—"}\n` +
-      `*Presupuesto:* ${captured.budget || "—"}\n` +
-      `*Financiamiento:* ${captured.financing || "—"}` +
-      propLine +
-      `\n\nQuedo atento. Gracias.`;
+      (propertyCtx
+        ? `*Interés:* ${propertyCtx.operation} — ${propertyCtx.title}\n*Presupuesto:* ${captured.budget || "—"}\n*Financiamiento:* ${captured.financing || "—"}`
+        : `*Operación:* ${captured.operation || "—"}\n*Tipo:* ${captured.type || "—"}\n*Zona:* ${captured.zone || "—"}\n*Presupuesto:* ${captured.budget || "—"}\n*Financiamiento:* ${captured.financing || "—"}`) +
+      propLine + `\n\nQuedo atento. Gracias.`;
     return `https://wa.me/${businessWa}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -214,9 +208,7 @@ export function PublicChatbot() {
               </div>
             </div>
             <p className="text-sm text-ink leading-relaxed">¡Hola! ¿Te ayudo a encontrar la propiedad ideal? Estoy aquí 24/7.</p>
-            <button onClick={openChat} className="mt-3 text-xs font-medium text-brand-600 hover:text-brand-700">
-              Iniciar conversación →
-            </button>
+            <button onClick={openChat} className="mt-3 text-xs font-medium text-brand-600 hover:text-brand-700">Iniciar conversación →</button>
           </div>
         </div>
       )}
@@ -243,9 +235,7 @@ export function PublicChatbot() {
                 <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full"></span> En línea · responde en segundos
               </div>
             </div>
-            {propertyCtx && (
-              <div className="text-[10px] text-white/60 max-w-[90px] truncate text-right">{propertyCtx.title}</div>
-            )}
+            {propertyCtx && <div className="text-[10px] text-white/60 max-w-[90px] truncate text-right">{propertyCtx.title}</div>}
           </div>
 
           <div ref={chatRef} className="h-80 overflow-y-auto p-4 space-y-2.5 bg-ink-ghost">
@@ -253,27 +243,21 @@ export function PublicChatbot() {
               <div key={i} className={`flex ${!m.from_bot ? "justify-end" : "justify-start"} fade-in`}>
                 <div className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-sm ${
                   !m.from_bot ? "bg-brand-500 text-white rounded-br-md" : "bg-white text-ink border border-ink-line rounded-bl-md"
-                }`}>
-                  {m.message}
-                </div>
+                }`}>{m.message}</div>
               </div>
             ))}
             {typing && (
               <div className="flex justify-start">
                 <div className="bg-white border border-ink-line rounded-2xl px-3 py-2.5 flex gap-1">
-                  <span className="typing-dot w-1.5 h-1.5 bg-ink-soft rounded-full"></span>
-                  <span className="typing-dot w-1.5 h-1.5 bg-ink-soft rounded-full"></span>
-                  <span className="typing-dot w-1.5 h-1.5 bg-ink-soft rounded-full"></span>
+                  {[0,1,2].map(i => <span key={i} className="typing-dot w-1.5 h-1.5 bg-ink-soft rounded-full"></span>)}
                 </div>
               </div>
             )}
             {done && (
-              <div className="fade-in">
-                <a href={buildWaLink()} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full mt-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-2xl shadow-card">
-                  <Icon name="chat" className="w-5 h-5" /> Continuar por WhatsApp
-                </a>
-              </div>
+              <a href={buildWaLink()} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full mt-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-2xl shadow-card fade-in">
+                <Icon name="chat" className="w-5 h-5" /> Continuar por WhatsApp
+              </a>
             )}
           </div>
 

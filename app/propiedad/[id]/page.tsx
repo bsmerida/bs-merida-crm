@@ -19,11 +19,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
   if (!p || !p.is_published) notFound();
 
   const { data: imgs } = await supabase
-    .from("property_images")
-    .select("*")
-    .eq("property_id", params.id)
-    .order("position");
-
+    .from("property_images").select("*").eq("property_id", params.id).order("position");
   const { data: agent } = p.agent_id
     ? await supabase.from("profiles").select("*").eq("id", p.agent_id).single()
     : { data: null };
@@ -41,20 +37,13 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
     <>
       <PublicHeader />
       <div className="max-w-7xl mx-auto px-8 py-8">
-        <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">
-          ← Regresar
-        </Link>
+        <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">← Regresar</Link>
 
-        {/* Hero */}
         <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl relative overflow-hidden mt-4">
-          {cover ? (
-            <img src={cover.url} alt={property.title} className="w-full h-full object-cover" />
-          ) : (
-            <span>{PLACEHOLDER_EMOJI[property.type] || "🏠"}</span>
-          )}
+          {cover ? <img src={cover.url} alt={property.title} className="w-full h-full object-cover" />
+            : <span>{PLACEHOLDER_EMOJI[property.type] || "🏠"}</span>}
         </div>
 
-        {/* Galería */}
         {images.length > 1 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
             {images.slice(1, 5).map(img => (
@@ -66,62 +55,28 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10">
-          {/* Columna principal */}
           <div className="lg:col-span-2 space-y-8">
             <div>
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand-600 font-semibold">
                 {property.type} · {property.operation}
-                {property.development && (
-                  <span className="ml-2 text-ink-muted normal-case">· {property.development}</span>
-                )}
+                {(property as any).development && <span className="ml-2 text-ink-muted normal-case">· {(property as any).development}</span>}
               </div>
               <h1 className="text-4xl font-semibold text-ink tracking-tight mt-2">{property.title}</h1>
-              {property.reference && (
-                <div className="text-xs font-mono text-ink-soft mt-1">{property.reference}</div>
-              )}
+              {property.reference && <div className="text-xs font-mono text-ink-soft mt-1">{property.reference}</div>}
               <div className="flex items-center gap-1.5 text-ink-muted mt-2">
                 <Icon name="pin" className="w-4 h-4" />
-                <span className="text-sm">
-                  {property.address || [property.zone, property.city, property.state].filter(Boolean).join(", ")}
-                </span>
+                <span className="text-sm">{property.address || [property.zone, property.city, property.state].filter(Boolean).join(", ")}</span>
               </div>
             </div>
 
-            {/* Características */}
             <div className="flex flex-wrap gap-6 text-sm text-ink py-6 border-y border-ink-line">
-              {property.bedrooms > 0 && (
-                <div className="flex items-center gap-2">
-                  <Icon name="bed" className="w-5 h-5 text-ink-muted" />
-                  <span><span className="font-semibold">{property.bedrooms}</span> recámaras</span>
-                </div>
-              )}
-              {property.bathrooms > 0 && (
-                <div className="flex items-center gap-2">
-                  <Icon name="bath" className="w-5 h-5 text-ink-muted" />
-                  <span><span className="font-semibold">{property.bathrooms}</span> baños</span>
-                </div>
-              )}
-              {property.m2_construction && (
-                <div className="flex items-center gap-2">
-                  <Icon name="sqm" className="w-5 h-5 text-ink-muted" />
-                  <span><span className="font-semibold">{property.m2_construction}</span> m² construcción</span>
-                </div>
-              )}
-              {property.m2_land && (
-                <div className="flex items-center gap-2">
-                  <Icon name="sqm" className="w-5 h-5 text-ink-muted" />
-                  <span><span className="font-semibold">{property.m2_land}</span> m² terreno</span>
-                </div>
-              )}
-              {property.parking > 0 && (
-                <div className="flex items-center gap-2">
-                  <Icon name="car" className="w-5 h-5 text-ink-muted" />
-                  <span><span className="font-semibold">{property.parking}</span> cajones</span>
-                </div>
-              )}
+              {property.bedrooms > 0 && <div className="flex items-center gap-2"><Icon name="bed" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bedrooms}</span> recámaras</span></div>}
+              {property.bathrooms > 0 && <div className="flex items-center gap-2"><Icon name="bath" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bathrooms}</span> baños</span></div>}
+              {property.m2_construction && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_construction}</span> m² construcción</span></div>}
+              {property.m2_land && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_land}</span> m² terreno</span></div>}
+              {property.parking > 0 && <div className="flex items-center gap-2"><Icon name="car" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.parking}</span> cajones</span></div>}
             </div>
 
-            {/* Descripción */}
             {property.description && (
               <div>
                 <h2 className="text-xl font-semibold text-ink mb-4">Descripción</h2>
@@ -129,58 +84,39 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               </div>
             )}
 
-            {/* Amenidades */}
             {property.amenities?.length > 0 && (
               <div>
                 <h2 className="text-xl font-semibold text-ink mb-4">Amenidades</h2>
                 <div className="flex flex-wrap gap-2">
                   {property.amenities.map((a: string) => (
-                    <span key={a} className="bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full text-sm">
-                      {a}
-                    </span>
+                    <span key={a} className="bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full text-sm">{a}</span>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* Precio por m² */}
-            {property.m2_construction && property.price > 0 && (
-              <div className="bg-ink-ghost rounded-2xl p-4 text-sm text-ink-muted">
-                Precio por m²:{" "}
-                <span className="font-semibold text-ink">
-                  {fmtMXN(Math.round(property.price / property.m2_construction))} / m²
-                </span>
-              </div>
-            )}
           </div>
 
-          {/* Sidebar */}
           <div>
             <div className="bg-white rounded-3xl border border-ink-line shadow-card p-6 sticky top-24">
-              <div className="text-3xl font-semibold text-ink tracking-tight">
-                {fmtMXN(property.price)}
-              </div>
-              {property.operation === "Renta" && (
-                <div className="text-sm text-ink-muted mt-1">por mes</div>
-              )}
+              <div className="text-3xl font-semibold text-ink tracking-tight">{fmtMXN(property.price)}</div>
+              {property.operation === "Renta" && <div className="text-sm text-ink-muted mt-1">por mes</div>}
 
-              {/* Botones interactivos — Client Component separado */}
+              {/* Botones — pasa operation para que Sofía sepa el tipo */}
               <PropertyContactButtons
                 propertyId={property.id}
                 propertyTitle={property.title}
                 propertyUrl={propUrl}
+                propertyOperation={property.operation}
                 waNumber={wa}
                 waMsg={waMsg}
               />
 
-              {/* Asesor */}
               {agent && (
                 <div className="mt-6 pt-6 border-t border-ink-line">
                   <div className="text-xs text-ink-muted">Asesor a cargo</div>
                   <div className="flex items-center gap-3 mt-3">
                     <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
-                      {(agent as Profile).initials ||
-                        (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
+                      {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
                     </div>
                     <div>
                       <div className="font-medium text-sm text-ink">{(agent as Profile).full_name}</div>

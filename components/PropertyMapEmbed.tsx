@@ -33,14 +33,33 @@ export function PropertyMapEmbed({ lat, lng, title }: Props) {
         zoom: 15,
         zoomControl: true,
         scrollWheelZoom: false,
+        attributionControl: false,
       });
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      // Tiles con mejor diseño (CartoDB Positron — más limpio y moderno)
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
       }).addTo(map);
 
-      L.marker([lat, lng]).addTo(map).bindPopup(`<strong>${title}</strong>`).openPopup();
+      // Pin personalizado
+      const icon = L.divIcon({
+        html: `<div style="
+          width: 36px; height: 36px;
+          background: #5E4B8E;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 3px solid white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        "></div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 36],
+        className: "",
+      });
+
+      L.marker([lat, lng], { icon })
+        .addTo(map)
+        .bindPopup(`<strong style="font-family:sans-serif;font-size:13px">${title}</strong>`)
+        .openPopup();
 
       mapInstanceRef.current = map;
     };
@@ -57,10 +76,18 @@ export function PropertyMapEmbed({ lat, lng, title }: Props) {
 
   return (
     <div className="space-y-2">
-      <div ref={mapRef} className="w-full h-64 rounded-2xl overflow-hidden border border-ink-line" />
-      <a href={`https://maps.google.com/?q=${lat},${lng}`} target="_blank" rel="noopener noreferrer"
-        className="text-xs text-ink-muted hover:text-brand-600">
-        Abrir en Google Maps ↗
+      <div
+        ref={mapRef}
+        className="w-full rounded-2xl overflow-hidden border border-ink-line"
+        style={{ height: "320px" }}
+      />
+      <a
+        href={`https://maps.google.com/?q=${lat},${lng}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-ink-muted hover:text-brand-600 flex items-center gap-1"
+      >
+        <span>↗</span> Abrir en Google Maps
       </a>
     </div>
   );

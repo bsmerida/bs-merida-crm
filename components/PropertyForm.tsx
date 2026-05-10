@@ -7,25 +7,12 @@ import type { Property } from "@/lib/supabase/types";
 
 type Props = { property?: Property };
 
-async function geocodeAddress(address: string, zone: string, city: string, state: string) {
-  const q = [address, zone, city, state].filter(Boolean).join(", ");
-  if (!q) return null;
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
-      { headers: { "Accept-Language": "es" } }
-    );
-    const data = await res.json();
-    if (data[0]) return { lat: Number(data[0].lat), lng: Number(data[0].lon) };
-  } catch {}
-  return null;
-}
-
 export function PropertyForm({ property }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [error, setError] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -67,6 +54,24 @@ export function PropertyForm({ property }: Props) {
     setForm(f => ({ ...f, reference: `BS-${ym}-${seq}` }));
   };
 
+  const geocode = async () => {
+    const q = [form.address, form.zone, form.city, form.state].filter(Boolean).join(", ");
+    if (!q) return;
+    setGeocoding(true);
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }));
+      } else {
+        alert("No se encontraron coordenadas. Intenta con una dirección más específica.");
+      }
+    } catch {
+      alert("Error al buscar coordenadas.");
+    }
+    setGeocoding(false);
+  };
+
   const handleFileSelect = (files: FileList) => {
     const arr = Array.from(files);
     setPendingFiles(prev => [...prev, ...arr]);
@@ -99,14 +104,6 @@ export function PropertyForm({ property }: Props) {
     setSubmitting(true);
     setError("");
 
-    // Geocodificar automáticamente si no hay coordenadas
-    let lat = form.lat ? Number(form.lat) : null;
-    let lng = form.lng ? Number(form.lng) : null;
-    if (!lat || !lng) {
-      const coords = await geocodeAddress(form.address, form.zone, form.city, form.state);
-      if (coords) { lat = coords.lat; lng = coords.lng; }
-    }
-
     const payload: any = {
       title: form.title,
       description: form.description || null,
@@ -119,8 +116,8 @@ export function PropertyForm({ property }: Props) {
       zone: form.zone || null,
       city: form.city,
       state: form.state,
-      lat,
-      lng,
+      lat: form.lat ? Number(form.lat) : null,
+      lng: form.lng ? Number(form.lng) : null,
       bedrooms: Number(form.bedrooms),
       bathrooms: Number(form.bathrooms),
       m2_construction: form.m2_construction ? Number(form.m2_construction) : null,
@@ -150,7 +147,7 @@ export function PropertyForm({ property }: Props) {
   };
 
   const remove = async () => {
-    if (!property || !confirm("¿Eliminar esta propiedad? Esta acción no se puede deshacer.")) return;
+    if (!property || !confirm("¿Eliminar esta propiedad?")) return;
     setSubmitting(true);
     const { error: err } = await supabase.from("properties").delete().eq("id", property.id);
     setSubmitting(false);
@@ -166,8 +163,6 @@ export function PropertyForm({ property }: Props) {
 
   return (
     <form onSubmit={submit} className="space-y-6">
-
-      {/* Básico */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Información básica</h3>
         <Field label="Título *">
@@ -211,17 +206,13 @@ export function PropertyForm({ property }: Props) {
         </Field>
       </div>
 
-      {/* Precio */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Precio</h3>
         <div className="flex items-center gap-2 flex-wrap">
           {(["total", "m2", "lineal"] as const).map(t => (
-            <button key={t} type="button"
-              onClick={() => setForm(f => ({ ...f, price_type: t }))}
+            <button key={t} type="button" onClick={() => setForm(f => ({ ...f, price_type: t }))}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                form.price_type === t
-                  ? "bg-brand-500 text-white border-brand-500"
-                  : "bg-white text-ink border-ink-line hover:border-brand-300"
+                form.price_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"
               }`}>
               {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
             </button>
@@ -238,10 +229,8 @@ export function PropertyForm({ property }: Props) {
         )}
       </div>
 
-      {/* Ubicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Ubicación</h3>
-        <p className="text-xs text-ink-muted">El mapa se genera automáticamente al guardar con la dirección que captures.</p>
         <Field label="Dirección">
           <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
             placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
@@ -258,38 +247,27 @@ export function PropertyForm({ property }: Props) {
             <input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className={inp} />
           </Field>
         </div>
+        <button type="button" onClick={geocode} disabled={geocoding}
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm disabled:opacity-50">
+          {geocoding ? "⏳ Buscando..." : "📍 Ubicar en el mapa"}
+        </button>
         {form.lat && form.lng && (
-          <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer"
-            className="text-xs text-emerald-600 hover:underline">
-            ✓ Coordenadas guardadas — Ver en Google Maps ↗
-          </a>
+          <div className="flex items-center gap-3 text-xs text-emerald-600">
+            <span>✓ Coordenadas guardadas</span>
+            <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer"
+              className="hover:underline">Ver en Google Maps ↗</a>
+          </div>
         )}
       </div>
 
-      {/* Características */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Field label="Recámaras">
-            <input type="number" min="0" value={form.bedrooms}
-              onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inp} />
-          </Field>
-          <Field label="Baños">
-            <input type="number" min="0" step="0.5" value={form.bathrooms}
-              onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inp} />
-          </Field>
-          <Field label="m² construcción">
-            <input type="number" min="0" value={form.m2_construction}
-              onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inp} />
-          </Field>
-          <Field label="m² terreno">
-            <input type="number" min="0" value={form.m2_land}
-              onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inp} />
-          </Field>
-          <Field label="Estacionamientos">
-            <input type="number" min="0" value={form.parking}
-              onChange={e => setForm({ ...form, parking: e.target.value })} className={inp} />
-          </Field>
+          <Field label="Recámaras"><input type="number" min="0" value={form.bedrooms} onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inp} /></Field>
+          <Field label="Baños"><input type="number" min="0" step="0.5" value={form.bathrooms} onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inp} /></Field>
+          <Field label="m² construcción"><input type="number" min="0" value={form.m2_construction} onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inp} /></Field>
+          <Field label="m² terreno"><input type="number" min="0" value={form.m2_land} onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inp} /></Field>
+          <Field label="Estacionamientos"><input type="number" min="0" value={form.parking} onChange={e => setForm({ ...form, parking: e.target.value })} className={inp} /></Field>
         </div>
         <Field label="Amenidades (separadas por coma)">
           <input value={form.amenities} onChange={e => setForm({ ...form, amenities: e.target.value })}
@@ -297,7 +275,6 @@ export function PropertyForm({ property }: Props) {
         </Field>
       </div>
 
-      {/* Imágenes — solo al crear */}
       {!property && (
         <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
           <h3 className="font-semibold text-ink">Imágenes</h3>
@@ -323,19 +300,14 @@ export function PropertyForm({ property }: Props) {
         </div>
       )}
 
-      {/* Publicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-3">
         <h3 className="font-semibold text-ink">Publicación</h3>
         <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={form.is_published}
-            onChange={e => setForm({ ...form, is_published: e.target.checked })}
-            className="w-4 h-4 accent-brand-500" />
+          <input type="checkbox" checked={form.is_published} onChange={e => setForm({ ...form, is_published: e.target.checked })} className="w-4 h-4 accent-brand-500" />
           Publicar en el sitio web
         </label>
         <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={form.featured}
-            onChange={e => setForm({ ...form, featured: e.target.checked })}
-            className="w-4 h-4 accent-brand-500" />
+          <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} className="w-4 h-4 accent-brand-500" />
           Destacada (aparece primero)
         </label>
       </div>
@@ -344,8 +316,7 @@ export function PropertyForm({ property }: Props) {
 
       <div className="flex items-center justify-between">
         {property && (
-          <button type="button" onClick={remove} disabled={submitting}
-            className="text-sm text-red-600 hover:text-red-700">
+          <button type="button" onClick={remove} disabled={submitting} className="text-sm text-red-600 hover:text-red-700">
             Eliminar propiedad
           </button>
         )}
@@ -356,7 +327,7 @@ export function PropertyForm({ property }: Props) {
           </button>
           <button type="submit" disabled={submitting || uploading}
             className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full text-sm font-medium">
-            {uploading ? "Subiendo imágenes..." : submitting ? "Guardando y geocodificando..." : property ? "Guardar cambios" : "Crear propiedad"}
+            {uploading ? "Subiendo imágenes..." : submitting ? "Guardando..." : property ? "Guardar cambios" : "Crear propiedad"}
           </button>
         </div>
       </div>

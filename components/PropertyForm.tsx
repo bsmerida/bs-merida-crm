@@ -1,11 +1,29 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { TIPOS_PROPIEDAD, OPERACIONES, ESTADOS_PROPIEDAD } from "@/lib/utils";
 import type { Property } from "@/lib/supabase/types";
 
 type Props = { property?: Property };
+
+// Field FUERA del componente para evitar re-render en cada keystroke
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs text-ink-muted">{label}</label>
+      <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+function fmtPrice(price: string, type: string) {
+  if (!price) return "—";
+  const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(price));
+  if (type === "m2") return `${n} / m²`;
+  if (type === "lineal") return `${n} / ml`;
+  return n;
+}
 
 export function PropertyForm({ property }: Props) {
   const router = useRouter();
@@ -28,8 +46,8 @@ export function PropertyForm({ property }: Props) {
     price_type: (property as any)?.price_type || "total",
     address: property?.address || "",
     zone: property?.zone || "",
-    city: property?.city || "Mérida",
-    state: property?.state || "Yucatán",
+    city: property?.city || "",
+    state: property?.state || "",
     lat: (property as any)?.lat?.toString() || "",
     lng: (property as any)?.lng?.toString() || "",
     bedrooms: property?.bedrooms?.toString() || "0",
@@ -44,6 +62,10 @@ export function PropertyForm({ property }: Props) {
     development: (property as any)?.development || "",
   });
 
+  const set = useCallback((field: string, value: any) => {
+    setForm(f => ({ ...f, [field]: value }));
+  }, []);
+
   const generateReference = async () => {
     const now = new Date();
     const ym = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -51,32 +73,42 @@ export function PropertyForm({ property }: Props) {
       .from("properties").select("*", { count: "exact", head: true })
       .like("reference", `BS-${ym}-%`);
     const seq = String((count || 0) + 1).padStart(3, "0");
-    setForm(f => ({ ...f, reference: `BS-${ym}-${seq}` }));
+    set("reference", `BS-${ym}-${seq}`);
   };
 
   const geocode = async () => {
-    const q = [form.address, form.zone, form.city, form.state, "Mexico"].filter(Boolean).join(", ");
-    if (!q.trim()) return;
+    const parts = [form.address, form.zone, form.city, form.state, "México"].filter(Boolean);
+    if (parts.length < 2) {
+      alert("Escribe al menos la ciudad o la dirección antes de ubicar.");
+      return;
+    }
     setGeocoding(true);
     try {
+      const q = parts.join(", ");
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&countrycodes=mx`,
         { headers: { "Accept-Language": "es" } }
       );
       const data = await res.json();
       if (data[0]) {
         setForm(f => ({ ...f, lat: String(data[0].lat), lng: String(data[0].lon) }));
       } else {
-        alert("No se encontraron coordenadas. Intenta con una dirección más específica.");
-      }
-      if (res.ok) {
-        const data = await res.json();
-        setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }));
-      } else {
-        alert("No se encontraron coordenadas. Intenta con una dirección más específica.");
+        // Intento con solo ciudad + estado
+        const q2 = [form.city, form.state, "México"].filter(Boolean).join(", ");
+        const res2 = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q2)}&limit=1&countrycodes=mx`,
+          { headers: { "Accept-Language": "es" } }
+        );
+        const data2 = await res2.json();
+        if (data2[0]) {
+          setForm(f => ({ ...f, lat: String(data2[0].lat), lng: String(data2[0].lon) }));
+          alert("Se ubicó la ciudad. Para mayor precisión agrega la dirección exacta.");
+        } else {
+          alert("No se encontraron coordenadas. Revisa que la ciudad esté bien escrita.");
+        }
       }
     } catch {
-      alert("Error al buscar coordenadas.");
+      alert("Error de conexión al buscar coordenadas.");
     }
     setGeocoding(false);
   };
@@ -123,8 +155,8 @@ export function PropertyForm({ property }: Props) {
       price_type: form.price_type,
       address: form.address || null,
       zone: form.zone || null,
-      city: form.city,
-      state: form.state,
+      city: form.city || null,
+      state: form.state || null,
       lat: form.lat ? Number(form.lat) : null,
       lng: form.lng ? Number(form.lng) : null,
       bedrooms: Number(form.bedrooms),
@@ -164,49 +196,44 @@ export function PropertyForm({ property }: Props) {
     else { router.push("/admin/propiedades"); router.refresh(); }
   };
 
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div><label className="text-xs text-ink-muted">{label}</label><div className="mt-1.5">{children}</div></div>
-  );
   const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
   const priceLabel = form.price_type === "m2" ? "Precio por m² MXN *" : form.price_type === "lineal" ? "Precio por metro lineal MXN *" : "Precio total MXN *";
 
   return (
     <form onSubmit={submit} className="space-y-6">
+
+      {/* Básico */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Información básica</h3>
         <Field label="Título *">
-          <input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-            placeholder="Ej. Casa en Provincia Residencial" className={inp} />
+          <input required value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ej. Casa en Provincia Residencial" className={inp} />
         </Field>
         <Field label="Descripción">
-          <textarea rows={4} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-            className={`${inp} resize-none`} />
+          <textarea rows={4} value={form.description} onChange={e => set("description", e.target.value)} className={`${inp} resize-none`} />
         </Field>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Field label="Tipo *">
-            <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className={inp}>
+            <select value={form.type} onChange={e => set("type", e.target.value)} className={inp}>
               {TIPOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
           <Field label="Operación *">
-            <select value={form.operation} onChange={e => setForm({ ...form, operation: e.target.value })} className={inp}>
+            <select value={form.operation} onChange={e => set("operation", e.target.value)} className={inp}>
               {OPERACIONES.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
           <Field label="Estado *">
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inp}>
+            <select value={form.status} onChange={e => set("status", e.target.value)} className={inp}>
               {ESTADOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
         </div>
         <Field label="Desarrollador / Proyecto">
-          <input value={form.development} onChange={e => setForm({ ...form, development: e.target.value })}
-            placeholder="Ej. Grupo Dicas" className={inp} />
+          <input value={form.development} onChange={e => set("development", e.target.value)} placeholder="Ej. Grupo Dicas" className={inp} />
         </Field>
         <Field label="Código identificador">
           <div className="flex gap-2">
-            <input value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })}
-              placeholder="Ej. BS-2505-001" className={`${inp} flex-1`} />
+            <input value={form.reference} onChange={e => set("reference", e.target.value)} placeholder="Ej. BS-2505-001" className={`${inp} flex-1`} />
             <button type="button" onClick={generateReference}
               className="px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm whitespace-nowrap">
               ✨ Generar
@@ -215,11 +242,12 @@ export function PropertyForm({ property }: Props) {
         </Field>
       </div>
 
+      {/* Precio */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Precio</h3>
         <div className="flex items-center gap-2 flex-wrap">
           {(["total", "m2", "lineal"] as const).map(t => (
-            <button key={t} type="button" onClick={() => setForm(f => ({ ...f, price_type: t }))}
+            <button key={t} type="button" onClick={() => set("price_type", t)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
                 form.price_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"
               }`}>
@@ -228,8 +256,7 @@ export function PropertyForm({ property }: Props) {
           ))}
         </div>
         <Field label={priceLabel}>
-          <input required type="number" min="0" value={form.price}
-            onChange={e => setForm({ ...form, price: e.target.value })} className={inp} />
+          <input required type="number" min="0" value={form.price} onChange={e => set("price", e.target.value)} className={inp} />
         </Field>
         {form.price_type !== "total" && form.price && (
           <p className="text-xs text-ink-muted bg-ink-ghost rounded-lg px-3 py-2">
@@ -238,22 +265,22 @@ export function PropertyForm({ property }: Props) {
         )}
       </div>
 
+      {/* Ubicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Ubicación</h3>
         <Field label="Dirección">
-          <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
+          <input value={form.address} onChange={e => set("address", e.target.value)}
             placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
         </Field>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field label="Zona o colonia">
-            <input value={form.zone} onChange={e => setForm({ ...form, zone: e.target.value })}
-              placeholder="Ej. Provincia, Cholul" className={inp} />
+            <input value={form.zone} onChange={e => set("zone", e.target.value)} placeholder="Ej. Provincia, Cholul" className={inp} />
           </Field>
           <Field label="Ciudad">
-            <input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className={inp} />
+            <input value={form.city} onChange={e => set("city", e.target.value)} placeholder="Ej. Mérida" className={inp} />
           </Field>
           <Field label="Estado">
-            <input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className={inp} />
+            <input value={form.state} onChange={e => set("state", e.target.value)} placeholder="Ej. Yucatán" className={inp} />
           </Field>
         </div>
         <button type="button" onClick={geocode} disabled={geocoding}
@@ -263,27 +290,29 @@ export function PropertyForm({ property }: Props) {
         {form.lat && form.lng && (
           <div className="flex items-center gap-3 text-xs text-emerald-600">
             <span>✓ Coordenadas guardadas</span>
-            <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer"
-              className="hover:underline">Ver en Google Maps ↗</a>
+            <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              Ver en Google Maps ↗
+            </a>
           </div>
         )}
       </div>
 
+      {/* Características */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Field label="Recámaras"><input type="number" min="0" value={form.bedrooms} onChange={e => setForm({ ...form, bedrooms: e.target.value })} className={inp} /></Field>
-          <Field label="Baños"><input type="number" min="0" step="0.5" value={form.bathrooms} onChange={e => setForm({ ...form, bathrooms: e.target.value })} className={inp} /></Field>
-          <Field label="m² construcción"><input type="number" min="0" value={form.m2_construction} onChange={e => setForm({ ...form, m2_construction: e.target.value })} className={inp} /></Field>
-          <Field label="m² terreno"><input type="number" min="0" value={form.m2_land} onChange={e => setForm({ ...form, m2_land: e.target.value })} className={inp} /></Field>
-          <Field label="Estacionamientos"><input type="number" min="0" value={form.parking} onChange={e => setForm({ ...form, parking: e.target.value })} className={inp} /></Field>
+          <Field label="Recámaras"><input type="number" min="0" value={form.bedrooms} onChange={e => set("bedrooms", e.target.value)} className={inp} /></Field>
+          <Field label="Baños"><input type="number" min="0" step="0.5" value={form.bathrooms} onChange={e => set("bathrooms", e.target.value)} className={inp} /></Field>
+          <Field label="m² construcción"><input type="number" min="0" value={form.m2_construction} onChange={e => set("m2_construction", e.target.value)} className={inp} /></Field>
+          <Field label="m² terreno"><input type="number" min="0" value={form.m2_land} onChange={e => set("m2_land", e.target.value)} className={inp} /></Field>
+          <Field label="Estacionamientos"><input type="number" min="0" value={form.parking} onChange={e => set("parking", e.target.value)} className={inp} /></Field>
         </div>
         <Field label="Amenidades (separadas por coma)">
-          <input value={form.amenities} onChange={e => setForm({ ...form, amenities: e.target.value })}
-            placeholder="Alberca, Jardín, Seguridad 24/7" className={inp} />
+          <input value={form.amenities} onChange={e => set("amenities", e.target.value)} placeholder="Alberca, Jardín, Seguridad 24/7" className={inp} />
         </Field>
       </div>
 
+      {/* Imágenes */}
       {!property && (
         <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
           <h3 className="font-semibold text-ink">Imágenes</h3>
@@ -309,14 +338,15 @@ export function PropertyForm({ property }: Props) {
         </div>
       )}
 
+      {/* Publicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-3">
         <h3 className="font-semibold text-ink">Publicación</h3>
         <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={form.is_published} onChange={e => setForm({ ...form, is_published: e.target.checked })} className="w-4 h-4 accent-brand-500" />
+          <input type="checkbox" checked={form.is_published} onChange={e => set("is_published", e.target.checked)} className="w-4 h-4 accent-brand-500" />
           Publicar en el sitio web
         </label>
         <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} className="w-4 h-4 accent-brand-500" />
+          <input type="checkbox" checked={form.featured} onChange={e => set("featured", e.target.checked)} className="w-4 h-4 accent-brand-500" />
           Destacada (aparece primero)
         </label>
       </div>
@@ -342,12 +372,4 @@ export function PropertyForm({ property }: Props) {
       </div>
     </form>
   );
-}
-
-function fmtPrice(price: string, type: string) {
-  if (!price) return "—";
-  const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(price));
-  if (type === "m2") return `${n} / m²`;
-  if (type === "lineal") return `${n} / ml`;
-  return n;
 }

@@ -7,7 +7,6 @@ import type { Property } from "@/lib/supabase/types";
 
 type Props = { property?: Property };
 
-// Field FUERA del componente para evitar re-render en cada keystroke
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -77,38 +76,19 @@ export function PropertyForm({ property }: Props) {
   };
 
   const geocode = async () => {
-    const parts = [form.address, form.zone, form.city, form.state, "México"].filter(Boolean);
-    if (parts.length < 2) {
-      alert("Escribe al menos la ciudad o la dirección antes de ubicar.");
-      return;
-    }
+    const q = [form.address, form.zone, form.city, form.state, "México"].filter(Boolean).join(", ");
+    if (!q.trim()) { alert("Llena al menos la ciudad antes de ubicar."); return; }
     setGeocoding(true);
     try {
-      const q = parts.join(", ");
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&countrycodes=mx`,
-        { headers: { "Accept-Language": "es" } }
-      );
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
       const data = await res.json();
-      if (data[0]) {
-        setForm(f => ({ ...f, lat: String(data[0].lat), lng: String(data[0].lon) }));
+      if (res.ok && data.lat) {
+        setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }));
       } else {
-        // Intento con solo ciudad + estado
-        const q2 = [form.city, form.state, "México"].filter(Boolean).join(", ");
-        const res2 = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q2)}&limit=1&countrycodes=mx`,
-          { headers: { "Accept-Language": "es" } }
-        );
-        const data2 = await res2.json();
-        if (data2[0]) {
-          setForm(f => ({ ...f, lat: String(data2[0].lat), lng: String(data2[0].lon) }));
-          alert("Se ubicó la ciudad. Para mayor precisión agrega la dirección exacta.");
-        } else {
-          alert("No se encontraron coordenadas. Revisa que la ciudad esté bien escrita.");
-        }
+        alert("No se encontraron coordenadas. Revisa que la dirección esté completa.");
       }
     } catch {
-      alert("Error de conexión al buscar coordenadas.");
+      alert("Error al buscar coordenadas.");
     }
     setGeocoding(false);
   };
@@ -202,7 +182,6 @@ export function PropertyForm({ property }: Props) {
   return (
     <form onSubmit={submit} className="space-y-6">
 
-      {/* Básico */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Información básica</h3>
         <Field label="Título *">
@@ -242,7 +221,6 @@ export function PropertyForm({ property }: Props) {
         </Field>
       </div>
 
-      {/* Precio */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Precio</h3>
         <div className="flex items-center gap-2 flex-wrap">
@@ -265,12 +243,10 @@ export function PropertyForm({ property }: Props) {
         )}
       </div>
 
-      {/* Ubicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Ubicación</h3>
         <Field label="Dirección">
-          <input value={form.address} onChange={e => set("address", e.target.value)}
-            placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
+          <input value={form.address} onChange={e => set("address", e.target.value)} placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
         </Field>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field label="Zona o colonia">
@@ -297,7 +273,6 @@ export function PropertyForm({ property }: Props) {
         )}
       </div>
 
-      {/* Características */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -312,7 +287,6 @@ export function PropertyForm({ property }: Props) {
         </Field>
       </div>
 
-      {/* Imágenes */}
       {!property && (
         <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
           <h3 className="font-semibold text-ink">Imágenes</h3>
@@ -338,7 +312,6 @@ export function PropertyForm({ property }: Props) {
         </div>
       )}
 
-      {/* Publicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-3">
         <h3 className="font-semibold text-ink">Publicación</h3>
         <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">

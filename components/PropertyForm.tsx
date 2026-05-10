@@ -55,11 +55,20 @@ export function PropertyForm({ property }: Props) {
   };
 
   const geocode = async () => {
-    const q = [form.address, form.zone, form.city, form.state].filter(Boolean).join(", ");
-    if (!q) return;
+    const q = [form.address, form.zone, form.city, form.state, "Mexico"].filter(Boolean).join(", ");
+    if (!q.trim()) return;
     setGeocoding(true);
     try {
-      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+        { headers: { "Accept-Language": "es" } }
+      );
+      const data = await res.json();
+      if (data[0]) {
+        setForm(f => ({ ...f, lat: String(data[0].lat), lng: String(data[0].lon) }));
+      } else {
+        alert("No se encontraron coordenadas. Intenta con una dirección más específica.");
+      }
       if (res.ok) {
         const data = await res.json();
         setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }));

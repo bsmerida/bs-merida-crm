@@ -7,6 +7,20 @@ import type { Property } from "@/lib/supabase/types";
 
 type Props = { property?: Property };
 
+async function geocodeAddress(address: string, zone: string, city: string, state: string) {
+  const q = [address, zone, city, state].filter(Boolean).join(", ");
+  if (!q) return null;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+      { headers: { "Accept-Language": "es" } }
+    );
+    const data = await res.json();
+    if (data[0]) return { lat: Number(data[0].lat), lng: Number(data[0].lon) };
+  } catch {}
+  return null;
+}
+
 export function PropertyForm({ property }: Props) {
   const router = useRouter();
   const supabase = createClient();
@@ -53,16 +67,6 @@ export function PropertyForm({ property }: Props) {
     setForm(f => ({ ...f, reference: `BS-${ym}-${seq}` }));
   };
 
-  const geocode = async () => {
-    const q = [form.address, form.zone, form.city, form.state].filter(Boolean).join(", ");
-    if (!q) return;
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
-      const data = await res.json();
-      if (data[0]) setForm(f => ({ ...f, lat: data[0].lat, lng: data[0].lon }));
-    } catch { /* silencioso */ }
-  };
-
   const handleFileSelect = (files: FileList) => {
     const arr = Array.from(files);
     setPendingFiles(prev => [...prev, ...arr]);
@@ -95,6 +99,14 @@ export function PropertyForm({ property }: Props) {
     setSubmitting(true);
     setError("");
 
+    // Geocodificar automáticamente si no hay coordenadas
+    let lat = form.lat ? Number(form.lat) : null;
+    let lng = form.lng ? Number(form.lng) : null;
+    if (!lat || !lng) {
+      const coords = await geocodeAddress(form.address, form.zone, form.city, form.state);
+      if (coords) { lat = coords.lat; lng = coords.lng; }
+    }
+
     const payload: any = {
       title: form.title,
       description: form.description || null,
@@ -107,8 +119,8 @@ export function PropertyForm({ property }: Props) {
       zone: form.zone || null,
       city: form.city,
       state: form.state,
-      lat: form.lat ? Number(form.lat) : null,
-      lng: form.lng ? Number(form.lng) : null,
+      lat,
+      lng,
       bedrooms: Number(form.bedrooms),
       bathrooms: Number(form.bathrooms),
       m2_construction: form.m2_construction ? Number(form.m2_construction) : null,
@@ -150,7 +162,6 @@ export function PropertyForm({ property }: Props) {
     <div><label className="text-xs text-ink-muted">{label}</label><div className="mt-1.5">{children}</div></div>
   );
   const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
-
   const priceLabel = form.price_type === "m2" ? "Precio por m² MXN *" : form.price_type === "lineal" ? "Precio por metro lineal MXN *" : "Precio total MXN *";
 
   return (
@@ -220,9 +231,9 @@ export function PropertyForm({ property }: Props) {
           <input required type="number" min="0" value={form.price}
             onChange={e => setForm({ ...form, price: e.target.value })} className={inp} />
         </Field>
-        {form.price_type !== "total" && (
+        {form.price_type !== "total" && form.price && (
           <p className="text-xs text-ink-muted bg-ink-ghost rounded-lg px-3 py-2">
-            Este precio se mostrará como <strong>{fmtPrice(form.price, form.price_type)}</strong> en el sitio y en la ficha.
+            Se mostrará como <strong>{fmtPrice(form.price, form.price_type)}</strong> en el sitio y la ficha.
           </p>
         )}
       </div>
@@ -230,8 +241,10 @@ export function PropertyForm({ property }: Props) {
       {/* Ubicación */}
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Ubicación</h3>
+        <p className="text-xs text-ink-muted">El mapa se genera automáticamente al guardar con la dirección que captures.</p>
         <Field label="Dirección">
-          <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className={inp} />
+          <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
+            placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
         </Field>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Field label="Zona o colonia">
@@ -245,27 +258,10 @@ export function PropertyForm({ property }: Props) {
             <input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className={inp} />
           </Field>
         </div>
-        {/* Coordenadas para el mapa */}
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Latitud">
-            <input type="number" step="any" value={form.lat}
-              onChange={e => setForm({ ...form, lat: e.target.value })}
-              placeholder="Ej. 20.9674" className={inp} />
-          </Field>
-          <Field label="Longitud">
-            <input type="number" step="any" value={form.lng}
-              onChange={e => setForm({ ...form, lng: e.target.value })}
-              placeholder="Ej. -89.6235" className={inp} />
-          </Field>
-        </div>
-        <button type="button" onClick={geocode}
-          className="text-xs text-brand-600 hover:text-brand-700 hover:underline">
-          📍 Obtener coordenadas desde la dirección automáticamente
-        </button>
         {form.lat && form.lng && (
           <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer"
-            className="text-xs text-ink-muted hover:underline block">
-            Ver en Google Maps ↗
+            className="text-xs text-emerald-600 hover:underline">
+            ✓ Coordenadas guardadas — Ver en Google Maps ↗
           </a>
         )}
       </div>
@@ -360,7 +356,7 @@ export function PropertyForm({ property }: Props) {
           </button>
           <button type="submit" disabled={submitting || uploading}
             className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full text-sm font-medium">
-            {uploading ? "Subiendo imágenes..." : submitting ? "Guardando..." : property ? "Guardar cambios" : "Crear propiedad"}
+            {uploading ? "Subiendo imágenes..." : submitting ? "Guardando y geocodificando..." : property ? "Guardar cambios" : "Crear propiedad"}
           </button>
         </div>
       </div>
@@ -368,7 +364,6 @@ export function PropertyForm({ property }: Props) {
   );
 }
 
-// Helper para mostrar preview del precio con sufijo
 function fmtPrice(price: string, type: string) {
   if (!price) return "—";
   const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(price));

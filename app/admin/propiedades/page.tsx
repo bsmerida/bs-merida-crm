@@ -11,14 +11,8 @@ export default async function AdminPropiedades() {
     .select("*, agent:profiles(full_name), property_images(url, is_cover, position)")
     .order("created_at", { ascending: false });
 
-  // Conteos de vistas y solicitudes por propiedad
-  const { data: viewCounts } = await supabase
-    .from("property_views")
-    .select("property_id");
-
-  const { data: inquiryCounts } = await supabase
-    .from("property_inquiries")
-    .select("property_id");
+  const { data: viewCounts } = await supabase.from("property_views").select("property_id");
+  const { data: inquiryCounts } = await supabase.from("property_inquiries").select("property_id");
 
   const viewsMap: Record<string, number> = {};
   const inquiriesMap: Record<string, number> = {};
@@ -27,15 +21,11 @@ export default async function AdminPropiedades() {
 
   const props = (properties || []).map((p: any) => {
     const imgs = (p.property_images || []) as { url: string; is_cover: boolean; position: number }[];
-    const cover =
-      imgs.find(i => i.is_cover)?.url ||
-      imgs.sort((a, b) => a.position - b.position)[0]?.url ||
-      null;
+    const cover = imgs.find(i => i.is_cover)?.url || imgs.sort((a, b) => a.position - b.position)[0]?.url || null;
     return {
       id: p.id, title: p.title, type: p.type, operation: p.operation,
       status: p.status, price: p.price, zone: p.zone, city: p.city,
-      reference: p.reference, development: p.development,
-      agent: p.agent, cover,
+      reference: p.reference, development: p.development, agent: p.agent, cover,
       views_count: viewsMap[p.id] || 0,
       inquiries_count: inquiriesMap[p.id] || 0,
     };
@@ -49,6 +39,11 @@ export default async function AdminPropiedades() {
           <p className="text-sm text-ink-muted mt-0.5">{props.length} en el inventario</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Botón de estadísticas */}
+          <Link href="/admin/propiedades/estadisticas"
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
+            📊 Estadísticas
+          </Link>
           <Link href="/admin/propiedades/tokko"
             className="flex items-center gap-1.5 px-4 py-2 bg-brand-50 border border-brand-200 text-brand-700 rounded-full text-sm hover:bg-brand-100">
             🔄 Sincronizar Tokko

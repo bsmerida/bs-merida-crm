@@ -136,7 +136,7 @@ const AGE_RANGES = [
 
 type Lead = any;
 
-export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
+export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Lead[]; isAdmin?: boolean }) {
   const [leads, setLeads] = useState(initialLeads);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("Todos");
@@ -275,7 +275,7 @@ export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
 
   const tabs = [
     { id: "lista", label: "Lista" },
-    { id: "stats", label: "Estadísticas" },
+    ...(isAdmin ? [{ id: "stats", label: "Estadísticas" }] : []),
   ] as const;
 
   const statsTabs = [
@@ -528,7 +528,7 @@ export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
                 <h3 className="font-semibold text-ink mb-5">Zonas de interés</h3>
                 {byZona.length === 0
                   ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Se captura automáticamente del chatbot.</div>
-                  : <HBarChart data={byZona} max={maxZona} colorFn={() => "#5E4B8E"} />}
+                  : <HBarChart data={byZona} max={maxZona} color="#5E4B8E" />}
               </div>
 
             </div>

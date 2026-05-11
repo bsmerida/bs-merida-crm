@@ -11,6 +11,20 @@ export default async function AdminPropiedades() {
     .select("*, agent:profiles(full_name), property_images(url, is_cover, position)")
     .order("created_at", { ascending: false });
 
+  // Conteos de vistas y solicitudes por propiedad
+  const { data: viewCounts } = await supabase
+    .from("property_views")
+    .select("property_id");
+
+  const { data: inquiryCounts } = await supabase
+    .from("property_inquiries")
+    .select("property_id");
+
+  const viewsMap: Record<string, number> = {};
+  const inquiriesMap: Record<string, number> = {};
+  (viewCounts || []).forEach((v: any) => { viewsMap[v.property_id] = (viewsMap[v.property_id] || 0) + 1; });
+  (inquiryCounts || []).forEach((v: any) => { inquiriesMap[v.property_id] = (inquiriesMap[v.property_id] || 0) + 1; });
+
   const props = (properties || []).map((p: any) => {
     const imgs = (p.property_images || []) as { url: string; is_cover: boolean; position: number }[];
     const cover =
@@ -18,18 +32,12 @@ export default async function AdminPropiedades() {
       imgs.sort((a, b) => a.position - b.position)[0]?.url ||
       null;
     return {
-      id: p.id,
-      title: p.title,
-      type: p.type,
-      operation: p.operation,
-      status: p.status,
-      price: p.price,
-      zone: p.zone,
-      city: p.city,
-      reference: p.reference,
-      development: p.development,
-      agent: p.agent,
-      cover,
+      id: p.id, title: p.title, type: p.type, operation: p.operation,
+      status: p.status, price: p.price, zone: p.zone, city: p.city,
+      reference: p.reference, development: p.development,
+      agent: p.agent, cover,
+      views_count: viewsMap[p.id] || 0,
+      inquiries_count: inquiriesMap[p.id] || 0,
     };
   });
 
@@ -45,9 +53,9 @@ export default async function AdminPropiedades() {
             className="flex items-center gap-1.5 px-4 py-2 bg-brand-50 border border-brand-200 text-brand-700 rounded-full text-sm hover:bg-brand-100">
             🔄 Sincronizar Tokko
           </Link>
-          <Link href="/admin/propiedades/importar"
+          <Link href="/admin/geocode"
             className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
-            <Icon name="arrowDown" className="w-3.5 h-3.5" /> Importar CSV
+            📍 Geocodificar
           </Link>
           <Link href="/admin/propiedades/nueva"
             className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 text-white rounded-full text-sm hover:bg-brand-600">
@@ -55,24 +63,7 @@ export default async function AdminPropiedades() {
           </Link>
         </div>
       </div>
-
-      {props.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-ink-line p-16 text-center">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-            <Icon name="building" className="w-6 h-6" />
-          </div>
-          <h3 className="font-semibold text-ink">Aún no hay propiedades</h3>
-          <p className="text-sm text-ink-muted mt-2 max-w-sm mx-auto">
-            Empieza por agregar tu primera propiedad.
-          </p>
-          <Link href="/admin/propiedades/nueva"
-            className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm">
-            <Icon name="plus" className="w-3.5 h-3.5" /> Agregar primera propiedad
-          </Link>
-        </div>
-      ) : (
-        <AdminPropiedadesList props={props} />
-      )}
+      <AdminPropiedadesList props={props} />
     </div>
   );
 }

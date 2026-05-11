@@ -240,6 +240,34 @@ export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
   ).sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).slice(0, 8) as [string, number][];
   const maxState = byClientState[0]?.[1] as number || 1;
 
+  // Zonas donde quieren comprar/rentar
+  // Extraer de preferred_zones o del campo interest
+  const zonaCount: Record<string, number> = {};
+  leads.forEach((l: any) => {
+    // Primero preferred_zones (array)
+    if (l.preferred_zones && Array.isArray(l.preferred_zones)) {
+      l.preferred_zones.forEach((z: string) => {
+        if (z) zonaCount[z] = (zonaCount[z] || 0) + 1;
+      });
+    }
+    // También extraer zona del campo interest (capturado por Sofía)
+    if (l.interest) {
+      const match = l.interest.match(/en ([^|,
+]+)/i);
+      if (match) {
+        const zona = match[1].trim();
+        if (zona.length > 1 && zona.length < 40) {
+          zonaCount[zona] = (zonaCount[zona] || 0) + 1;
+        }
+      }
+    }
+  });
+  const byZona = Object.entries(zonaCount)
+    .sort((a: any, b: any) => b[1] - a[1])
+    .slice(0, 10) as [string, number][];
+  const maxZona = byZona[0]?.[1] as number || 1;
+
+
   // Tasa de conversión por fuente
   const convBySource = bySource.map(([source, total]) => {
     const cerr = leads.filter((l: any) => l.source === source && l.status === "Cerrado ganado").length;
@@ -494,6 +522,16 @@ export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
                   ? <div className="text-sm text-ink-muted text-center py-4">Sin datos geográficos del cliente.</div>
                   : <HBarChart data={byClientState} max={maxState} />}
               </div>
+
+
+              {/* Zonas de interés */}
+              <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+                <h3 className="font-semibold text-ink mb-5">Zonas de interés</h3>
+                {byZona.length === 0
+                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Se captura automáticamente del chatbot.</div>
+                  : <HBarChart data={byZona} max={maxZona} color="#5E4B8E" />}
+              </div>
+
             </div>
           )}
         </div>

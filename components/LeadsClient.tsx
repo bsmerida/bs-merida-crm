@@ -252,8 +252,7 @@ export function LeadsClient({ leads: initialLeads }: { leads: Lead[] }) {
     }
     // También extraer zona del campo interest (capturado por Sofía)
     if (l.interest) {
-      const match = l.interest.match(/en ([^|,
-]+)/i);
+      const match = l.interest.match(/en ([^|,\n]+)/i);
       if (match) {
         const zona = match[1].trim();
         if (zona.length > 1 && zona.length < 40) {

@@ -118,50 +118,54 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
   totalInquiries: number;
 }) {
   const [section, setSection] = useState<"inventario" | "trafico" | "top">("inventario");
+  const [opFilter, setOpFilter] = useState<"Todas" | "Venta" | "Renta">("Todas");
 
-  const published = props.filter(p => p.is_published).length;
-  const available = props.filter(p => p.status === "Disponible").length;
-  const valorInventario = props.filter(p => p.status === "Disponible").reduce((s, p) => s + Number(p.price), 0);
+  // Filtrar propiedades por operación
+  const filteredProps = opFilter === "Todas" ? props : props.filter(p => p.operation === opFilter);
+
+  const published = filteredProps.filter(p => p.is_published).length;
+  const available = filteredProps.filter(p => p.status === "Disponible").length;
+  const valorInventario = filteredProps.filter(p => p.status === "Disponible").reduce((s, p) => s + Number(p.price), 0);
   const convProp = totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(1) : "0";
 
   // Por tipo
   const byType = Object.entries(
-    props.reduce((acc, p) => { acc[p.type] = (acc[p.type] || 0) + 1; return acc; }, {} as Record<string, number>)
+    filteredProps.reduce((acc, p) => { acc[p.type] = (acc[p.type] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]) as [string, number][];
 
   // Por operación
   const byOp = Object.entries(
-    props.reduce((acc, p) => { acc[p.operation] = (acc[p.operation] || 0) + 1; return acc; }, {} as Record<string, number>)
+    filteredProps.reduce((acc, p) => { acc[p.operation] = (acc[p.operation] || 0) + 1; return acc; }, {} as Record<string, number>)
   ) as [string, number][];
 
   // Por estado
   const byStatus = Object.entries(
-    props.reduce((acc, p) => { acc[p.status] = (acc[p.status] || 0) + 1; return acc; }, {} as Record<string, number>)
+    filteredProps.reduce((acc, p) => { acc[p.status] = (acc[p.status] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]) as [string, number][];
 
   // Por ciudad
   const byCity = Object.entries(
-    props.reduce((acc, p) => { const k = p.city || "Sin ciudad"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
+    filteredProps.reduce((acc, p) => { const k = p.city || "Sin ciudad"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]).slice(0, 8) as [string, number][];
   const maxCity = byCity[0]?.[1] || 1;
 
   // Por precio
   const byPrice = PRICE_RANGES.map(r => ({
     label: r.label,
-    value: props.filter(p => Number(p.price) >= r.min && Number(p.price) < r.max).length,
+    value: filteredProps.filter(p => Number(p.price) >= r.min && Number(p.price) < r.max).length,
   }));
 
   // Top vistas
-  const topViews = [...props].sort((a, b) => b.views_count - a.views_count).slice(0, 10);
+  const topViews = [...filteredProps].sort((a, b) => b.views_count - a.views_count).slice(0, 10);
   const maxViews = topViews[0]?.views_count || 1;
 
   // Top solicitudes
-  const topInq = [...props].sort((a, b) => b.inquiries_count - a.inquiries_count)
+  const topInq = [...filteredProps].sort((a, b) => b.inquiries_count - a.inquiries_count)
     .filter(p => p.inquiries_count > 0).slice(0, 10);
   const maxInq = topInq[0]?.inquiries_count || 1;
 
   // Sin vistas
-  const sinVistas = props.filter(p => p.views_count === 0 && p.is_published).slice(0, 10);
+  const sinVistas = filteredProps.filter(p => p.views_count === 0 && p.is_published).slice(0, 10);
 
   // Tendencia vistas
   const maxTrend = Math.max(...viewsTrend.map(d => d.count), 1);
@@ -188,6 +192,17 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
             <div className={`text-3xl font-semibold mt-2 ${k.color}`}>{k.value}</div>
             <div className="text-xs text-ink-muted mt-1">{k.sub}</div>
           </div>
+        ))}
+      </div>
+
+
+      {/* Toggle Venta / Renta / Todas */}
+      <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl w-fit">
+        {(["Todas", "Venta", "Renta"] as const).map(op => (
+          <button key={op} onClick={() => setOpFilter(op)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${opFilter === op ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+            {op}
+          </button>
         ))}
       </div>
 

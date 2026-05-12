@@ -92,7 +92,7 @@ export default function FinanzasPage() {
       setLoading(true);
       // Cargar histórico
       const histRes = await supabase.from("financial_history").select("*").order("year", { ascending: false }).order("month", { ascending: false }).limit(24);
-      const history = histRes.data || [];
+      const historialData = histRes.data || [];
 
       const [d, e, l, a] = await Promise.all([
         supabase.from("deals").select("*, property:properties(title), lead:leads(name), agent:profiles!deals_agent_id_fkey(full_name), agent2:profiles!deals_agent2_id_fkey(full_name)"),
@@ -222,7 +222,7 @@ export default function FinanzasPage() {
             period: PERIODOS.find(p => p.value === period)?.label || period,
             pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
             deals: dealsInPeriod, expenses: expensesInPeriod, agentStats, bySource,
-            pipelineData: pipelineStages, totalLeads: leads.length, history,
+            pipelineData: pipelineStages, totalLeads: leads.length, history: historialData,
           }} />
           <FinanzasAI data={{
             period: PERIODOS.find(p => p.value === period)?.label || period,

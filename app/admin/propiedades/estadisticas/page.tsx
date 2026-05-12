@@ -10,7 +10,7 @@ export default async function PropiedadesEstadisticasPage() {
     { data: views },
     { data: inquiries },
   ] = await Promise.all([
-    supabase.from("properties").select("id, title, type, operation, status, price, zone, city, state, reference, is_published, created_at"),
+    supabase.from("properties").select("id, title, type, operation, status, price, currency, zone, city, state, reference, is_published, created_at"),
     supabase.from("property_views").select("property_id, viewed_at"),
     supabase.from("property_inquiries").select("property_id, created_at"),
   ]);

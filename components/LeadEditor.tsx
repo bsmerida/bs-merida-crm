@@ -47,6 +47,7 @@ export function LeadEditor({
     gender:       lead.gender || "",
     client_city:  lead.client_city || "",
     client_state: lead.client_state || "",
+    source:       lead.source || "Manual",
   });
 
   const [saving, setSaving] = useState(false);
@@ -157,6 +158,21 @@ export function LeadEditor({
               <select value={form.agent_id} onChange={e => set("agent_id", e.target.value)} className={inp}>
                 <option value="">Sin asignar</option>
                 {agentes.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
+              </select>
+            </div></div>
+            <div><label className="text-xs text-ink-muted">Origen</label><div className="mt-1.5">
+              <select value={form.source} onChange={e => set("source", e.target.value)} className={inp}>
+                <option value="Manual">Manual</option>
+                <option value="Referido">Referido</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Google">Google</option>
+                <option value="Inmuebles24">Inmuebles24</option>
+                <option value="Lamudi">Lamudi</option>
+                <option value="Portal inmobiliario">Portal inmobiliario</option>
+                <option value="WhatsApp directo">WhatsApp directo</option>
+                <option value="Chatbot IA">Chatbot IA</option>
+                <option value="Otro">Otro</option>
               </select>
             </div></div>
             <div><label className="text-xs text-ink-muted">Presupuesto (texto)</label><div className="mt-1.5"><input value={form.budget_text} onChange={e => set("budget_text", e.target.value)} placeholder="Ej. 3-5M" className={inp} /></div></div>

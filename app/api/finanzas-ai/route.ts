@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
- 
+
 export async function POST(req: NextRequest) {
   try {
     const { messages, system } = await req.json();
- 
+
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY || "",
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
         messages,
       }),
     });
- 
+
     const data = await res.json();
     const reply = data.content?.[0]?.text || "No pude generar una respuesta.";
     return NextResponse.json({ reply });

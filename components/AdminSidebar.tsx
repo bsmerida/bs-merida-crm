@@ -14,22 +14,22 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
 
   const isAdmin = profile?.role === "admin";
 
-  // Items visibles para todos
-  const commonItems = [
+  type NavItem = { href: string; label: string; icon: string; badge?: number | null };
+
+  const commonItems: NavItem[] = [
     { href: "/admin", label: "Inicio", icon: "home" },
     { href: "/admin/leads", label: "Clientes", icon: "users", badge: leadsNuevos > 0 ? leadsNuevos : null },
     { href: "/admin/propiedades", label: "Propiedades", icon: "building" },
   ];
 
-  // Items solo para admin
-  const adminItems = [
+  const adminItems: NavItem[] = [
     { href: "/admin/kpis", label: "KPIs", icon: "chart" },
     { href: "/admin/portales", label: "Portales", icon: "globe" },
     { href: "/admin/branding", label: "Marca", icon: "spark" },
     { href: "/admin/ajustes", label: "Ajustes", icon: "settings" },
   ];
 
-  const items = isAdmin ? [...commonItems, ...adminItems] : commonItems;
+  const items: NavItem[] = isAdmin ? [...commonItems, ...adminItems] : commonItems;
 
   const initials = profile?.initials || profile?.full_name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "BS";
 

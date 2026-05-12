@@ -263,7 +263,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
               <VBar data={byPrice} color="#5E4B8E" height={140} />
             </div>
             <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-              <h3 className="font-semibold text-ink mb-5">Por ciudad</h3>
+              <h3 className="font-semibold text-ink mb-5">Por estado</h3>
               <HBar data={byState} max={maxState} />
             </div>
           </div>

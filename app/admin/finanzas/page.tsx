@@ -84,6 +84,7 @@ export default function FinanzasPage() {
   const [showDealForm, setShowDealForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [refresh, setRefresh] = useState(0);
+  const [historialData, setHistorialData] = useState<any[]>([]);
 
   const reload = () => setRefresh(r => r + 1);
 
@@ -92,7 +93,7 @@ export default function FinanzasPage() {
       setLoading(true);
       // Cargar histórico
       const histRes = await supabase.from("financial_history").select("*").order("year", { ascending: false }).order("month", { ascending: false }).limit(24);
-      const historialData = histRes.data || [];
+      setHistorialData(histRes.data || []);
 
       const [d, e, l, a] = await Promise.all([
         supabase.from("deals").select("*, property:properties(title), lead:leads(name), agent:profiles!deals_agent_id_fkey(full_name), agent2:profiles!deals_agent2_id_fkey(full_name)"),

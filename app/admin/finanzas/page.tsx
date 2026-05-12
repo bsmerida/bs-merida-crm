@@ -85,6 +85,8 @@ export default function FinanzasPage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [historialData, setHistorialData] = useState<any[]>([]);
+  const [editingMetas, setEditingMetas] = useState(false);
+  const [metas, setMetas] = useState({ ingresos: 0, utilidad: 0, margen: 0, gastos: 0 });
 
   const reload = () => setRefresh(r => r + 1);
 
@@ -185,8 +187,46 @@ export default function FinanzasPage() {
     }).reduce((s: number, d: any) => s + Number(d.gross_commission), 0),
   })).sort((a, b) => b.leads - a.leads);
 
+  // ── FLUJO DE CAJA ──────────────────────────────────────────
+  const flujoMeses = useMemo(() => {
+    const mesesMap: Record<string, { entradas: number; salidas: number }> = {};
+    // Últimos 12 meses
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      mesesMap[key] = { entradas: 0, salidas: 0 };
+    }
+    // Entradas: comisiones de deals cobrados (amount_collected)
+    deals.forEach((d: any) => {
+      if (!d.closing_date) return;
+      const key = d.closing_date.slice(0, 7);
+      if (!mesesMap[key]) return;
+      mesesMap[key].entradas += Number(d.amount_collected || d.gross_commission || 0);
+    });
+    // Salidas: gastos registrados
+    expenses.forEach((e: any) => {
+      if (!e.expense_date) return;
+      const key = e.expense_date.slice(0, 7);
+      if (!mesesMap[key]) return;
+      mesesMap[key].salidas += Number(e.amount || 0);
+    });
+    // Construir array con flujo neto y acumulado
+    let acumulado = 0;
+    return Object.entries(mesesMap).map(([mes, v]) => {
+      const neto = v.entradas - v.salidas;
+      acumulado += neto;
+      const [anio, m] = mes.split("-");
+      const label = new Date(Number(anio), Number(m) - 1, 1).toLocaleDateString("es-MX", { month: "short", year: "2-digit" });
+      return { mes, label, entradas: v.entradas, salidas: v.salidas, neto, acumulado };
+    });
+  }, [deals, expenses]);
+
+  const maxFlujo = Math.max(...flujoMeses.map(m => Math.max(m.entradas, m.salidas)), 1);
+
   const TABS = [
     { id: "pnl",       label: "P&L" },
+    { id: "flujo",     label: "Flujo de Caja" },
     { id: "cxc",       label: "Cuentas por cobrar" },
     { id: "comisiones",label: "Comisiones" },
     { id: "asesores",  label: "Asesores" },
@@ -259,11 +299,64 @@ export default function FinanzasPage() {
       {/* ── P&L ── */}
       {tab === "pnl" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard label="Ingresos del período" value={fmtMXN(ingresoTotal)} color="text-emerald-600" />
-            <KPICard label="Utilidad operativa" value={fmtMXN(utilidadOp)} color={utilidadOp >= 0 ? "text-emerald-600" : "text-red-500"} />
-            <KPICard label="Margen neto" value={fmtPct(margenNeto)} color={margenNeto >= 0 ? "text-emerald-600" : "text-red-500"} />
-            <KPICard label="Gastos totales" value={fmtMXN(gastoTotal)} color="text-red-500" />
+          {/* Semáforo de metas */}
+          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-ink">Semáforo de metas</h3>
+                <p className="text-xs text-ink-muted mt-0.5">Compara el período seleccionado vs tu objetivo</p>
+              </div>
+              <button onClick={() => setEditingMetas(e => !e)}
+                className="text-xs text-brand-600 hover:underline px-3 py-1.5 border border-brand-200 rounded-full">
+                {editingMetas ? "✓ Guardar metas" : "✏️ Editar metas"}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { key: "ingresos" as const, label: "Ingresos", real: ingresoTotal, fmt: fmtMXN, color: "emerald" },
+                { key: "utilidad" as const, label: "Utilidad operativa", real: utilidadOp, fmt: fmtMXN, color: "brand" },
+                { key: "margen" as const, label: "Margen neto", real: margenNeto * 100, fmt: (n: number) => `${n.toFixed(1)}%`, color: "blue" },
+                { key: "gastos" as const, label: "Gastos máx.", real: gastoTotal, fmt: fmtMXN, color: "red", invertido: true },
+              ].map(({ key, label, real, fmt, color, invertido }) => {
+                const meta = metas[key];
+                const pct = meta > 0 ? (real / meta) * 100 : null;
+                const ok = pct !== null && (invertido ? pct <= 100 : pct >= 90);
+                const warn = pct !== null && (invertido ? pct > 100 && pct <= 115 : pct >= 70 && pct < 90);
+                const bad = pct !== null && (invertido ? pct > 115 : pct < 70);
+                const semaforo = ok ? "🟢" : warn ? "🟡" : bad ? "🔴" : "⚪";
+                return (
+                  <div key={key} className={`rounded-xl border p-4 ${ok ? "border-emerald-200 bg-emerald-50" : warn ? "border-amber-200 bg-amber-50" : bad ? "border-red-200 bg-red-50" : "border-ink-line bg-white"}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-ink-muted">{label}</span>
+                      <span className="text-base">{semaforo}</span>
+                    </div>
+                    <div className={`text-xl font-semibold tracking-tight ${ok ? "text-emerald-700" : warn ? "text-amber-700" : bad ? "text-red-600" : "text-ink"}`}>
+                      {fmt(real)}
+                    </div>
+                    {editingMetas ? (
+                      <input type="number" min="0" placeholder="Meta"
+                        value={meta || ""}
+                        onChange={e => setMetas(m => ({ ...m, [key]: Number(e.target.value) }))}
+                        className="mt-2 w-full text-xs border border-ink-line rounded-lg px-2 py-1.5 text-ink" />
+                    ) : (
+                      <div className="mt-2">
+                        {meta > 0 ? (
+                          <>
+                            <div className="h-1.5 bg-white/70 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all ${ok ? "bg-emerald-500" : warn ? "bg-amber-400" : "bg-red-400"}`}
+                                style={{ width: `${Math.min(pct || 0, 100)}%` }} />
+                            </div>
+                            <p className="text-[10px] text-ink-muted mt-1">{pct?.toFixed(0)}% de {fmt(meta)}</p>
+                          </>
+                        ) : (
+                          <p className="text-[10px] text-ink-muted">Sin meta — clic en Editar</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -314,6 +407,85 @@ export default function FinanzasPage() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLUJO DE CAJA ── */}
+      {tab === "flujo" && (
+        <div className="space-y-6">
+          {/* KPIs resumen */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPICard label="Entradas acumuladas (12m)" value={fmtMXN(flujoMeses.reduce((s, m) => s + m.entradas, 0))} color="text-emerald-600" />
+            <KPICard label="Salidas acumuladas (12m)" value={fmtMXN(flujoMeses.reduce((s, m) => s + m.salidas, 0))} color="text-red-500" />
+            <KPICard label="Flujo neto (12m)" value={fmtMXN(flujoMeses.reduce((s, m) => s + m.neto, 0))} color={flujoMeses.reduce((s, m) => s + m.neto, 0) >= 0 ? "text-emerald-600" : "text-red-500"} />
+            <KPICard label="Saldo acumulado" value={fmtMXN(flujoMeses[flujoMeses.length - 1]?.acumulado || 0)} color="text-brand-600" />
+          </div>
+
+          {/* Gráfica de barras entradas vs salidas */}
+          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-semibold text-ink">Entradas vs Salidas — últimos 12 meses</h3>
+              <div className="flex items-center gap-4 text-xs text-ink-muted">
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block"></span>Entradas</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400 inline-block"></span>Salidas</span>
+              </div>
+            </div>
+            <div className="flex items-end gap-1" style={{ height: 160 }}>
+              {flujoMeses.map(m => (
+                <div key={m.mes} className="flex-1 flex items-end gap-[2px] group relative">
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 text-center">
+                    {m.label}<br/>E: {fmtMXN(m.entradas)}<br/>S: {fmtMXN(m.salidas)}
+                  </div>
+                  <div className="flex-1 rounded-t-sm bg-emerald-400 hover:bg-emerald-500 transition"
+                    style={{ height: m.entradas > 0 ? `${Math.max((m.entradas / maxFlujo) * 140, 3)}px` : "2px" }} />
+                  <div className="flex-1 rounded-t-sm bg-red-400 hover:bg-red-500 transition"
+                    style={{ height: m.salidas > 0 ? `${Math.max((m.salidas / maxFlujo) * 140, 3)}px` : "2px" }} />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-1 mt-2">
+              {flujoMeses.map(m => (
+                <div key={m.mes} className="flex-1 text-center">
+                  <span className="text-[9px] text-ink-muted block">{m.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tabla detalle mensual */}
+          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+            <div className="p-5 border-b border-ink-line">
+              <h3 className="font-semibold text-ink">Flujo mensual detallado</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                  <tr>{["Mes", "Entradas", "Salidas", "Flujo neto", "Flujo acumulado"].map(h => (
+                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-5 py-3">{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {[...flujoMeses].reverse().map(m => (
+                    <tr key={m.mes} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                      <td className="px-5 py-3 text-sm font-medium text-ink capitalize">{m.label}</td>
+                      <td className="px-5 py-3 text-sm text-emerald-600 font-medium">{fmtMXN(m.entradas)}</td>
+                      <td className="px-5 py-3 text-sm text-red-500">{fmtMXN(m.salidas)}</td>
+                      <td className={`px-5 py-3 text-sm font-semibold ${m.neto >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                        {m.neto >= 0 ? "+" : ""}{fmtMXN(m.neto)}
+                      </td>
+                      <td className={`px-5 py-3 text-sm font-semibold ${m.acumulado >= 0 ? "text-brand-600" : "text-red-500"}`}>
+                        {fmtMXN(m.acumulado)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 text-sm text-blue-800">
+            💡 Las <strong>entradas</strong> se calculan con los montos cobrados de tus operaciones. Las <strong>salidas</strong> con los gastos registrados. Registra todo en <strong>Comisiones</strong> y <strong>Gastos</strong> para mantener este flujo actualizado.
           </div>
         </div>
       )}

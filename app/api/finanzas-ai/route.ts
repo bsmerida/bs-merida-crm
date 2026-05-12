@@ -20,6 +20,12 @@ export async function POST(req: NextRequest) {
     });
 
     const data = await res.json();
+    
+    // Si hay error de Anthropic, devolverlo
+    if (data.error) {
+      return NextResponse.json({ reply: `Error Anthropic: ${data.error.message}` });
+    }
+
     const reply = data.content?.[0]?.text || "No pude generar una respuesta.";
     return NextResponse.json({ reply });
   } catch (e: any) {

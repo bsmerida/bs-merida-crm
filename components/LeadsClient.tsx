@@ -141,7 +141,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("Todos");
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [tab, setTab] = useState<"lista" | "stats">("lista");
+  const [tab, setTab] = useState<string>("lista");
   const [statsSection, setStatsSection] = useState<"general" | "perfil" | "tendencia">("general");
   const supabase = createClient();
 

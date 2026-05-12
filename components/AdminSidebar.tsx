@@ -23,10 +23,11 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
   ];
 
   const adminItems: NavItem[] = [
-    { href: "/admin/kpis", label: "KPIs", icon: "chart" },
-    { href: "/admin/portales", label: "Portales", icon: "globe" },
-    { href: "/admin/branding", label: "Marca", icon: "spark" },
-    { href: "/admin/ajustes", label: "Ajustes", icon: "settings" },
+    { href: "/admin/kpis",      label: "KPIs",      icon: "chart" },
+    { href: "/admin/finanzas",  label: "Finanzas",  icon: "dollar" },
+    { href: "/admin/portales",  label: "Portales",  icon: "globe" },
+    { href: "/admin/branding",  label: "Marca",     icon: "spark" },
+    { href: "/admin/ajustes",   label: "Ajustes",   icon: "settings" },
   ];
 
   const items: NavItem[] = isAdmin ? [...commonItems, ...adminItems] : commonItems;

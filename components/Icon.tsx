@@ -75,6 +75,11 @@ const paths: Record<string, JSX.Element> = {
     </>
   ),
   tiktok: <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5" />,
+  dollar: (
+    <>
+      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+    </>
+  ),
 };
 
 export function Icon({ name, className = "w-5 h-5", strokeWidth = 1.5 }: IconProps) {

@@ -25,6 +25,7 @@ export function ExpenseForm({ onClose, onSaved }: { onClose: () => void; onSaved
     amount: "",
     expense_date: new Date().toISOString().slice(0, 10),
     recurring: false,
+    invoiced: false,
     notes: "",
   });
 
@@ -43,6 +44,7 @@ export function ExpenseForm({ onClose, onSaved }: { onClose: () => void; onSaved
       amount: Number(form.amount),
       expense_date: form.expense_date,
       recurring: form.recurring,
+      invoiced: form.invoiced,
       notes: form.notes || null,
     });
     setSaving(false);
@@ -91,11 +93,18 @@ export function ExpenseForm({ onClose, onSaved }: { onClose: () => void; onSaved
               </div>
             </div>
           </div>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-            <input type="checkbox" checked={form.recurring} onChange={e => set("recurring", e.target.checked)}
-              className="w-4 h-4 accent-brand-500" />
-            Gasto recurrente mensual
-          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
+              <input type="checkbox" checked={form.recurring} onChange={e => set("recurring", e.target.checked)}
+                className="w-4 h-4 accent-brand-500" />
+              Gasto recurrente mensual
+            </label>
+            <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
+              <input type="checkbox" checked={form.invoiced} onChange={e => set("invoiced", e.target.checked)}
+                className="w-4 h-4 accent-brand-500" />
+              <span>¿Se facturó? {form.invoiced ? <span className="text-emerald-600 text-xs font-medium">✓ Sí</span> : <span className="text-ink-muted text-xs">No</span>}</span>
+            </label>
+          </div>
           <div>
             <label className="text-xs text-ink-muted">Notas</label>
             <div className="mt-1.5">

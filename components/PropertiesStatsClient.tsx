@@ -162,6 +162,12 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
   ).sort((a, b) => b[1] - a[1]).slice(0, 8) as [string, number][];
   const maxCity = byCity[0]?.[1] || 1;
 
+  // Por estado (zona geográfica)
+  const byState = Object.entries(
+    props.reduce((acc, p) => { const k = p.zone || p.city || "Sin estado"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
+  ).sort((a, b) => b[1] - a[1]).slice(0, 8) as [string, number][];
+  const maxState = byState[0]?.[1] || 1;
+
   // Por precio
   const byPrice = PRICE_RANGES.map(r => ({
     label: r.label,

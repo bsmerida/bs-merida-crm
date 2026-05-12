@@ -4,7 +4,7 @@ import { fmtMXN } from "@/lib/utils";
 
 type Prop = {
   id: string; title: string; type: string; operation: string; status: string;
-  price: number; zone: string | null; city: string; reference: string | null;
+  price: number; zone: string | null; city: string; state: string; reference: string | null;
   is_published: boolean; created_at: string;
   views_count: number; inquiries_count: number;
 };
@@ -28,23 +28,38 @@ function HBar({ data, max, color = "#5E4B8E" }: { data: [string, number][]; max:
   );
 }
 
-// Gráfica de barras vertical
-function VBar({ data, color = "#5E4B8E", height = 120 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
+// Gráfica de barras vertical — alturas en píxeles para que sean proporcionales
+function VBar({ data, color = "#5E4B8E", chartHeight = 140 }: { data: { label: string; value: number }[]; color?: string; chartHeight?: number }) {
   const max = Math.max(...data.map(d => d.value), 1);
+  const labelH = 20;
+  const availH = chartHeight - labelH;
   return (
-    <div className="flex items-end gap-1.5" style={{ height }}>
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-          {d.value > 0 && (
-            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
-              {d.label}: {d.value}
+    <div style={{ height: chartHeight }}>
+      <div className="flex items-end gap-1.5" style={{ height: availH }}>
+        {data.map((d, i) => {
+          const barH = d.value > 0 ? Math.max(Math.round((d.value / max) * availH), 4) : 2;
+          return (
+            <div key={i} className="flex-1 group relative flex flex-col justify-end">
+              {d.value > 0 && (
+                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+                  {d.label}: {d.value}
+                </div>
+              )}
+              <div
+                className="w-full rounded-t-sm transition-all duration-500 hover:opacity-75"
+                style={{ height: barH, backgroundColor: d.value > 0 ? color : "#EAE5F2" }}
+              />
             </div>
-          )}
-          <div className="w-full rounded-t-sm transition-all duration-500 hover:opacity-80"
-            style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value > 0 ? 4 : 1, backgroundColor: d.value > 0 ? color : "#EAE5F2" }} />
-          <span className="text-[9px] text-ink-muted truncate w-full text-center">{d.label}</span>
-        </div>
-      ))}
+          );
+        })}
+      </div>
+      <div className="flex gap-1.5 mt-1">
+        {data.map((d, i) => (
+          <div key={i} className="flex-1 text-center">
+            <span className="text-[9px] text-ink-muted truncate block">{d.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -162,9 +177,9 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
   ).sort((a, b) => b[1] - a[1]).slice(0, 8) as [string, number][];
   const maxCity = byCity[0]?.[1] || 1;
 
-  // Por estado (zona geográfica)
+  // Por estado (entidad federativa)
   const byState = Object.entries(
-    props.reduce((acc, p) => { const k = p.zone || p.city || "Sin estado"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
+    props.reduce((acc, p) => { const k = p.state || "Sin estado"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]).slice(0, 8) as [string, number][];
   const maxState = byState[0]?.[1] || 1;
 
@@ -266,7 +281,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
               <h3 className="font-semibold text-ink mb-5">Distribución por precio</h3>
-              <VBar data={byPrice} color="#5E4B8E" height={140} />
+              <VBar data={byPrice} color="#5E4B8E" chartHeight={140} />
             </div>
             <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
               <h3 className="font-semibold text-ink mb-5">Por estado</h3>

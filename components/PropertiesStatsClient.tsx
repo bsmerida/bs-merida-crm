@@ -111,6 +111,12 @@ const PRICE_RANGES = [
   { label: ">20M",  min: 20_000_000,  max: Infinity },
 ];
 
+const DIVISAS = [
+  { code: "MXN", label: "MXN $", rate: 1 },
+  { code: "USD", label: "USD $", rate: 0.058 },
+  { code: "EUR", label: "EUR €", rate: 0.053 },
+];
+
 export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInquiries }: {
   props: Prop[];
   viewsTrend: { date: string; count: number }[];
@@ -118,54 +124,61 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
   totalInquiries: number;
 }) {
   const [section, setSection] = useState<"inventario" | "trafico" | "top">("inventario");
-  const [opFilter, setOpFilter] = useState<"Todas" | "Venta" | "Renta">("Todas");
+  const [divisa, setDivisa] = useState("MXN");
+  
+  const divisaConfig = DIVISAS.find(d => d.code === divisa) || DIVISAS[0];
+  const fmtDivisa = (n: number) => {
+    const converted = n * divisaConfig.rate;
+    return new Intl.NumberFormat("es-MX", { 
+      style: "currency", 
+      currency: divisa === "MXN" ? "MXN" : divisa === "USD" ? "USD" : "EUR",
+      maximumFractionDigits: 0 
+    }).format(converted);
+  };
 
-  // Filtrar propiedades por operación
-  const filteredProps = opFilter === "Todas" ? props : props.filter(p => p.operation === opFilter);
-
-  const published = filteredProps.filter(p => p.is_published).length;
-  const available = filteredProps.filter(p => p.status === "Disponible").length;
-  const valorInventario = filteredProps.filter(p => p.status === "Disponible").reduce((s, p) => s + Number(p.price), 0);
+  const published = props.filter(p => p.is_published).length;
+  const available = props.filter(p => p.status === "Disponible").length;
+  const valorInventario = props.filter(p => p.status === "Disponible").reduce((s, p) => s + Number(p.price), 0);
   const convProp = totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(1) : "0";
 
   // Por tipo
   const byType = Object.entries(
-    filteredProps.reduce((acc, p) => { acc[p.type] = (acc[p.type] || 0) + 1; return acc; }, {} as Record<string, number>)
+    props.reduce((acc, p) => { acc[p.type] = (acc[p.type] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]) as [string, number][];
 
   // Por operación
   const byOp = Object.entries(
-    filteredProps.reduce((acc, p) => { acc[p.operation] = (acc[p.operation] || 0) + 1; return acc; }, {} as Record<string, number>)
+    props.reduce((acc, p) => { acc[p.operation] = (acc[p.operation] || 0) + 1; return acc; }, {} as Record<string, number>)
   ) as [string, number][];
 
   // Por estado
   const byStatus = Object.entries(
-    filteredProps.reduce((acc, p) => { acc[p.status] = (acc[p.status] || 0) + 1; return acc; }, {} as Record<string, number>)
+    props.reduce((acc, p) => { acc[p.status] = (acc[p.status] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]) as [string, number][];
 
   // Por ciudad
   const byCity = Object.entries(
-    filteredProps.reduce((acc, p) => { const k = p.city || "Sin ciudad"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
+    props.reduce((acc, p) => { const k = p.city || "Sin ciudad"; acc[k] = (acc[k] || 0) + 1; return acc; }, {} as Record<string, number>)
   ).sort((a, b) => b[1] - a[1]).slice(0, 8) as [string, number][];
   const maxCity = byCity[0]?.[1] || 1;
 
   // Por precio
   const byPrice = PRICE_RANGES.map(r => ({
     label: r.label,
-    value: filteredProps.filter(p => Number(p.price) >= r.min && Number(p.price) < r.max).length,
+    value: props.filter(p => Number(p.price) >= r.min && Number(p.price) < r.max).length,
   }));
 
   // Top vistas
-  const topViews = [...filteredProps].sort((a, b) => b.views_count - a.views_count).slice(0, 10);
+  const topViews = [...props].sort((a, b) => b.views_count - a.views_count).slice(0, 10);
   const maxViews = topViews[0]?.views_count || 1;
 
   // Top solicitudes
-  const topInq = [...filteredProps].sort((a, b) => b.inquiries_count - a.inquiries_count)
+  const topInq = [...props].sort((a, b) => b.inquiries_count - a.inquiries_count)
     .filter(p => p.inquiries_count > 0).slice(0, 10);
   const maxInq = topInq[0]?.inquiries_count || 1;
 
   // Sin vistas
-  const sinVistas = filteredProps.filter(p => p.views_count === 0 && p.is_published).slice(0, 10);
+  const sinVistas = props.filter(p => p.views_count === 0 && p.is_published).slice(0, 10);
 
   // Tendencia vistas
   const maxTrend = Math.max(...viewsTrend.map(d => d.count), 1);
@@ -179,6 +192,20 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
 
   return (
     <div className="space-y-6">
+      {/* Selector de divisa */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-ink-muted">Divisa:</span>
+        <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl">
+          {DIVISAS.map(d => (
+            <button key={d.code} onClick={() => setDivisa(d.code)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${divisa === d.code ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+              {d.label}
+            </button>
+          ))}
+        </div>
+        {divisa !== "MXN" && <span className="text-xs text-ink-muted">Tipo de cambio aprox. · actualiza manualmente</span>}
+      </div>
+
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
@@ -195,21 +222,10 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
         ))}
       </div>
 
-
-      {/* Toggle Venta / Renta / Todas */}
-      <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl w-fit">
-        {(["Todas", "Venta", "Renta"] as const).map(op => (
-          <button key={op} onClick={() => setOpFilter(op)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${opFilter === op ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
-            {op}
-          </button>
-        ))}
-      </div>
-
       {/* Valor de inventario */}
       <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl p-6 text-white">
         <div className="text-sm text-white/70">Valor total del inventario disponible</div>
-        <div className="text-4xl font-semibold tracking-tight mt-2">{fmtMXN(valorInventario)}</div>
+        <div className="text-4xl font-semibold tracking-tight mt-2">{fmtDivisa(valorInventario)}</div>
         <div className="text-sm text-white/60 mt-1">{published} propiedades publicadas · {available} disponibles</div>
       </div>
 
@@ -248,7 +264,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
             </div>
             <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
               <h3 className="font-semibold text-ink mb-5">Por ciudad</h3>
-              <HBar data={byCity} max={maxCity} />
+              <HBar data={byState} max={maxState} />
             </div>
           </div>
         </div>

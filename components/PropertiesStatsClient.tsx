@@ -4,7 +4,7 @@ import { fmtMXN } from "@/lib/utils";
 
 type Prop = {
   id: string; title: string; type: string; operation: string; status: string;
-  price: number; zone: string | null; city: string; state: string; reference: string | null;
+  price: number; currency?: string; zone: string | null; city: string; state: string; reference: string | null;
   is_published: boolean; created_at: string;
   views_count: number; inquiries_count: number;
 };
@@ -153,7 +153,11 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
 
   const published = props.filter(p => p.is_published).length;
   const available = props.filter(p => p.status === "Disponible").length;
-  const valorInventario = props.filter(p => p.status === "Disponible").reduce((s, p) => s + Number(p.price), 0);
+  const valorInventario = props.filter(p => p.status === "Disponible").reduce((s, p) => {
+    const mxn = p.currency === "USD" ? Number(p.price) * 17 : Number(p.price);
+    return s + mxn;
+  }, 0);
+  const propUSD = props.filter(p => p.currency === "USD").length;
   const convProp = totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(1) : "0";
 
   // Por tipo
@@ -247,7 +251,10 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
       <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl p-6 text-white">
         <div className="text-sm text-white/70">Valor total del inventario disponible</div>
         <div className="text-4xl font-semibold tracking-tight mt-2">{fmtDivisa(valorInventario)}</div>
-        <div className="text-sm text-white/60 mt-1">{published} propiedades publicadas · {available} disponibles</div>
+        <div className="text-sm text-white/60 mt-1">
+          {published} propiedades publicadas · {available} disponibles
+          {propUSD > 0 && <span className="ml-2">· {propUSD} en USD (convertidas a ~$17 MXN)</span>}
+        </div>
       </div>
 
       {/* Sub-tabs */}

@@ -3,6 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { DealForm } from "@/components/finanzas/DealForm";
 import { ExpenseForm } from "@/components/finanzas/ExpenseForm";
+import { ReportExporter } from "@/components/finanzas/ReportExporter";
+import { FinanzasAI } from "@/components/finanzas/FinanzasAI";
 
 const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
 const fmtPct = (n: number) => `${(n * 100).toFixed(1)}%`;
@@ -212,6 +214,17 @@ export default function FinanzasPage() {
               </button>
             ))}
           </div>
+          <ReportExporter data={{
+            period: PERIODOS.find(p => p.value === period)?.label || period,
+            pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
+            deals: dealsInPeriod, expenses: expensesInPeriod, agentStats, bySource,
+          }} />
+          <FinanzasAI data={{
+            period: PERIODOS.find(p => p.value === period)?.label || period,
+            pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
+            deals: dealsInPeriod, expenses: expensesInPeriod, agentStats, bySource,
+            pipelineData: pipelineStages, totalLeads: leads.length,
+          }} />
           <button onClick={() => setShowExpenseForm(true)}
             className="px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
             + Gasto

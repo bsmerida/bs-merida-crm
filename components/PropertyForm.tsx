@@ -16,9 +16,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function fmtPrice(price: string, type: string) {
+function fmtPrice(price: string, type: string, currency = "MXN") {
   if (!price) return "—";
-  const n = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(price));
+  const n = new Intl.NumberFormat(currency === "USD" ? "en-US" : "es-MX", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(price));
   if (type === "m2") return `${n} / m²`;
   if (type === "lineal") return `${n} / ml`;
   return n;
@@ -43,6 +43,7 @@ export function PropertyForm({ property }: Props) {
     status: property?.status || "Disponible",
     price: property?.price?.toString() || "",
     price_type: (property as any)?.price_type || "total",
+    currency: (property as any)?.currency || "MXN",
     address: property?.address || "",
     zone: property?.zone || "",
     city: property?.city || "",
@@ -133,6 +134,7 @@ export function PropertyForm({ property }: Props) {
       status: form.status,
       price: Number(form.price),
       price_type: form.price_type,
+      currency: form.currency,
       address: form.address || null,
       zone: form.zone || null,
       city: form.city || null,
@@ -177,7 +179,7 @@ export function PropertyForm({ property }: Props) {
   };
 
   const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
-  const priceLabel = form.price_type === "m2" ? "Precio por m² MXN *" : form.price_type === "lineal" ? "Precio por metro lineal MXN *" : "Precio total MXN *";
+  const priceLabel = form.price_type === "m2" ? `Precio por m² ${form.currency} *` : form.price_type === "lineal" ? `Precio por metro lineal ${form.currency} *` : `Precio total ${form.currency} *`;
 
   return (
     <form onSubmit={submit} className="space-y-6">
@@ -223,22 +225,36 @@ export function PropertyForm({ property }: Props) {
 
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
         <h3 className="font-semibold text-ink">Precio</h3>
-        <div className="flex items-center gap-2 flex-wrap">
-          {(["total", "m2", "lineal"] as const).map(t => (
-            <button key={t} type="button" onClick={() => set("price_type", t)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                form.price_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"
-              }`}>
-              {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
-            </button>
-          ))}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-ink-muted">Tipo:</span>
+            {(["total", "m2", "lineal"] as const).map(t => (
+              <button key={t} type="button" onClick={() => set("price_type", t)}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                  form.price_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"
+                }`}>
+                {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-ink-muted">Moneda:</span>
+            {(["MXN", "USD"] as const).map(c => (
+              <button key={c} type="button" onClick={() => set("currency", c)}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                  form.currency === c ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-ink border-ink-line hover:border-emerald-300"
+                }`}>
+                {c === "MXN" ? "🇲🇽 MXN" : "🇺🇸 USD"}
+              </button>
+            ))}
+          </div>
         </div>
         <Field label={priceLabel}>
           <input required type="number" min="0" value={form.price} onChange={e => set("price", e.target.value)} className={inp} />
         </Field>
         {form.price_type !== "total" && form.price && (
           <p className="text-xs text-ink-muted bg-ink-ghost rounded-lg px-3 py-2">
-            Se mostrará como <strong>{fmtPrice(form.price, form.price_type)}</strong> en el sitio y la ficha.
+            Se mostrará como <strong>{fmtPrice(form.price, form.price_type, form.currency)}</strong> en el sitio y la ficha.
           </p>
         )}
       </div>

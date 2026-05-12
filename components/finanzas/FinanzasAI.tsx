@@ -74,18 +74,16 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
     setLoading(true);
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/finanzas-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
           system: buildContext(),
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
       const data = await res.json();
-      const reply = data.content?.[0]?.text || "No pude generar una respuesta.";
+      const reply = data.reply || "No pude generar una respuesta.";
       setMessages([...newMessages, { role: "assistant", content: reply }]);
     } catch {
       setMessages([...newMessages, { role: "assistant", content: "Error al conectar con la IA. Intenta de nuevo." }]);

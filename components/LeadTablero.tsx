@@ -101,10 +101,15 @@ export function LeadTablero({ lead }: { lead: any }) {
     const res = await fetch("/api/tablero/match", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lead, properties: allProps }),
+      body: JSON.stringify({ lead }),  // el match ahora carga props internamente
     });
-    const { matches, error } = await res.json();
+    const { matches, error, empty } = await res.json();
     if (error) { alert(`Error IA: ${error}`); setMatching(false); return; }
+    if (empty || !matches?.length) {
+      alert("No se encontraron propiedades que coincidan con las preferencias del cliente. Revisa zona, presupuesto o tipo.");
+      setMatching(false);
+      return;
+    }
 
     // Agregar cada match al tablero
     for (const m of (matches || [])) {

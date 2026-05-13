@@ -288,11 +288,11 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
     { label: "Sin definir", value: leads.filter((l: any) => !l.search_operation).length, color: "#D1D5DB" },
   ].filter(x => x.value > 0);
 
-  // Por tipo de inmueble buscado
+  // Por tipo de inmueble buscado (multi-select → expandir array)
   const bySearchType = Object.entries(
     leads.reduce((acc: any, l: any) => {
-      const k = l.search_type || "Sin definir";
-      acc[k] = (acc[k] || 0) + 1;
+      const types = Array.isArray(l.search_types) ? l.search_types : (l.search_types ? [l.search_types] : []);
+      types.forEach((t: string) => { acc[t] = (acc[t] || 0) + 1; });
       return acc;
     }, {})
   ).sort((a: any, b: any) => b[1] - a[1]) as [string, number][];

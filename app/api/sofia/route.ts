@@ -6,12 +6,14 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   const { messages, propertyCtx, sessionId } = await req.json();
 
-  // Cargar inventario disponible para que Sofía pueda recomendar
   const db = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bs-merida-crm.vercel.app";
+
+  // Inventario disponible con IDs para que Sofía pueda referenciarlos
   const { data: props } = await db
     .from("properties")
     .select("id, title, type, operation, price, currency, zone, city, bedrooms, bathrooms, m2_construction, status")
@@ -21,40 +23,45 @@ export async function POST(req: NextRequest) {
 
   const inventario = (props || [])
     .map(p =>
-      `• ${p.title} | ${p.type} en ${p.operation} | $${Number(p.price).toLocaleString("es-MX")} ${p.currency || "MXN"} | ${[p.zone, p.city].filter(Boolean).join(", ")} | ${p.bedrooms}rec ${p.bathrooms}ba${p.m2_construction ? ` ${p.m2_construction}m²` : ""}`
+      `[${p.id}] ${p.title} | ${p.type} en ${p.operation} | ` +
+      `$${Number(p.price).toLocaleString("es-MX")} ${p.currency || "MXN"} | ` +
+      `${[p.zone, p.city].filter(Boolean).join(", ")} | ` +
+      `${p.bedrooms}rec ${p.bathrooms}ba${p.m2_construction ? ` ${p.m2_construction}m²` : ""}`
     )
     .join("\n");
 
   const propCtxBlock = propertyCtx
-    ? `\nEL VISITANTE ESTÁ VIENDO ESTA PROPIEDAD ESPECÍFICA:
+    ? `\nEL VISITANTE ESTÁ VIENDO ESTA PROPIEDAD:
 Nombre: ${propertyCtx.title}
 Operación: ${propertyCtx.operation}
-URL: ${propertyCtx.url}
-Responde preguntas sobre esta propiedad. Si no sabes un detalle específico, di que un asesor puede ampliar la información.\n`
+ID: ${propertyCtx.id}
+Responde sobre esta propiedad. Para mostrarla usa [PROPS|${propertyCtx.id}]\n`
     : "";
 
-  const system = `Eres Sofía, asistente virtual de BS Mérida Inmobiliaria. Eres cálida, inteligente y conoces bien el mercado inmobiliario mexicano.
+  const system = `Eres Sofía, asistente virtual de BS Mérida Inmobiliaria. Eres cálida, inteligente y conoces el mercado inmobiliario mexicano.
 ${propCtxBlock}
-INVENTARIO DISPONIBLE ACTUALMENTE (para hacer recomendaciones):
-${inventario || "No hay propiedades disponibles en este momento."}
+INVENTARIO DISPONIBLE (formato: [ID] nombre | detalles):
+${inventario || "Sin propiedades disponibles."}
 
-TUS OBJETIVOS (en orden):
-1. Ayudar al visitante a encontrar su propiedad ideal
-2. Responder preguntas sobre propiedades con base en el inventario
-3. Capturar de forma natural: nombre, WhatsApp/teléfono, presupuesto, zona de interés
+CÓMO MOSTRAR PROPIEDADES:
+Cuando recomiendes propiedades, incluye al final de tu mensaje:
+[PROPS|id1,id2,id3]
+Ejemplo: [PROPS|abc-123,def-456]
+Máximo 3 propiedades por mensaje. Solo IDs del inventario de arriba.
+El sistema convierte eso en tarjetas bonitas con foto automáticamente.
 
-REGLAS IMPORTANTES:
-- Respuestas CORTAS: máximo 2-3 oraciones. El chat es pequeño.
-- No pidas todos los datos de golpe. Uno a la vez, cuando sea natural.
-- Si alguien pregunta por una propiedad específica del inventario, descríbela.
-- Si no hay propiedades exactas para lo que buscan, sugiere las más cercanas.
-- Cuando ya tengas nombre Y teléfono del visitante, agrega al FINAL de tu respuesta esta línea exacta (sin cambiar el formato):
-  [LEAD|nombre=NOMBRE|telefono=TELEFONO|presupuesto=PRESUPUESTO|zona=ZONA|operacion=OPERACION]
-  Donde los campos que no sepas los dejas vacíos. Ejemplo: [LEAD|nombre=Ana|telefono=9991234567|presupuesto=3M|zona=Altabrisa|operacion=Compra]
-- Esa línea la procesa el sistema automáticamente, el usuario NO la ve.
-- Siempre en español. Tono: amigable pero profesional.
-- Nunca inventes precios ni datos que no estén en el inventario.
-- Si te preguntan algo que no sabes, di que un asesor puede dar más detalles.`;
+TUS OBJETIVOS:
+1. Entender qué busca el cliente (operación, tipo, zona, presupuesto)
+2. Recomendar propiedades del inventario con tarjetas visuales
+3. Capturar nombre y WhatsApp de forma natural en la conversación
+4. Cuando tengas nombre Y teléfono, agrega al final: [LEAD|nombre=X|telefono=Y|presupuesto=Z|zona=W|operacion=V]
+
+REGLAS:
+- Respuestas CORTAS: 1-3 oraciones + las tarjetas hacen el trabajo visual
+- Si alguien describe lo que busca, muestra propiedades inmediatamente
+- Pregunta nombre/teléfono después de que haya interés real, no al inicio
+- Nunca inventes datos que no estén en el inventario
+- Siempre en español, tono amigable y profesional`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -65,7 +72,7 @@ REGLAS IMPORTANTES:
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+      max_tokens: 500,
       system,
       messages,
     }),
@@ -76,7 +83,7 @@ REGLAS IMPORTANTES:
 
   let reply: string = data.content?.[0]?.text || "Lo siento, hubo un error. ¿Puedes intentar de nuevo?";
 
-  // Extraer datos del lead si Sofía los capturó
+  // Extraer lead data
   let leadData: Record<string, string> | null = null;
   const leadMatch = reply.match(/\[LEAD\|([^\]]+)\]/);
   if (leadMatch) {
@@ -85,11 +92,52 @@ REGLAS IMPORTANTES:
       const [k, v] = pair.split("=");
       if (k && v) leadData![k.trim()] = v.trim();
     });
-    // Quitar la línea [LEAD|...] del texto que ve el usuario
     reply = reply.replace(/\[LEAD\|[^\]]+\]\s*/g, "").trim();
   }
 
-  // Guardar mensaje de Sofía en la sesión
+  // Extraer IDs de propiedades a mostrar
+  let propertyCards: any[] = [];
+  const propsMatch = reply.match(/\[PROPS\|([^\]]+)\]/);
+  if (propsMatch) {
+    const ids = propsMatch[1].split(",").map(id => id.trim()).filter(Boolean);
+    reply = reply.replace(/\[PROPS\|[^\]]+\]\s*/g, "").trim();
+
+    if (ids.length) {
+      // Traer datos de esas propiedades
+      const { data: propData } = await db
+        .from("properties")
+        .select("id, title, type, operation, price, currency, zone, city, bedrooms, bathrooms, m2_construction")
+        .in("id", ids);
+
+      // Traer portadas en una sola query
+      const { data: covers } = await db
+        .from("property_images")
+        .select("property_id, url")
+        .in("property_id", ids)
+        .eq("is_cover", true);
+
+      const coverMap = Object.fromEntries((covers || []).map(c => [c.property_id, c.url]));
+
+      propertyCards = (propData || [])
+        .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))
+        .map(p => ({
+          id: p.id,
+          title: p.title,
+          type: p.type,
+          operation: p.operation,
+          price: p.price,
+          currency: p.currency || "MXN",
+          zone: [p.zone, p.city].filter(Boolean).join(", "),
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          m2: p.m2_construction,
+          cover: coverMap[p.id] || null,
+          url: `${siteUrl}/propiedad/${p.id}`,
+        }));
+    }
+  }
+
+  // Guardar mensaje de Sofía
   if (sessionId) {
     await db.from("chatbot_messages").insert({
       session_id: sessionId,
@@ -98,5 +146,5 @@ REGLAS IMPORTANTES:
     });
   }
 
-  return NextResponse.json({ reply, leadData });
+  return NextResponse.json({ reply, leadData, propertyCards });
 }

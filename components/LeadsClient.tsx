@@ -165,6 +165,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
       await supabase.from("visits").delete().eq("lead_id", id);
       await supabase.from("deals").delete().eq("lead_id", id);
       await supabase.from("property_inquiries").delete().eq("lead_id", id);
+      await supabase.from("chatbot_sessions").delete().eq("lead_id", id);
 
       const { error } = await supabase.from("leads").delete().eq("id", id);
       if (error) {

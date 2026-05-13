@@ -5,6 +5,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyContactButtons } from "@/components/PropertyContactButtons";
+import { PropertyGallery } from "@/components/PropertyGallery";
 import { PropertyMapEmbed } from "@/components/PropertyMapEmbed";
 import { PropertyViewTracker } from "@/components/PropertyViewTracker";
 import { Icon } from "@/components/Icon";
@@ -55,21 +56,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
       <div className="max-w-7xl mx-auto px-8 py-8">
         <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">← Regresar</Link>
 
-        {/* Hero */}
-        <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl relative overflow-hidden mt-4">
-          {cover ? <img src={cover.url} alt={property.title} className="w-full h-full object-cover" />
-            : <span>{PLACEHOLDER_EMOJI[property.type] || "🏠"}</span>}
-        </div>
-
-        {images.length > 1 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-            {images.slice(1, 5).map(img => (
-              <div key={img.id} className="aspect-[4/3] rounded-xl bg-ink-ghost overflow-hidden">
-                <img src={img.url} alt="" className="w-full h-full object-cover" />
-              </div>
-            ))}
-          </div>
-        )}
+        <PropertyGallery images={images} title={property.title} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10">
           <div className="lg:col-span-2 space-y-8">

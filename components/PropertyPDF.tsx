@@ -30,6 +30,9 @@ const s = StyleSheet.create({
   footerText: { fontSize: 8, color: MUTED },
   galleryGrid: { flexDirection: "row", flexWrap: "wrap", marginTop: 16 },
   galleryImg: { width: "48%", height: 180, marginBottom: 12, marginRight: "2%", backgroundColor: GHOST, borderRadius: 4, objectFit: "cover" },
+  mapBox: { marginTop: 18, borderRadius: 6, overflow: "hidden" },
+  mapImg: { width: "100%", height: 180, objectFit: "cover", borderRadius: 6 },
+  mapLabel: { fontSize: 8, color: MUTED, marginTop: 4 },
   disclaimer: { fontSize: 8, color: MUTED, lineHeight: 1.5, marginTop: 8 },
 });
 
@@ -37,9 +40,10 @@ const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency"
 
 export type PDFProperty = {
   id: string; title: string; description: string | null; type: string; operation: string;
-  price: number; address: string | null; zone: string | null; city: string; state: string;
+  price: number; currency?: string; address: string | null; zone: string | null; city: string; state: string;
   bedrooms: number; bathrooms: number; m2_construction: number | null; m2_land: number | null;
   parking: number; amenities: string[]; reference: string | null; development: string | null;
+  lat?: number | null; lng?: number | null;
 };
 export type PDFAgent = { full_name: string | null; phone: string | null; email: string | null } | null;
 
@@ -101,6 +105,17 @@ export function PropertyPDF({ property: p, images, agent, biz, hideHeader }: {
         {agent && (
           <><Text style={s.sectionTitle}>Asesor a cargo</Text>
           <Text style={s.paragraph}>{agent.full_name || ""}{agent.phone ? `  ·  ${agent.phone}` : ""}{agent.email ? `  ·  ${agent.email}` : ""}</Text></>
+        )}
+
+        {p.lat && p.lng && (
+          <View style={s.mapBox}>
+            <Text style={s.sectionTitle}>Ubicación en el mapa</Text>
+            <Image
+              src={`https://staticmap.openstreetmap.de/staticmap.php?center=${p.lat},${p.lng}&zoom=16&size=580x200&markers=${p.lat},${p.lng},ol-marker`}
+              style={s.mapImg}
+            />
+            <Text style={s.mapLabel}>{[p.address, p.zone, p.city, p.state].filter(Boolean).join(", ")}</Text>
+          </View>
         )}
 
         {/* Footer solo en modo cliente */}

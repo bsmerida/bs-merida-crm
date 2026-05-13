@@ -42,6 +42,8 @@ export function LeadEditor({
     budget_text:  lead.budget_text || "",
     budget_min:   lead.budget_min?.toString() || "",
     budget_max:   lead.budget_max?.toString() || "",
+    search_operation: lead.search_operation || "",
+    search_type:      lead.search_type || "",
     notes:        lead.notes || "",
     age:          lead.age?.toString() || "",
     gender:       lead.gender || "",
@@ -72,6 +74,8 @@ export function LeadEditor({
       budget_text:  form.budget_text || null,
       budget_min:   form.budget_min ? Number(form.budget_min) : null,
       budget_max:   form.budget_max ? Number(form.budget_max) : null,
+      search_operation: form.search_operation || null,
+      search_type:      form.search_type || null,
       notes:        form.notes || null,
       age:          form.age ? Number(form.age) : null,
       gender:       form.gender || null,
@@ -181,6 +185,30 @@ export function LeadEditor({
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div><label className="text-xs text-ink-muted">Presupuesto mínimo (MXN)</label><div className="mt-1.5"><input type="number" value={form.budget_min} onChange={e => set("budget_min", e.target.value)} placeholder="Ej. 2000000" className={inp} /></div></div>
             <div><label className="text-xs text-ink-muted">Presupuesto máximo (MXN)</label><div className="mt-1.5"><input type="number" value={form.budget_max} onChange={e => set("budget_max", e.target.value)} placeholder="Ej. 5000000" className={inp} /></div></div>
+          </div>
+
+          <div className="mt-4">
+            <label className="text-xs text-ink-muted">Operación buscada</label>
+            <div className="flex gap-2 mt-1.5">
+              {["Comprar", "Rentar"].map(op => (
+                <button key={op} type="button" onClick={() => set("search_operation", form.search_operation === op ? "" : op)}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${form.search_operation === op ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+                  {op === "Comprar" ? "🏠 Comprar" : "🔑 Rentar"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="text-xs text-ink-muted">Tipo de inmueble</label>
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {["Casa", "Departamento", "Terreno", "Local", "Oficina", "Bodega"].map(t => (
+                <button key={t} type="button" onClick={() => set("search_type", form.search_type === t ? "" : t)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${form.search_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-4">

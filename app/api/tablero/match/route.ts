@@ -17,7 +17,28 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { lead } = await req.json();
+
+  // Leer preferencias de AMBOS lugares: columnas directas + JSONB
   const prefs = lead.preferences || {};
+  const operation  = lead.search_operation || prefs.operation || "";
+  const types      = (lead.search_types?.length ? lead.search_types : null) || prefs.types || [];
+  const zones      = prefs.zones || [];
+  const radius     = prefs.radius_km || 3;
+  const budgetMax  = lead.budget_max  ? Number(lead.budget_max)  : null;
+  const budgetMin  = lead.budget_min  ? Number(lead.budget_min)  : null;
+  const bedsMin    = prefs.bedrooms_min  != null ? prefs.bedrooms_min  : null;
+  const bedsMax    = prefs.bedrooms_max  != null ? prefs.bedrooms_max  : null;
+  const bathsMin   = prefs.bathrooms_min != null ? prefs.bathrooms_min : null;
+  const m2Min      = prefs.m2_construction_min != null ? prefs.m2_construction_min : null;
+
+  // Verificar que hay criterios mínimos para no mandar basura
+  const hasCriteria = budgetMax || zones.length || types.length || operation;
+  if (!hasCriteria) {
+    return NextResponse.json({
+      no_criteria: true,
+      error: "Completa al menos el presupuesto máximo o las zonas de interés antes de usar la IA."
+    }, { status: 400 });
+  }
 
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const { data: allProps } = await db
@@ -27,80 +48,114 @@ export async function POST(req: NextRequest) {
 
   if (!allProps?.length) return NextResponse.json({ matches: [] });
 
-  let candidates: any[] = allProps.map(p => ({ ...p, zone_match: "exact" }));
+  let candidates: any[] = allProps.map(p => ({ ...p, zone_match: "exact", minDist: 0 }));
 
-  // 1. Presupuesto
-  const budgetMax = lead.budget_max ? Number(lead.budget_max) : null;
-  const budgetMin = lead.budget_min ? Number(lead.budget_min) : null;
-  if (budgetMax) candidates = candidates.filter(p => Number(p.price) <= budgetMax * 1.05);
-  if (budgetMin) candidates = candidates.filter(p => Number(p.price) >= budgetMin * 0.5);
+  // ── Filtros duros ─────────────────────────────────────────
+  // 1. Presupuesto — sin tolerancia
+  if (budgetMax) candidates = candidates.filter(p => Number(p.price) <= budgetMax);
+  if (budgetMin) candidates = candidates.filter(p => Number(p.price) >= budgetMin * 0.8);
 
-  // 2. Operación
-  if (prefs.operation) candidates = candidates.filter(p => p.operation === prefs.operation);
-
-  // 3. Tipo
-  if (prefs.types?.length) candidates = candidates.filter(p => prefs.types.includes(p.type));
-
-  // 4. Recámaras
-  if (prefs.bedrooms_min != null) candidates = candidates.filter(p => p.bedrooms >= prefs.bedrooms_min);
-  if (prefs.bedrooms_max != null) candidates = candidates.filter(p => p.bedrooms <= prefs.bedrooms_max);
-
-  // 5. Baños
-  if (prefs.bathrooms_min != null) candidates = candidates.filter(p => p.bathrooms >= prefs.bathrooms_min);
-
-  // 6. m²
-  if (prefs.m2_construction_min != null)
-    candidates = candidates.filter(p => !p.m2_construction || p.m2_construction >= prefs.m2_construction_min);
-  if (prefs.m2_land_min != null)
-    candidates = candidates.filter(p => !p.m2_land || p.m2_land >= prefs.m2_land_min);
-
-  // 7. Zona por distancia — criterio PRINCIPAL
-  if (prefs.zones?.length) {
-    const radius = prefs.radius_km || 3;
-    const withDist = candidates.map(p => {
-      if (!p.lat || !p.lng) return { ...p, minDist: 999, zone_match: "city" };
-      const minDist = Math.min(...prefs.zones.map((z: any) => distKm(Number(p.lat), Number(p.lng), z.lat, z.lng)));
-      const zone_match = minDist <= radius ? "exact" : minDist <= radius * 2.5 ? "nearby" : "far";
-      return { ...p, minDist, zone_match };
-    }).filter(p => p.zone_match !== "far");
-
-    const hasExact = withDist.some(p => p.zone_match === "exact");
-    candidates = hasExact ? withDist.filter(p => p.zone_match !== "city") : withDist;
+  // 2. Operación (Venta ↔ Comprar, Renta ↔ Rentar)
+  if (operation) {
+    const opMap: Record<string, string> = { "Comprar": "Venta", "Rentar": "Renta", "Venta": "Venta", "Renta": "Renta" };
+    const opDb = opMap[operation] || operation;
+    candidates = candidates.filter(p => p.operation === opDb);
   }
 
-  if (!candidates.length) return NextResponse.json({ matches: [], empty: true });
-  candidates = candidates.slice(0, 30);
+  // 3. Tipo de inmueble (multi)
+  if (types.length) candidates = candidates.filter(p => types.includes(p.type));
 
+  // 4. Recámaras
+  if (bedsMin != null) candidates = candidates.filter(p => p.bedrooms >= bedsMin);
+  if (bedsMax != null) candidates = candidates.filter(p => p.bedrooms <= bedsMax);
+
+  // 5. Baños
+  if (bathsMin != null) candidates = candidates.filter(p => p.bathrooms >= bathsMin);
+
+  // 6. m² construcción
+  if (m2Min != null) candidates = candidates.filter(p => !p.m2_construction || p.m2_construction >= m2Min);
+
+  // 7. Zona por distancia — criterio PRINCIPAL
+  if (zones.length) {
+    const withDist = candidates.map(p => {
+      if (!p.lat || !p.lng) return { ...p, minDist: 999, zone_match: "sin_coords" };
+      const minDist = Math.min(...zones.map((z: any) => distKm(Number(p.lat), Number(p.lng), z.lat, z.lng)));
+      const zone_match = minDist <= radius ? "exact" : minDist <= radius * 2 ? "nearby" : "far";
+      return { ...p, minDist, zone_match };
+    });
+
+    const inZone = withDist.filter(p => p.zone_match !== "far" && p.zone_match !== "sin_coords");
+
+    if (inZone.length >= 3) {
+      // Hay suficientes en la zona — priorizar exactas
+      const exact = inZone.filter(p => p.zone_match === "exact");
+      candidates = exact.length >= 3 ? exact : inZone;
+    } else {
+      // Pocas en zona — ampliar radio x2 y avisar
+      const wider = withDist.filter(p => p.minDist <= radius * 4);
+      candidates = wider.length ? wider : withDist.filter(p => p.zone_match !== "far");
+    }
+  }
+
+  if (!candidates.length) return NextResponse.json({
+    matches: [], empty: true,
+    debug: {
+      total_props: allProps.length,
+      after_budget: allProps.filter((p: any) => {
+        if (budgetMax && Number(p.price) > budgetMax) return false;
+        if (budgetMin && Number(p.price) < budgetMin * 0.8) return false;
+        return true;
+      }).length,
+      after_operation: (() => {
+        const opMap: Record<string, string> = { "Comprar": "Venta", "Rentar": "Renta", "Venta": "Venta", "Renta": "Renta" };
+        const opDb = operation ? (opMap[operation] || operation) : null;
+        return opDb ? allProps.filter((p: any) => p.operation === opDb).length : allProps.length;
+      })(),
+      after_types: types.length ? allProps.filter((p: any) => types.includes(p.type)).length : allProps.length,
+      operation, types, budgetMax, budgetMin,
+      zones_count: zones.length,
+      sample_operations: [...new Set(allProps.slice(0, 20).map((p: any) => p.operation))],
+      sample_types: [...new Set(allProps.slice(0, 20).map((p: any) => p.type))],
+    }
+  });
+
+  // Limitar a 20 para el prompt (ya están bien filtrados)
+  candidates = candidates
+    .sort((a, b) => a.minDist - b.minDist)
+    .slice(0, 20);
+
+  // ── Prompt ────────────────────────────────────────────────
   const propList = candidates.map((p: any) =>
     `ID:${p.id} | ${p.title} | ${p.type} | ${p.operation} | ` +
     `$${Number(p.price).toLocaleString()} ${p.currency || "MXN"} | ` +
     `${[p.zone, p.city].filter(Boolean).join(", ")} | ` +
-    `${p.bedrooms}rec ${p.bathrooms}ba${p.m2_construction ? ` ${p.m2_construction}m²` : ""} | zona:${p.zone_match}`
+    `${p.bedrooms}rec ${p.bathrooms}ba${p.m2_construction ? ` ${p.m2_construction}m²` : ""}` +
+    (p.zone_match ? ` | zona:${p.zone_match}` : "")
   ).join("\n");
 
-  const system = `Eres un experto asesor inmobiliario mexicano. Rankea las propiedades candidatas según el perfil del cliente.
+  const system = `Eres un asesor inmobiliario mexicano experto. Tu trabajo es seleccionar las MEJORES propiedades de la lista para este cliente específico.
 
-PRIORIDADES:
-1. Zona exacta (zone_match=exact) siempre por encima de zona cercana (nearby)
-2. Precio dentro del rango ideal
-3. Características que coincidan
+REGLAS ESTRICTAS:
+- Estas propiedades ya fueron pre-filtradas por presupuesto, tipo y zona. No tienes que verificar eso.
+- Prioriza siempre zone_match=exact sobre zone_match=nearby
+- Selecciona máximo 8, score mínimo 7 (sé exigente)
+- Si ninguna es realmente buena, devuelve menos propiedades o ninguna
+- La razón debe ser específica para ESTE cliente (máx 12 palabras)
 
-Responde SOLO con JSON, sin texto extra ni markdown:
-{"matches":[{"property_id":"uuid","score":9,"reason":"razón breve máx 12 palabras"}]}
+Responde SOLO con JSON sin texto extra:
+{"matches":[{"property_id":"uuid","score":9,"reason":"razón"}]}`;
 
-Máximo 8 propiedades, score mínimo 6, orden descendente.`;
+  const zonasTxt = zones.map((z: any) => z.label).join(", ") || "no especificada";
+  const tiposTxt = types.join(", ") || "cualquiera";
 
   const userMsg = `CLIENTE: ${lead.name}
-Zona(s): ${prefs.zones?.map((z: any) => z.label).join(", ") || "no especificada"} (radio ${prefs.radius_km || 3}km)
-Presupuesto: ${budgetMin ? `$${budgetMin.toLocaleString()}` : "sin mín"} - ${budgetMax ? `$${budgetMax.toLocaleString()} MXN` : "sin máx"}
-Operación: ${prefs.operation || "no especificada"}
-Tipos: ${prefs.types?.join(", ") || "cualquiera"}
-Recámaras: ${prefs.bedrooms_min ?? "—"} a ${prefs.bedrooms_max ?? "—"}
-Baños mín: ${prefs.bathrooms_min ?? "—"}
-Características: ${prefs.amenities?.join(", ") || "ninguna"}
-Notas: ${prefs.search_notes || "Ninguna"}
+Busca: ${operation || "no especificado"} | Tipo: ${tiposTxt}
+Zona(s): ${zonasTxt} (radio ${radius}km)
+Presupuesto: ${budgetMin ? `$${budgetMin.toLocaleString()}` : "sin mín"} — ${budgetMax ? `$${budgetMax.toLocaleString()} MXN` : "sin máx"}
+Recámaras: ${bedsMin ?? "—"} a ${bedsMax ?? "—"} | Baños mín: ${bathsMin ?? "—"}
+Notas: ${prefs.search_notes || lead.interest || "Ninguna"}
 
-CANDIDATAS (${candidates.length}):
+PROPIEDADES CANDIDATAS (${candidates.length}, ya filtradas):
 ${propList}`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -112,7 +167,7 @@ ${propList}`;
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1200,
+      max_tokens: 1000,
       system,
       messages: [{ role: "user", content: userMsg }],
     }),

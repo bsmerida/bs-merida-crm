@@ -42,40 +42,45 @@ export function LeadTablero({ lead }: { lead: any }) {
 
     if (b) {
       setBoard(b);
-      // Propiedades del tablero con cover
       const { data: bp } = await supabaseClient
         .from("board_properties")
         .select("*, property:properties(id,title,type,operation,price,currency,zone,city,bedrooms,bathrooms,m2_construction,status)")
         .eq("board_id", b.id)
         .order("ai_score", { ascending: false });
 
-      const withCovers = await Promise.all(
-        (bp || []).map(async (row: any) => {
-          const { data: img } = await supabaseClient
-            .from("property_images").select("url").eq("property_id", row.property.id)
-            .eq("is_cover", true).limit(1).single();
-          return { ...row.property, ai_reason: row.ai_reason, ai_score: row.ai_score, added_by: row.added_by, cover: img?.url };
-        })
-      );
-      setBoardProps(withCovers);
+      const bpIds = (bp || []).map((row: any) => row.property.id);
+      const { data: bpCovers } = bpIds.length
+        ? await supabaseClient.from("property_images").select("property_id, url").in("property_id", bpIds).eq("is_cover", true)
+        : { data: [] };
+      const bpCoverMap = Object.fromEntries((bpCovers || []).map((c: any) => [c.property_id, c.url]));
+
+      setBoardProps((bp || []).map((row: any) => ({
+        ...row.property,
+        ai_reason: row.ai_reason,
+        ai_score: row.ai_score,
+        added_by: row.added_by,
+        cover: bpCoverMap[row.property.id],
+      })));
     }
 
-    // Inventario disponible con covers
+    // Inventario disponible — una sola query para portadas
     const { data: props } = await supabaseClient
       .from("properties")
       .select("id,title,type,operation,price,currency,zone,city,bedrooms,bathrooms,m2_construction,status")
       .eq("status", "Disponible")
       .order("created_at", { ascending: false });
 
-    const propsWithCovers = await Promise.all(
-      (props || []).map(async (p: any) => {
-        const { data: img } = await supabaseClient
-          .from("property_images").select("url").eq("property_id", p.id)
-          .eq("is_cover", true).limit(1).single();
-        return { ...p, cover: img?.url };
-      })
-    );
-    setAllProps(propsWithCovers);
+    const propIds = (props || []).map((p: any) => p.id);
+    const { data: covers } = propIds.length
+      ? await supabaseClient
+          .from("property_images")
+          .select("property_id, url")
+          .in("property_id", propIds)
+          .eq("is_cover", true)
+      : { data: [] };
+
+    const coverMap = Object.fromEntries((covers || []).map((c: any) => [c.property_id, c.url]));
+    setAllProps((props || []).map((p: any) => ({ ...p, cover: coverMap[p.id] })));
     setLoading(false);
   }, [lead.id]);
 

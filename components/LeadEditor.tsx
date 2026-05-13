@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESTADOS_LEAD } from "@/lib/utils";
 
 const TIPOS_ACTIVIDAD = ["llamada", "whatsapp", "email", "visita", "nota"];
+const TIPOS_INMUEBLE = ["Casa", "Departamento", "Terreno", "Local", "Oficina", "Bodega"];
 
 const STATUS_COLORS: Record<string, string> = {
   "Nuevo":            "bg-blue-50 text-blue-700",
@@ -43,7 +44,7 @@ export function LeadEditor({
     budget_min:   lead.budget_min?.toString() || "",
     budget_max:   lead.budget_max?.toString() || "",
     search_operation: lead.search_operation || "",
-    search_type:      lead.search_type || "",
+    search_types:     (lead.search_types as string[]) || [],
     notes:        lead.notes || "",
     age:          lead.age?.toString() || "",
     gender:       lead.gender || "",
@@ -57,6 +58,46 @@ export function LeadEditor({
   const [actType, setActType] = useState("nota");
   const [actDesc, setActDesc] = useState("");
   const [acts, setActs] = useState(activities);
+
+  // Zonas con geolocalización
+  type Zone = { name: string; city: string; label: string; lat: number; lng: number; count?: number };
+  const initPrefs = lead.preferences || {};
+  const [selectedZones, setSelectedZones] = useState<Zone[]>(initPrefs.zones || []);
+  const [radiusKm, setRadiusKm] = useState<number>(initPrefs.radius_km || 3);
+  const [allZones, setAllZones] = useState<Zone[]>([]);
+  const [zoneQuery, setZoneQuery] = useState("");
+  const [zoneSugg, setZoneSugg] = useState<Zone[]>([]);
+  const [showZoneSugg, setShowZoneSugg] = useState(false);
+  const zoneRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/zones").then(r => r.json()).then((z: Zone[]) => setAllZones(z)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!zoneQuery.trim()) { setZoneSugg([]); return; }
+    const q = zoneQuery.toLowerCase();
+    setZoneSugg(allZones.filter(z => z.label.toLowerCase().includes(q)).slice(0, 8));
+    setShowZoneSugg(true);
+  }, [zoneQuery, allZones]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (zoneRef.current && !zoneRef.current.contains(e.target as Node)) setShowZoneSugg(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const addZone = useCallback((z: Zone) => {
+    setSelectedZones(prev => prev.find(z2 => z2.label === z.label) ? prev : [...prev, z]);
+    setZoneQuery(""); setShowZoneSugg(false);
+  }, []);
+  const removeZone = (label: string) => setSelectedZones(prev => prev.filter(z => z.label !== label));
+  const toggleType = (t: string) => setForm(f => ({
+    ...f,
+    search_types: f.search_types.includes(t) ? f.search_types.filter((x: string) => x !== t) : [...f.search_types, t],
+  }));
 
   const set = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }));
 
@@ -75,7 +116,14 @@ export function LeadEditor({
       budget_min:   form.budget_min ? Number(form.budget_min) : null,
       budget_max:   form.budget_max ? Number(form.budget_max) : null,
       search_operation: form.search_operation || null,
-      search_type:      form.search_type || null,
+      search_types:     form.search_types.length ? form.search_types : null,
+      preferences: {
+        ...(lead.preferences || {}),
+        zones: selectedZones,
+        radius_km: radiusKm,
+        operation: form.search_operation || "",
+        types: form.search_types,
+      },
       notes:        form.notes || null,
       age:          form.age ? Number(form.age) : null,
       gender:       form.gender || null,
@@ -200,15 +248,58 @@ export function LeadEditor({
           </div>
 
           <div className="mt-4">
-            <label className="text-xs text-ink-muted">Tipo de inmueble</label>
+            <label className="text-xs text-ink-muted">Tipo de inmueble <span className="text-ink-soft">(puede ser varios)</span></label>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {["Casa", "Departamento", "Terreno", "Local", "Oficina", "Bodega"].map(t => (
-                <button key={t} type="button" onClick={() => set("search_type", form.search_type === t ? "" : t)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${form.search_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+              {TIPOS_INMUEBLE.map(t => (
+                <button key={t} type="button" onClick={() => toggleType(t)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${form.search_types.includes(t) ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
                   {t}
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <label className="text-xs text-ink-muted">Zonas de interés <span className="text-ink-soft">(con geolocalización)</span></label>
+            {selectedZones.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedZones.map(z => (
+                  <div key={z.label} className="flex items-center gap-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs px-2.5 py-1.5 rounded-full">
+                    📍 {z.label}
+                    <button type="button" onClick={() => removeZone(z.label)} className="hover:text-red-500 ml-0.5">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div ref={zoneRef} className="relative">
+              <input value={zoneQuery} onChange={e => setZoneQuery(e.target.value)}
+                onFocus={() => zoneQuery && setShowZoneSugg(true)}
+                placeholder="Buscar zona o colonia del inventario..."
+                className={inp} />
+              {showZoneSugg && zoneSugg.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-ink-line rounded-xl shadow-lg z-20 overflow-hidden">
+                  {zoneSugg.map(z => (
+                    <button key={z.label} type="button" onClick={() => addZone(z)}
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-ink-ghost flex items-center gap-2">
+                      <span className="text-brand-500">📍</span>
+                      <span className="text-ink">{z.label}</span>
+                      <span className="text-ink-muted text-xs ml-auto">{z.count} prop.</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {selectedZones.length > 0 && (
+              <div className="flex items-center gap-2 text-xs text-ink-muted">
+                <span>Radio:</span>
+                {[1, 2, 3, 5, 8].map(km => (
+                  <button key={km} type="button" onClick={() => setRadiusKm(km)}
+                    className={`px-2.5 py-1 rounded-full border transition ${radiusKm === km ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"}`}>
+                    {km}km
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="mt-4">

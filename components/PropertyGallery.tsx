@@ -29,40 +29,41 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
     <>
       {/* Carrusel principal */}
       <div className="space-y-3">
-        {/* Imagen principal */}
-        <div className="relative aspect-[2.4/1] rounded-3xl overflow-hidden bg-ink-ghost group">
-          <img
-            src={images[current].url}
-            alt={`${title} — foto ${current + 1}`}
-            className="w-full h-full object-cover cursor-zoom-in transition-transform duration-500 group-hover:scale-[1.02]"
-            onClick={() => setLightbox(true)}
-          />
+        {/* Wrapper relativo que contiene imagen Y flechas */}
+        <div className="relative">
+          {/* Imagen principal */}
+          <div className="aspect-[2.4/1] rounded-3xl overflow-hidden bg-ink-ghost group">
+            <img
+              src={images[current].url}
+              alt={`${title} — foto ${current + 1}`}
+              className="w-full h-full object-cover cursor-zoom-in transition-opacity duration-300"
+              onClick={() => setLightbox(true)}
+            />
+            {/* Contador */}
+            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
+              {current + 1} / {images.length}
+            </div>
+            {/* Ver todas */}
+            {images.length > 1 && (
+              <button onClick={() => setLightbox(true)}
+                className="absolute bottom-4 left-4 bg-white/90 hover:bg-white text-ink text-xs px-3 py-1.5 rounded-full shadow flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                🖼 Ver todas las fotos
+              </button>
+            )}
+          </div>
 
-          {/* Flechas */}
+          {/* Flechas FUERA del contenedor de imagen, centradas verticalmente en él */}
           {images.length > 1 && (
             <>
               <button onClick={prev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-ink opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110">
+                className="absolute left-4 top-[50%] -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-ink text-xl font-light hover:scale-110 transition-transform">
                 ‹
               </button>
               <button onClick={next}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-ink opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110">
+                className="absolute right-4 top-[50%] -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-ink text-xl font-light hover:scale-110 transition-transform">
                 ›
               </button>
             </>
-          )}
-
-          {/* Contador */}
-          <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
-            {current + 1} / {images.length}
-          </div>
-
-          {/* Ver todas */}
-          {images.length > 1 && (
-            <button onClick={() => setLightbox(true)}
-              className="absolute bottom-4 left-4 bg-white/90 hover:bg-white text-ink text-xs px-3 py-1.5 rounded-full shadow flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
-              🖼 Ver todas las fotos
-            </button>
           )}
         </div>
 

@@ -160,21 +160,19 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
     if (!confirm(`¿Eliminar al cliente "${name}"? Esta acción no se puede deshacer.`)) return;
     setDeleting(id);
     try {
-      // Borrar registros relacionados primero (FK cascade manual)
-      await supabase.from("activities").delete().eq("lead_id", id);
-      await supabase.from("visits").delete().eq("lead_id", id);
-      await supabase.from("deals").delete().eq("lead_id", id);
-      await supabase.from("property_inquiries").delete().eq("lead_id", id);
-      await supabase.from("chatbot_sessions").delete().eq("lead_id", id);
-
-      const { error } = await supabase.from("leads").delete().eq("id", id);
-      if (error) {
-        alert(`No se pudo eliminar: ${error.message}`);
+      const res = await fetch("/api/leads/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`No se pudo eliminar: ${data.error}`);
         setDeleting(null);
         return;
       }
       setLeads((prev: any) => prev.filter((l: any) => l.id !== id));
-    } catch (e) {
+    } catch {
       alert("Error inesperado al eliminar. Intenta de nuevo.");
     }
     setDeleting(null);

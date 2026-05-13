@@ -281,6 +281,23 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   const maxZona = byZona[0]?.[1] as number || 1;
 
 
+  // Por operación buscada
+  const byOperation = [
+    { label: "Comprar", value: leads.filter((l: any) => l.search_operation === "Comprar").length, color: "#5E4B8E" },
+    { label: "Rentar",  value: leads.filter((l: any) => l.search_operation === "Rentar").length,  color: "#10B981" },
+    { label: "Sin definir", value: leads.filter((l: any) => !l.search_operation).length, color: "#D1D5DB" },
+  ].filter(x => x.value > 0);
+
+  // Por tipo de inmueble buscado
+  const bySearchType = Object.entries(
+    leads.reduce((acc: any, l: any) => {
+      const k = l.search_type || "Sin definir";
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {})
+  ).sort((a: any, b: any) => b[1] - a[1]) as [string, number][];
+  const maxSearchType = bySearchType[0]?.[1] as number || 1;
+
   // Tasa de conversión por fuente
   const convBySource = bySource.map(([source, total]) => {
     const cerr = leads.filter((l: any) => l.source === source && l.status === "Cerrado ganado").length;
@@ -420,6 +437,39 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                   {bySource.length === 0
                     ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de origen</div>
                     : <HBarChart data={bySource} max={maxSource} />}
+                </div>
+              </div>
+
+              {/* Operación y tipo buscado */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+                  <h3 className="font-semibold text-ink mb-5">Operación buscada</h3>
+                  {byOperation.every(x => x.label === "Sin definir") ? (
+                    <div className="text-sm text-ink-muted text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {byOperation.map(op => (
+                        <div key={op.label}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-ink">{op.label}</span>
+                            <span className="text-ink-muted font-medium">{op.value} clientes</span>
+                          </div>
+                          <div className="h-2.5 bg-ink-ghost rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${(op.value / total) * 100}%`, backgroundColor: op.color }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+                  <h3 className="font-semibold text-ink mb-5">Tipo de inmueble buscado</h3>
+                  {bySearchType.length === 0 || (bySearchType.length === 1 && bySearchType[0][0] === "Sin definir") ? (
+                    <div className="text-sm text-ink-muted text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
+                  ) : (
+                    <HBarChart data={bySearchType.filter(([k]) => k !== "Sin definir")} max={maxSearchType} />
+                  )}
                 </div>
               </div>
 

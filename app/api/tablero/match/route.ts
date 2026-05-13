@@ -54,9 +54,12 @@ ${propList}`;
 
   try {
     const text = data.content?.[0]?.text || "{}";
-    const parsed = JSON.parse(text);
+    // Limpiar posibles backticks de markdown que Claude a veces agrega
+    const clean = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+    const parsed = JSON.parse(clean);
     return NextResponse.json(parsed);
-  } catch {
-    return NextResponse.json({ error: "Error al parsear respuesta de IA" }, { status: 500 });
+  } catch (e) {
+    const raw = data.content?.[0]?.text || "vacío";
+    return NextResponse.json({ error: `JSON inválido. Respuesta: ${raw.slice(0, 300)}` }, { status: 500 });
   }
 }

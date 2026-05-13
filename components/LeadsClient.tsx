@@ -172,8 +172,8 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
         return;
       }
       setLeads((prev: any) => prev.filter((l: any) => l.id !== id));
-    } catch {
-      alert("Error inesperado al eliminar. Intenta de nuevo.");
+    } catch (e: any) {
+      alert(`Error: ${e?.message || JSON.stringify(e)}`);
     }
     setDeleting(null);
   };

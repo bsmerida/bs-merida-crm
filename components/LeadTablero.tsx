@@ -102,16 +102,39 @@ export function LeadTablero({ lead }: { lead: any }) {
   // ── Matching IA ────────────────────────────────────────────
   const runAI = async () => {
     if (!board) return;
+
+    // Verificar criterios mínimos antes de llamar
+    const prefs = lead.preferences || {};
+    const hasZones = prefs.zones?.length > 0;
+    const hasBudget = lead.budget_max || lead.budget_min;
+    const hasTypes = lead.search_types?.length > 0 || prefs.types?.length > 0;
+
+    if (!hasBudget && !hasZones) {
+      alert("Para mejores resultados, completa al menos:\n• El presupuesto máximo del cliente\n• Las zonas de interés\n\nGuarda el perfil del cliente y vuelve a intentar.");
+      return;
+    }
+
     setMatching(true);
     const res = await fetch("/api/tablero/match", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lead }),  // el match ahora carga props internamente
+      body: JSON.stringify({ lead }),
     });
-    const { matches, error, empty } = await res.json();
-    if (error) { alert(`Error IA: ${error}`); setMatching(false); return; }
+    const json = await res.json();
+    const { matches, error, empty, no_criteria } = json;
+
+    if (no_criteria) {
+      alert("Completa el presupuesto máximo o las zonas de interés en el perfil del cliente y guarda antes de usar la IA.");
+      setMatching(false);
+      return;
+    }
+    if (error && !empty) { alert(`Error IA: ${error}`); setMatching(false); return; }
     if (empty || !matches?.length) {
-      alert("No se encontraron propiedades que coincidan con las preferencias del cliente. Revisa zona, presupuesto o tipo.");
+      const d = json.debug;
+      const msg = d
+        ? `Sin resultados.\n\nDebug:\n• Total props disponibles: ${d.total_props}\n• Tras presupuesto: ${d.after_budget}\n• Tras operación (${d.operation || "sin filtro"}): ${d.after_operation}\n• Tras tipo (${d.types?.join(",") || "sin filtro"}): ${d.after_types}\n• Zonas configuradas: ${d.zones_count}\n\nValores en DB:\nOperaciones: ${d.sample_operations?.join(", ")}\nTipos: ${d.sample_types?.join(", ")}`
+        : "Sin resultados. Revisa zona, presupuesto o tipo.";
+      alert(msg);
       setMatching(false);
       return;
     }
@@ -208,6 +231,11 @@ export function LeadTablero({ lead }: { lead: any }) {
 
       {/* Acciones */}
       <div className="flex gap-2 flex-wrap">
+        {!lead.budget_max && !(lead.preferences?.zones?.length) && (
+          <div className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-800">
+            ⚠️ Para mejores sugerencias, completa el <strong>presupuesto máximo</strong> y las <strong>zonas de interés</strong> en el perfil del cliente y guarda.
+          </div>
+        )}
         <button onClick={runAI} disabled={matching}
           className="flex items-center gap-2 px-4 py-2 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-full text-sm font-medium disabled:opacity-50">
           {matching ? (

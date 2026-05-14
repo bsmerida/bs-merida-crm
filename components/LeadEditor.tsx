@@ -216,14 +216,30 @@ export function LeadEditor({
               <select value={form.source} onChange={e => set("source", e.target.value)} className={inp}>
                 <option value="Manual">Manual</option>
                 <option value="Referido">Referido</option>
-                <option value="Facebook">Facebook</option>
-                <option value="Instagram">Instagram</option>
-                <option value="Google">Google</option>
-                <option value="Inmuebles24">Inmuebles24</option>
-                <option value="Lamudi">Lamudi</option>
-                <option value="Portal inmobiliario">Portal inmobiliario</option>
-                <option value="WhatsApp directo">WhatsApp directo</option>
-                <option value="Chatbot IA">Chatbot IA</option>
+                <optgroup label="Redes sociales">
+                  <option value="Facebook">Facebook</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="WhatsApp directo">WhatsApp directo</option>
+                  <option value="Google">Google</option>
+                </optgroup>
+                <optgroup label="Portales activos">
+                  <option value="Tokko">Tokko</option>
+                  <option value="EasyBroker">EasyBroker</option>
+                  <option value="Inmuebles24">Inmuebles24</option>
+                  <option value="Lamudi by Proppit">Lamudi by Proppit</option>
+                  <option value="Mercado Libre">Mercado Libre</option>
+                  <option value="Propiedades.com">Propiedades.com</option>
+                  <option value="TuPortalOnline">TuPortalOnline</option>
+                  <option value="InmoExperts">InmoExperts</option>
+                  <option value="Properstar">Properstar</option>
+                  <option value="Pincali">Pincali</option>
+                  <option value="Clasco">Clasco</option>
+                </optgroup>
+                <optgroup label="Sitio propio">
+                  <option value="Chatbot IA">Chatbot IA — Sofía</option>
+                  <option value="Formulario web">Formulario web</option>
+                </optgroup>
                 <option value="Otro">Otro</option>
               </select>
             </div></div>

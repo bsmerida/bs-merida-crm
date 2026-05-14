@@ -87,6 +87,105 @@ export default function FinanzasPage() {
   const [historialData, setHistorialData] = useState<any[]>([]);
   const [editingMetas, setEditingMetas] = useState(false);
   const [metas, setMetas] = useState({ ingresos: 0, utilidad: 0, margen: 0, gastos: 0 });
+  const [metasMensuales, setMetasMensuales] = useState({ ingresos: 0, utilidad: 0, margen: 0, gastos: 0 });
+  const [savingMetas, setSavingMetas] = useState(false);
+
+  // Obtener los meses que cubre el período actual
+  const monthsInPeriod = useMemo(() => {
+    const { start } = getPeriodRange(period);
+    const months: string[] = [];
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    const now = new Date();
+    const endMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    while (cursor <= endMonth) {
+      months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`);
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return months;
+  }, [period]);
+
+  const numMonths = monthsInPeriod.length;
+  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+
+  // Cargar metas de la DB cuando cambia el período
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("financial_goals")
+        .select("*")
+        .in("month", monthsInPeriod)
+        .order("month", { ascending: false });
+
+      if (!data || data.length === 0) {
+        // Sin metas — buscar la más reciente como referencia
+        const { data: latest } = await supabase
+          .from("financial_goals")
+          .select("*")
+          .order("month", { ascending: false })
+          .limit(1);
+        const ref = latest?.[0];
+        const monthly = ref
+          ? { ingresos: Number(ref.ingresos), utilidad: Number(ref.utilidad), margen: Number(ref.margen), gastos: Number(ref.gastos) }
+          : { ingresos: 0, utilidad: 0, margen: 0, gastos: 0 };
+        setMetasMensuales(monthly);
+        setMetas({ ingresos: monthly.ingresos * numMonths, utilidad: monthly.utilidad * numMonths, margen: monthly.margen, gastos: monthly.gastos * numMonths });
+        return;
+      }
+
+      // Sumar los meses del período
+      const sum = data.reduce((acc, row) => ({
+        ingresos: acc.ingresos + Number(row.ingresos),
+        utilidad: acc.utilidad + Number(row.utilidad),
+        margen:   acc.margen   + Number(row.margen),
+        gastos:   acc.gastos   + Number(row.gastos),
+      }), { ingresos: 0, utilidad: 0, margen: 0, gastos: 0 });
+
+      // Meta mensual = promedio de los meses con datos
+      const avgMonths = data.length;
+      setMetasMensuales({
+        ingresos: sum.ingresos / avgMonths,
+        utilidad: sum.utilidad / avgMonths,
+        margen:   sum.margen   / avgMonths,
+        gastos:   sum.gastos   / avgMonths,
+      });
+
+      // Si el período tiene más meses que los registrados, extrapolar
+      const factor = numMonths / avgMonths;
+      setMetas({
+        ingresos: sum.ingresos * factor,
+        utilidad: sum.utilidad * factor,
+        margen:   sum.margen / avgMonths, // margen es % no se suma
+        gastos:   sum.gastos * factor,
+      });
+    };
+    load();
+  }, [monthsInPeriod, numMonths]);
+
+  // Guardar metas — siempre guarda por mes, distribuye uniformemente en el período
+  const saveMetas = async () => {
+    setSavingMetas(true);
+    const m = metasMensuales;
+    // Upsert para cada mes en el período
+    for (const month of monthsInPeriod) {
+      await supabase.from("financial_goals").upsert({
+        month,
+        ingresos: m.ingresos,
+        utilidad: m.utilidad,
+        margen:   m.margen,
+        gastos:   m.gastos,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "month" });
+    }
+    // Actualizar totales del período
+    setMetas({
+      ingresos: m.ingresos * numMonths,
+      utilidad: m.utilidad * numMonths,
+      margen:   m.margen,
+      gastos:   m.gastos * numMonths,
+    });
+    setSavingMetas(false);
+    setEditingMetas(false);
+  };
 
   const reload = () => setRefresh(r => r + 1);
 
@@ -304,25 +403,40 @@ export default function FinanzasPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-ink">Semáforo de metas</h3>
-                <p className="text-xs text-ink-muted mt-0.5">Compara el período seleccionado vs tu objetivo</p>
+                <p className="text-xs text-ink-muted mt-0.5">
+                  {numMonths === 1
+                    ? `Mes actual · ${new Date().toLocaleDateString("es-MX", { month: "long", year: "numeric" })}`
+                    : `${numMonths} meses · las metas se definen mensualmente y se suman`}
+                </p>
               </div>
-              <button onClick={() => setEditingMetas(e => !e)}
-                className="text-xs text-brand-600 hover:underline px-3 py-1.5 border border-brand-200 rounded-full">
-                {editingMetas ? "✓ Guardar metas" : "✏️ Editar metas"}
+              <button
+                onClick={() => editingMetas ? saveMetas() : setEditingMetas(true)}
+                disabled={savingMetas}
+                className="text-xs text-brand-600 hover:underline px-3 py-1.5 border border-brand-200 rounded-full disabled:opacity-50">
+                {savingMetas ? "Guardando..." : editingMetas ? "✓ Guardar metas" : "✏️ Editar metas"}
               </button>
             </div>
+
+            {editingMetas && (
+              <div className="mb-4 bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5 text-xs text-brand-700">
+                {numMonths === 1
+                  ? "Define la meta para este mes. Se guardará en la base de datos."
+                  : `Defines la meta mensual. Se guardará igual en los ${numMonths} meses del período y el total será ×${numMonths}.`}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { key: "ingresos" as const, label: "Ingresos", real: ingresoTotal, fmt: fmtMXN, color: "emerald" },
-                { key: "utilidad" as const, label: "Utilidad operativa", real: utilidadOp, fmt: fmtMXN, color: "brand" },
-                { key: "margen" as const, label: "Margen neto", real: margenNeto * 100, fmt: (n: number) => `${n.toFixed(1)}%`, color: "blue" },
-                { key: "gastos" as const, label: "Gastos máx.", real: gastoTotal, fmt: fmtMXN, color: "red", invertido: true },
-              ].map(({ key, label, real, fmt, color, invertido }) => {
+              {([
+                { key: "ingresos" as const, label: "Ingresos", real: ingresoTotal, fmt: fmtMXN, invertido: false },
+                { key: "utilidad" as const, label: "Utilidad operativa", real: utilidadOp, fmt: fmtMXN, invertido: false },
+                { key: "margen"   as const, label: "Margen neto", real: margenNeto * 100, fmt: (n: number) => `${n.toFixed(1)}%`, invertido: false },
+                { key: "gastos"   as const, label: "Gastos máx.", real: gastoTotal, fmt: fmtMXN, invertido: true },
+              ] as const).map(({ key, label, real, fmt, invertido }) => {
                 const meta = metas[key];
                 const pct = meta > 0 ? (real / meta) * 100 : null;
-                const ok = pct !== null && (invertido ? pct <= 100 : pct >= 90);
+                const ok   = pct !== null && (invertido ? pct <= 100 : pct >= 90);
                 const warn = pct !== null && (invertido ? pct > 100 && pct <= 115 : pct >= 70 && pct < 90);
-                const bad = pct !== null && (invertido ? pct > 115 : pct < 70);
+                const bad  = pct !== null && (invertido ? pct > 115 : pct < 70);
                 const semaforo = ok ? "🟢" : warn ? "🟡" : bad ? "🔴" : "⚪";
                 return (
                   <div key={key} className={`rounded-xl border p-4 ${ok ? "border-emerald-200 bg-emerald-50" : warn ? "border-amber-200 bg-amber-50" : bad ? "border-red-200 bg-red-50" : "border-ink-line bg-white"}`}>
@@ -334,10 +448,19 @@ export default function FinanzasPage() {
                       {fmt(real)}
                     </div>
                     {editingMetas ? (
-                      <input type="number" min="0" placeholder="Meta"
-                        value={meta || ""}
-                        onChange={e => setMetas(m => ({ ...m, [key]: Number(e.target.value) }))}
-                        className="mt-2 w-full text-xs border border-ink-line rounded-lg px-2 py-1.5 text-ink" />
+                      <div className="mt-2">
+                        <p className="text-[10px] text-ink-muted mb-1">Meta {numMonths > 1 ? "mensual" : "del mes"}</p>
+                        <input
+                          type="number" min="0"
+                          placeholder="Ej. 150000"
+                          value={metasMensuales[key] || ""}
+                          onChange={e => setMetasMensuales(m => ({ ...m, [key]: Number(e.target.value) }))}
+                          className="w-full text-xs border border-ink-line rounded-lg px-2 py-1.5 text-ink focus:outline-none focus:border-brand-400"
+                        />
+                        {numMonths > 1 && metasMensuales[key] > 0 && key !== "margen" && (
+                          <p className="text-[10px] text-brand-600 mt-1">Total período: {fmtMXN(metasMensuales[key] * numMonths)}</p>
+                        )}
+                      </div>
                     ) : (
                       <div className="mt-2">
                         {meta > 0 ? (
@@ -346,7 +469,10 @@ export default function FinanzasPage() {
                               <div className={`h-full rounded-full transition-all ${ok ? "bg-emerald-500" : warn ? "bg-amber-400" : "bg-red-400"}`}
                                 style={{ width: `${Math.min(pct || 0, 100)}%` }} />
                             </div>
-                            <p className="text-[10px] text-ink-muted mt-1">{pct?.toFixed(0)}% de {fmt(meta)}</p>
+                            <p className="text-[10px] text-ink-muted mt-1">
+                              {pct?.toFixed(0)}% de {fmt(meta)}
+                              {numMonths > 1 && key !== "margen" && <span className="ml-1">({fmtMXN(metasMensuales[key])}/mes)</span>}
+                            </p>
                           </>
                         ) : (
                           <p className="text-[10px] text-ink-muted">Sin meta — clic en Editar</p>

@@ -83,6 +83,8 @@ export default function FinanzasPage() {
   const [loading, setLoading] = useState(true);
   const [showDealForm, setShowDealForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
   const [refresh, setRefresh] = useState(0);
   const [historialData, setHistorialData] = useState<any[]>([]);
   const [editingMetas, setEditingMetas] = useState(false);
@@ -218,38 +220,82 @@ export default function FinanzasPage() {
     [deals, start, end]
   );
 
-  const expensesInPeriod = useMemo(() =>
+  // ── GASTOS: separar caja vs P&L ────────────────────────────────────────────
+  // Flujo de caja: usa el monto real pagado en la fecha del pago
+  const expensesCashInPeriod = useMemo(() =>
     expenses.filter(e => { const dt = new Date(e.expense_date); return dt >= start && dt <= end; }),
     [expenses, start, end]
   );
 
-  // ── P&L ────────────────────────────────────────────────────
-  const ingresoVenta = dealsInPeriod.filter(d => d.operation_type === "venta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
-  const ingresoRenta = dealsInPeriod.filter(d => d.operation_type === "renta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
-  const ingresoTotal = ingresoVenta + ingresoRenta;
-  const gastoComisiones = dealsInPeriod.reduce((s: number, d: any) => s + Number(d.agent_commission || 0) + Number(d.agent2_commission || 0) + Number(d.referral_amount || 0), 0);
-  const gastoNomina = expensesInPeriod.filter(e => e.category === "nomina").reduce((s: number, e: any) => s + Number(e.amount), 0);
-  const gastoMarketing = expensesInPeriod.filter(e => ["marketing_digital", "portales_inmobiliarios"].includes(e.category)).reduce((s: number, e: any) => s + Number(e.amount), 0);
-  const gastoAdmin = expensesInPeriod.filter(e => !["nomina", "marketing_digital", "portales_inmobiliarios", "comisiones_asesores"].includes(e.category)).reduce((s: number, e: any) => s + Number(e.amount), 0);
-  const gastoTotal = gastoComisiones + gastoNomina + gastoMarketing + gastoAdmin;
-  const utilidadBruta = ingresoTotal - gastoComisiones;
-  const utilidadOp = ingresoTotal - gastoTotal;
-  const margenNeto = ingresoTotal > 0 ? utilidadOp / ingresoTotal : 0;
+  // P&L: usa gastos amortizados (diferidos se distribuyen entre meses de cobertura)
+  const expensesPnL = useMemo(() => {
+    const periodStartM = new Date(start.getFullYear(), start.getMonth(), 1);
+    const periodEndM   = new Date(end.getFullYear(),   end.getMonth() + 1, 0);
 
-  // ── CxC ────────────────────────────────────────────────────
+    return expenses.reduce((total: Record<string, number>, e: any) => {
+      const cat = e.category || "otro";
+      const isDeferred = e.is_deferred && e.amortization_months > 1;
+
+      if (!isDeferred) {
+        // Gasto normal: cae en el período si su fecha de pago está dentro
+        const payDate = new Date(e.expense_date);
+        if (payDate >= start && payDate <= end) {
+          total[cat] = (total[cat] || 0) + Number(e.amount);
+        }
+        return total;
+      }
+
+      // Gasto diferido: calcular qué parte de la cobertura cae en el período
+      const coverFrom = e.deferred_start_date ? new Date(e.deferred_start_date) : new Date(e.expense_date);
+      const coverStart = new Date(coverFrom.getFullYear(), coverFrom.getMonth(), 1);
+      const coverEnd   = new Date(coverFrom.getFullYear(), coverFrom.getMonth() + e.amortization_months, 0);
+
+      const overlapStart = new Date(Math.max(coverStart.getTime(), periodStartM.getTime()));
+      const overlapEnd   = new Date(Math.min(coverEnd.getTime(),   periodEndM.getTime()));
+      if (overlapStart > overlapEnd) return total; // sin solapamiento
+
+      const overlapMonths = (overlapEnd.getFullYear() - overlapStart.getFullYear()) * 12
+        + overlapEnd.getMonth() - overlapStart.getMonth() + 1;
+
+      const monthly = Number(e.amount) / e.amortization_months;
+      total[cat] = (total[cat] || 0) + (monthly * overlapMonths);
+      return total;
+    }, {} as Record<string, number>);
+  }, [expenses, start, end]);
+
+  // ── P&L ────────────────────────────────────────────────────────────────────
+  const ingresoVenta   = dealsInPeriod.filter(d => d.operation_type === "venta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
+  const ingresoRenta   = dealsInPeriod.filter(d => d.operation_type === "renta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
+  const ingresoTotal   = ingresoVenta + ingresoRenta;
+
+  const gastoComisiones = dealsInPeriod.reduce((s: number, d: any) =>
+    s + Number(d.agent_commission || 0) + Number(d.agent2_commission || 0) + Number(d.referral_amount || 0), 0);
+  const gastoNomina     = (expensesPnL["nomina"] || 0);
+  const gastoMarketing  = (expensesPnL["marketing_digital"] || 0) + (expensesPnL["portales_inmobiliarios"] || 0);
+  const gastoAdmin      = Object.entries(expensesPnL)
+    .filter(([cat]) => !["nomina", "marketing_digital", "portales_inmobiliarios", "comisiones_asesores"].includes(cat))
+    .reduce((s, [, v]) => s + (v as number), 0);
+  const gastoTotal      = gastoComisiones + gastoNomina + gastoMarketing + gastoAdmin;
+  const utilidadBruta   = ingresoTotal - gastoComisiones;
+  const utilidadOp      = ingresoTotal - gastoTotal;
+  const margenNeto      = ingresoTotal > 0 ? utilidadOp / ingresoTotal : 0;
+
+  // ── CxC ────────────────────────────────────────────────────────────────────
   const dealsPendientes = deals.filter(d => d.status !== "cobrado" && d.status !== "cancelado");
-  const totalCxC = dealsPendientes.reduce((s: number, d: any) => s + Number(d.gross_commission) - Number(d.amount_collected || 0), 0);
-  const today = new Date();
-  const vencido = dealsPendientes.filter(d => d.expected_collection_date && new Date(d.expected_collection_date) < today).reduce((s: number, d: any) => s + Number(d.gross_commission) - Number(d.amount_collected || 0), 0);
+  const totalCxC  = dealsPendientes.reduce((s: number, d: any) => s + Number(d.gross_commission) - Number(d.amount_collected || 0), 0);
+  const today     = new Date();
+  const vencido   = dealsPendientes
+    .filter(d => d.expected_collection_date && new Date(d.expected_collection_date) < today)
+    .reduce((s: number, d: any) => s + Number(d.gross_commission) - Number(d.amount_collected || 0), 0);
 
-  // ── ASESORES ───────────────────────────────────────────────
+  // ── ASESORES ───────────────────────────────────────────────────────────────
   const agentStats = agents.map((a: any) => {
-    const myDeals = dealsInPeriod.filter(d => d.agent_id === a.id || d.agent2_id === a.id);
-    const myLeads = leads.filter(l => l.agent_id === a.id);
-    const cerrados = myLeads.filter(l => l.status === "Cerrado ganado").length;
-    const ingresos = myDeals.reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
+    const myDeals    = dealsInPeriod.filter((d: any) => d.agent_id === a.id || d.agent2_id === a.id);
+    const myLeads    = leads.filter((l: any) => l.agent_id === a.id);
+    const cerrados   = myLeads.filter((l: any) => l.status === "Cerrado ganado").length;
+    const ingresos   = myDeals.reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
     const comisiones = myDeals.reduce((s: number, d: any) => {
-      const c1 = d.agent_id === a.id ? Number(d.agent_commission || 0) : 0;
+      const c1 = d.agent_id  === a.id ? Number(d.agent_commission  || 0) : 0;
       const c2 = d.agent2_id === a.id ? Number(d.agent2_commission || 0) : 0;
       return s + c1 + c2;
     }, 0);
@@ -257,17 +303,17 @@ export default function FinanzasPage() {
     return { ...a, myDeals: myDeals.length, myLeads: myLeads.length, cerrados, ingresos, comisiones, conv, netEmpresa: ingresos - comisiones };
   }).sort((a: any, b: any) => b.ingresos - a.ingresos);
 
-  // ── PIPELINE ───────────────────────────────────────────────
+  // ── PIPELINE ───────────────────────────────────────────────────────────────
   const pipelineStages = Object.keys(PIPELINE_PROB).filter(s => s !== "Cerrado ganado").map(estado => {
-    const count = leads.filter(l => l.status === estado).length;
-    const valorPot = leads.filter(l => l.status === estado).reduce((s: number, l: any) => s + Number(l.budget_max || l.budget_min || 0), 0);
-    const comPot = valorPot * 0.04; // asumiendo 4% promedio
+    const count    = leads.filter((l: any) => l.status === estado).length;
+    const valorPot = leads.filter((l: any) => l.status === estado).reduce((s: number, l: any) => s + Number(l.budget_max || l.budget_min || 0), 0);
+    const comPot   = valorPot * 0.04;
     const ponderado = comPot * PIPELINE_PROB[estado];
     return { estado, count, valorPot, comPot, ponderado, prob: PIPELINE_PROB[estado] };
   });
   const totalPonderado = pipelineStages.reduce((s, p) => s + p.ponderado, 0);
 
-  // ── MARKETING ROI ──────────────────────────────────────────
+  // ── MARKETING ROI ──────────────────────────────────────────────────────────
   const bySource = Object.entries(
     leads.reduce((acc: any, l: any) => {
       const k = l.source || "Sin origen"; acc[k] = acc[k] || { leads: 0, cerrados: 0 };
@@ -276,8 +322,7 @@ export default function FinanzasPage() {
       return acc;
     }, {})
   ).map(([source, data]: any) => ({
-    source,
-    leads: data.leads,
+    source, leads: data.leads,
     cerrados: data.cerrados,
     conv: data.leads > 0 ? ((data.cerrados / data.leads) * 100).toFixed(1) : "0",
     ingresos: dealsInPeriod.filter(d => {
@@ -303,7 +348,7 @@ export default function FinanzasPage() {
       if (!mesesMap[key]) return;
       mesesMap[key].entradas += Number(d.amount_collected || d.gross_commission || 0);
     });
-    // Salidas: gastos registrados
+    // Salidas: gastos reales pagados en el mes (no amortizados — esto es flujo de caja real)
     expenses.forEach((e: any) => {
       if (!e.expense_date) return;
       const key = e.expense_date.slice(0, 7);
@@ -361,13 +406,13 @@ export default function FinanzasPage() {
           <ReportExporterPro data={{
             period: PERIODOS.find(p => p.value === period)?.label || period,
             pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
-            deals: dealsInPeriod, expenses: expensesInPeriod, agentStats, bySource,
+            deals: dealsInPeriod, expenses: expensesCashInPeriod, agentStats, bySource,
             pipelineData: pipelineStages, totalLeads: leads.length, history: historialData,
           }} />
           <FinanzasAI data={{
             period: PERIODOS.find(p => p.value === period)?.label || period,
             pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
-            deals: dealsInPeriod, expenses: expensesInPeriod, agentStats, bySource,
+            deals: dealsInPeriod, expenses: expensesCashInPeriod, agentStats, bySource,
             pipelineData: pipelineStages, totalLeads: leads.length,
           }} />
           <a href="/admin/finanzas/historicos"
@@ -696,14 +741,14 @@ export default function FinanzasPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-ink-ghost/40 border-b border-ink-line">
-                    <tr>{["Propiedad", "Cliente", "Tipo", "Valor operación", "Com. bruta", "Com. asesores", "Com. neta", "Cierre", "Estado"].map(h => (
+                    <tr>{["Propiedad", "Cliente", "Tipo", "Valor operación", "Com. bruta", "Compartida / Ref.", "Asesores", "Neto empresa", "Cierre", "Estado", ""].map(h => (
                       <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-3 py-3">{h}</th>
                     ))}</tr>
                   </thead>
                   <tbody>
                     {dealsInPeriod.map((d: any) => (
                       <tr key={d.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                        <td className="px-3 py-3 text-sm text-ink truncate max-w-[140px]">{d.property?.title || "—"}</td>
+                        <td className="px-3 py-3 text-sm text-ink truncate max-w-[130px]">{d.property?.title || "—"}</td>
                         <td className="px-3 py-3 text-sm text-ink-muted">{d.lead?.name || "—"}</td>
                         <td className="px-3 py-3">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${d.operation_type === "venta" ? "bg-brand-50 text-brand-700" : "bg-emerald-50 text-emerald-700"}`}>
@@ -712,11 +757,26 @@ export default function FinanzasPage() {
                         </td>
                         <td className="px-3 py-3 text-sm font-medium text-ink">{fmtMXN(Number(d.transaction_value))}</td>
                         <td className="px-3 py-3 text-sm text-ink">{fmtMXN(Number(d.gross_commission))}</td>
-                        <td className="px-3 py-3 text-sm text-orange-600">{fmtMXN(Number(d.agent_commission || 0) + Number(d.agent2_commission || 0) + Number(d.referral_amount || 0))}</td>
+                        <td className="px-3 py-3 text-sm text-orange-600">
+                          {(Number(d.shared_amount || 0) + Number(d.referral_amount || 0)) > 0
+                            ? `− ${fmtMXN(Number(d.shared_amount || 0) + Number(d.referral_amount || 0))}`
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-brand-600">
+                          {(Number(d.agent_commission || 0) + Number(d.agent2_commission || 0)) > 0
+                            ? `− ${fmtMXN(Number(d.agent_commission || 0) + Number(d.agent2_commission || 0))}`
+                            : "—"}
+                        </td>
                         <td className="px-3 py-3 text-sm font-semibold text-emerald-600">{fmtMXN(Number(d.net_commission))}</td>
                         <td className="px-3 py-3 text-xs text-ink-muted">{new Date(d.closing_date).toLocaleDateString("es-MX")}</td>
                         <td className="px-3 py-3">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[d.status] || ""}`}>{d.status}</span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <button onClick={() => { setEditingDeal(d); setShowDealForm(true); }}
+                            className="text-xs text-brand-600 hover:text-brand-700 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                            Editar
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -864,43 +924,129 @@ export default function FinanzasPage() {
       {/* ── GASTOS ── */}
       {tab === "gastos" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
-            <KPICard label="Gastos en período" value={fmtMXN(gastoTotal)} color="text-red-500" />
-            <KPICard label="Gastos de marketing" value={fmtMXN(gastoMarketing)} sub="Digital + portales" />
-            <KPICard label="Gastos recurrentes" value={fmtMXN(expenses.filter(e => e.recurring).reduce((s: number, e: any) => s + Number(e.amount), 0))} sub="Mensuales fijos" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPICard label="Gasto P&L del período" value={fmtMXN(gastoTotal)} color="text-red-500" sub="Amortizado" />
+            <KPICard label="Salidas reales de caja" value={fmtMXN(expensesCashInPeriod.reduce((s: number, e: any) => s + Number(e.amount), 0))} color="text-red-500" sub="Pagos reales" />
+            <KPICard label="Marketing + portales" value={fmtMXN(gastoMarketing)} sub="Digital y portales" />
+            <KPICard label="Gastos diferidos activos" value={`${expenses.filter(e => e.is_deferred && e.amortization_months > 1).length}`} sub="Con amortización" />
           </div>
 
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line flex items-center justify-between">
-              <h3 className="font-semibold text-ink">Todos los gastos</h3>
-              <a href="/admin/finanzas/historicos"
-            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
-            📅 Históricos
-          </a>
-          <button onClick={() => setShowExpenseForm(true)}
-                className="text-xs text-brand-600 hover:underline">+ Registrar gasto</button>
-            </div>
-            {expensesInPeriod.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">Sin gastos en este período.</div>
-            ) : (
+          {/* Gastos diferidos activos */}
+          {expenses.some(e => e.is_deferred && e.amortization_months > 1) && (
+            <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+              <div className="p-5 border-b border-ink-line">
+                <h3 className="font-semibold text-ink">Gastos diferidos activos</h3>
+                <p className="text-xs text-ink-muted mt-0.5">Pagos únicos que se distribuyen en el P&L mensualmente</p>
+              </div>
               <table className="w-full">
                 <thead className="bg-ink-ghost/40 border-b border-ink-line">
-                  <tr>{["Categoría", "Descripción", "Monto", "Fecha", "Recurrente"].map(h => (
+                  <tr>{["Descripción", "Pago total", "Cobertura", "Impacto mensual", "Estado"].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
-                  {expensesInPeriod.map((e: any) => (
-                    <tr key={e.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                      <td className="px-4 py-3">
-                        <span className="text-xs bg-ink-ghost text-ink-muted px-2 py-0.5 rounded-full capitalize">{e.category.replace(/_/g, " ")}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-ink">{e.description}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-red-500">{fmtMXN(Number(e.amount))}</td>
-                      <td className="px-4 py-3 text-xs text-ink-muted">{new Date(e.expense_date).toLocaleDateString("es-MX")}</td>
-                      <td className="px-4 py-3">{e.recurring && <span className="text-xs text-brand-600">Recurrente</span>}</td>
-                    </tr>
-                  ))}
+                  {expenses.filter(e => e.is_deferred && e.amortization_months > 1).map((e: any) => {
+                    const coverStart = new Date(e.deferred_start_date || e.expense_date);
+                    const coverEnd   = new Date(coverStart.getFullYear(), coverStart.getMonth() + e.amortization_months, 0);
+                    const nowDate    = new Date();
+                    const isActive   = nowDate >= coverStart && nowDate <= coverEnd;
+                    const pctDone    = Math.min(100, Math.max(0,
+                      ((nowDate.getTime() - coverStart.getTime()) / (coverEnd.getTime() - coverStart.getTime())) * 100
+                    ));
+                    return (
+                      <tr key={e.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-ink">{e.description}</p>
+                          {e.vendor && <p className="text-xs text-ink-muted">{e.vendor}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-ink">{fmtMXN(Number(e.amount))}</td>
+                        <td className="px-4 py-3 text-xs text-ink-muted">
+                          {e.amortization_months} meses<br/>
+                          <span className="text-ink-soft">{coverStart.toLocaleDateString("es-MX", { month:"short", year:"2-digit" })} – {coverEnd.toLocaleDateString("es-MX", { month:"short", year:"2-digit" })}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-semibold text-brand-600">{fmtMXN(Number(e.amount) / e.amortization_months)}<span className="text-xs text-ink-muted font-normal">/mes</span></p>
+                          <div className="h-1.5 bg-ink-ghost rounded-full mt-1 w-24">
+                            <div className="h-1.5 bg-brand-400 rounded-full" style={{ width: `${pctDone}%` }} />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-ink-ghost text-ink-muted"}`}>
+                            {isActive ? "Activo" : coverEnd < nowDate ? "Vencido" : "Pendiente"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Todos los gastos del período */}
+          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+            <div className="p-5 border-b border-ink-line flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-ink">Gastos del período</h3>
+                <p className="text-xs text-ink-muted mt-0.5">Pagos reales realizados en el período seleccionado</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href="/admin/finanzas/historicos"
+                  className="text-xs text-ink-muted hover:text-ink border border-ink-line rounded-full px-3 py-1.5">
+                  📅 Históricos
+                </a>
+                <button onClick={() => setShowExpenseForm(true)}
+                  className="text-xs text-brand-600 border border-brand-200 hover:bg-brand-50 rounded-full px-3 py-1.5">
+                  + Registrar gasto
+                </button>
+              </div>
+            </div>
+            {expensesCashInPeriod.length === 0 ? (
+              <div className="p-12 text-center text-sm text-ink-muted">Sin gastos registrados en este período.</div>
+            ) : (
+              <table className="w-full">
+                <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                  <tr>{["Categoría", "Descripción", "Proveedor", "Monto real", "Impacto mensual P&L", "Fecha", "Tipo", ""].map(h => (
+                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {expensesCashInPeriod.map((e: any) => {
+                    const monthly = e.is_deferred && e.amortization_months > 1
+                      ? Number(e.amount) / e.amortization_months
+                      : Number(e.amount);
+                    return (
+                      <tr key={e.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                        <td className="px-4 py-3">
+                          <span className="text-xs bg-ink-ghost text-ink-muted px-2 py-0.5 rounded-full capitalize">
+                            {e.category.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-ink">{e.description}</td>
+                        <td className="px-4 py-3 text-xs text-ink-muted">{e.vendor || "—"}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-red-500">{fmtMXN(Number(e.amount))}</td>
+                        <td className="px-4 py-3 text-sm text-ink-muted">
+                          {e.is_deferred && e.amortization_months > 1
+                            ? <span className="text-brand-600">{fmtMXN(monthly)}/mes × {e.amortization_months}</span>
+                            : <span className="text-ink-soft">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-ink-muted">{new Date(e.expense_date).toLocaleDateString("es-MX")}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-0.5">
+                            {e.is_deferred && <span className="text-xs text-brand-600">Diferido</span>}
+                            {e.recurring   && <span className="text-xs text-emerald-600">Recurrente</span>}
+                            {e.invoiced    && <span className="text-xs text-ink-muted">Facturado</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
+                            className="text-xs text-brand-600 hover:text-brand-700 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                            Editar
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -908,8 +1054,20 @@ export default function FinanzasPage() {
         </div>
       )}
 
-      {showDealForm && <DealForm onClose={() => setShowDealForm(false)} onSaved={reload} />}
-      {showExpenseForm && <ExpenseForm onClose={() => setShowExpenseForm(false)} onSaved={reload} />}
+      {showDealForm && (
+        <DealForm
+          deal={editingDeal || undefined}
+          onClose={() => { setShowDealForm(false); setEditingDeal(null); }}
+          onSaved={reload}
+        />
+      )}
+      {showExpenseForm && (
+        <ExpenseForm
+          expense={editingExpense || undefined}
+          onClose={() => { setShowExpenseForm(false); setEditingExpense(null); }}
+          onSaved={reload}
+        />
+      )}
     </div>
   );
 }

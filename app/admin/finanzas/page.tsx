@@ -268,8 +268,10 @@ export default function FinanzasPage() {
   const ingresoRenta   = dealsInPeriod.filter(d => d.operation_type === "renta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
   const ingresoTotal   = ingresoVenta + ingresoRenta;
 
-  const gastoComisiones = dealsInPeriod.reduce((s: number, d: any) =>
-    s + Number(d.agent_commission || 0) + Number(d.agent2_commission || 0) + Number(d.referral_amount || 0), 0);
+  const gastoCompartida = dealsInPeriod.reduce((s: number, d: any) => s + Number(d.shared_amount || 0), 0);
+  const gastoReferidos  = dealsInPeriod.reduce((s: number, d: any) => s + Number(d.referral_amount || 0), 0);
+  const gastoAsesores   = dealsInPeriod.reduce((s: number, d: any) => s + Number(d.agent_commission || 0) + Number(d.agent2_commission || 0), 0);
+  const gastoComisiones = gastoCompartida + gastoReferidos + gastoAsesores;
   const gastoNomina     = (expensesPnL["nomina"] || 0);
   const gastoMarketing  = (expensesPnL["marketing_digital"] || 0) + (expensesPnL["portales_inmobiliarios"] || 0);
   const gastoAdmin      = Object.entries(expensesPnL)
@@ -536,11 +538,13 @@ export default function FinanzasPage() {
               <h3 className="font-semibold text-ink mb-5">Estado de resultados</h3>
               <div className="space-y-3">
                 {[
-                  { label: "Comisiones de venta", value: ingresoVenta, type: "ingreso" },
-                  { label: "Comisiones de renta", value: ingresoRenta, type: "ingreso" },
-                  { label: "Ingresos totales", value: ingresoTotal, type: "total" },
-                  { label: "— Comisiones asesores/referidos", value: -gastoComisiones, type: "gasto" },
-                  { label: "Utilidad bruta", value: utilidadBruta, type: "subtotal" },
+                  { label: "Comisiones de venta",                     value: ingresoVenta,     type: "ingreso" },
+                  { label: "Comisiones de renta",                     value: ingresoRenta,     type: "ingreso" },
+                  { label: "Ingresos totales",                        value: ingresoTotal,     type: "total" },
+                  ...(gastoCompartida > 0 ? [{ label: "— Comisión compartida (otra inmob.)", value: -gastoCompartida, type: "gasto" }] : []),
+                  ...(gastoReferidos  > 0 ? [{ label: "— Comisión referidos externos",       value: -gastoReferidos,  type: "gasto" }] : []),
+                  ...(gastoAsesores   > 0 ? [{ label: "— Comisión asesores internos",         value: -gastoAsesores,   type: "gasto" }] : []),
+                  { label: "Utilidad bruta (neto comisiones)",        value: utilidadBruta,    type: "subtotal" },
                   { label: "— Nómina", value: -gastoNomina, type: "gasto" },
                   { label: "— Marketing", value: -gastoMarketing, type: "gasto" },
                   { label: "— Gastos administrativos", value: -gastoAdmin, type: "gasto" },
@@ -567,7 +571,9 @@ export default function FinanzasPage() {
                     {ingresoVenta > 0 && <HBar label="Comisiones venta" value={ingresoVenta} max={ingresoTotal} color="#10B981" />}
                     {ingresoRenta > 0 && <HBar label="Comisiones renta" value={ingresoRenta} max={ingresoTotal} color="#34D399" />}
                     <div className="text-xs font-semibold text-ink-muted uppercase tracking-wider mt-4">Gastos</div>
-                    {gastoComisiones > 0 && <HBar label="Comisiones asesores/referidos" value={gastoComisiones} max={ingresoTotal} color="#EF4444" />}
+                    {gastoCompartida > 0 && <HBar label="Compartida (otra inmob.)" value={gastoCompartida} max={ingresoTotal} color="#F97316" />}
+                    {gastoReferidos > 0 && <HBar label="Referidos externos" value={gastoReferidos} max={ingresoTotal} color="#FB923C" />}
+                    {gastoAsesores > 0 && <HBar label="Asesores internos" value={gastoAsesores} max={ingresoTotal} color="#EF4444" />}
                     {gastoNomina > 0 && <HBar label="Nómina" value={gastoNomina} max={ingresoTotal} color="#F97316" />}
                     {gastoMarketing > 0 && <HBar label="Marketing" value={gastoMarketing} max={ingresoTotal} color="#F59E0B" />}
                     {gastoAdmin > 0 && <HBar label="Administrativo" value={gastoAdmin} max={ingresoTotal} color="#6B7280" />}

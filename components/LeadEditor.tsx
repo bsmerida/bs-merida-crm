@@ -115,6 +115,7 @@ export function LeadEditor({
       budget_text:  form.budget_text || null,
       budget_min:   form.budget_min ? Number(form.budget_min) : null,
       budget_max:   form.budget_max ? Number(form.budget_max) : null,
+      source:       form.source || "Manual",
       search_operation: form.search_operation || null,
       search_types:     form.search_types.length ? form.search_types : null,
       preferences: {

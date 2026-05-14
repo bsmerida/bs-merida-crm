@@ -49,20 +49,33 @@ function HBarChart({ data, max, colorFn }: { data: [string, number][]; max: numb
 // Gráfica de barras vertical
 function VBarChart({ data, color = "#5E4B8E", height = 120 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
   const max = Math.max(...data.map(d => d.value), 1);
+  const labelH = 18;
+  const availH = height - labelH;
   return (
-    <div className="flex items-end gap-1" style={{ height }}>
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-          {d.value > 0 && (
-            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
-              {d.label}: {d.value}
+    <div style={{ height }}>
+      <div className="flex items-end gap-1" style={{ height: availH }}>
+        {data.map((d, i) => {
+          const barH = d.value > 0 ? Math.max(Math.round((d.value / max) * availH), 4) : 2;
+          return (
+            <div key={i} className="flex-1 group relative flex flex-col justify-end">
+              {d.value > 0 && (
+                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+                  {d.label}: {d.value}
+                </div>
+              )}
+              <div className="w-full rounded-t-sm transition-all duration-500 hover:opacity-75"
+                style={{ height: barH, backgroundColor: d.value > 0 ? color : "#EAE5F2" }} />
             </div>
-          )}
-          <div className="w-full rounded-t-sm transition-all duration-500 hover:opacity-80"
-            style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value > 0 ? 4 : 1, backgroundColor: d.value > 0 ? color : "#EAE5F2" }} />
-          <span className="text-[9px] text-ink-muted truncate w-full text-center">{d.label}</span>
-        </div>
-      ))}
+          );
+        })}
+      </div>
+      <div className="flex gap-1 mt-1">
+        {data.map((d, i) => (
+          <div key={i} className="flex-1 text-center">
+            <span className="text-[9px] text-ink-muted truncate block">{d.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -255,23 +268,22 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   const maxState = byClientState[0]?.[1] as number || 1;
 
   // Zonas donde quieren comprar/rentar
-  // Extraer de preferred_zones o del campo interest
+  // Lee de preferences.zones (guardado por LeadEditor) + fallback a interest
   const zonaCount: Record<string, number> = {};
   leads.forEach((l: any) => {
-    // Primero preferred_zones (array)
-    if (l.preferred_zones && Array.isArray(l.preferred_zones)) {
-      l.preferred_zones.forEach((z: string) => {
-        if (z) zonaCount[z] = (zonaCount[z] || 0) + 1;
+    // Fuente principal: preferences.zones (array de {name, label, lat, lng})
+    const zones = l.preferences?.zones;
+    if (Array.isArray(zones) && zones.length > 0) {
+      zones.forEach((z: any) => {
+        const name = z.name || z.label;
+        if (name) zonaCount[name] = (zonaCount[name] || 0) + 1;
       });
-    }
-    // También extraer zona del campo interest (capturado por Sofía)
-    if (l.interest) {
-      const match = l.interest.match(/en ([^|,\n]+)/i);
+    } else if (l.interest) {
+      // Fallback: intentar extraer zona del texto de interest capturado por Sofía
+      const match = l.interest.match(/(?:en|zona|colonia|fraccionamiento)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ][^|,\n]{2,35})/i);
       if (match) {
         const zona = match[1].trim();
-        if (zona.length > 1 && zona.length < 40) {
-          zonaCount[zona] = (zonaCount[zona] || 0) + 1;
-        }
+        zonaCount[zona] = (zonaCount[zona] || 0) + 1;
       }
     }
   });
@@ -591,7 +603,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
                 <h3 className="font-semibold text-ink mb-5">Zonas de interés</h3>
                 {byZona.length === 0
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Se captura automáticamente del chatbot.</div>
+                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Llena el campo "Zonas de interés" en el perfil de cada cliente.</div>
                   : <HBarChart data={byZona} max={maxZona} colorFn={() => "#5E4B8E"} />}
               </div>
 

@@ -9,7 +9,7 @@ type ReportData = {
   deals: any[];
   expenses: any[];
   agentStats: any[];
-  bySource: any[];
+  bySource?: any[]; marketingByChannel?: any[];
   pipelineData: any[];
   totalLeads: number;
 };

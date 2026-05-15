@@ -114,11 +114,13 @@ export function DealForm({
       return;
     }
     setSaving(true);
+
+    // Solo los campos base que siempre existen en la tabla deals
     const payload: any = {
-      lead_id:                  form.lead_id     || null,
-      property_id:              form.property_id || null,
-      agent_id:                 form.agent_id    || null,
-      agent2_id:                form.agent2_id   || null,
+      lead_id:                  form.lead_id       || null,
+      property_id:              form.property_id   || null,
+      agent_id:                 form.agent_id      || null,
+      agent2_id:                form.agent2_id     || null,
       operation_type:           form.operation_type,
       deal_type:                form.deal_type,
       transaction_value:        tv,
@@ -134,40 +136,43 @@ export function DealForm({
       net_commission:           netAmt,
       closing_date:             form.closing_date,
       expected_collection_date: form.expected_collection_date || null,
-      amount_collected:         Number(form.amount_collected) || null,
       status:                   form.status,
       notes:                    form.notes || null,
     };
 
-    // Campos nuevos (requieren migración SQL) — los agrega si están disponibles
-    try {
-      payload.shared_agency_name = form.deal_type === "compartida" ? form.shared_agency_name || null : null;
+    // amount_collected solo si tiene valor real
+    if (form.amount_collected && Number(form.amount_collected) > 0) {
+      payload.amount_collected = Number(form.amount_collected);
+    }
+
+    // Campos de comisión compartida (solo si ya corriste la migración SQL)
+    if (form.deal_type === "compartida" && sharedAmt > 0) {
       payload.shared_pct         = sharedPct;
       payload.shared_amount      = sharedAmt;
-    } catch (_) {}
+      payload.shared_agency_name = form.shared_agency_name || null;
+    }
 
     const { error } = isEditing
       ? await supabase.from("deals").update(payload).eq("id", deal.id)
       : await supabase.from("deals").insert(payload);
 
+    setSaving(false);
+
     if (error) {
-      // Si falla por columnas que no existen, reintentar sin ellas
+      // Si falla por columnas compartidas, reintentar sin ellas
       if (error.message?.includes("shared")) {
-        delete payload.shared_agency_name;
         delete payload.shared_pct;
         delete payload.shared_amount;
-        const { error: error2 } = isEditing
+        delete payload.shared_agency_name;
+        const { error: e2 } = isEditing
           ? await supabase.from("deals").update(payload).eq("id", deal.id)
           : await supabase.from("deals").insert(payload);
-        setSaving(false);
-        if (error2) { alert("Error: " + error2.message); return; }
+        if (e2) { alert("Error al guardar: " + e2.message); return; }
       } else {
-        setSaving(false);
-        alert("Error: " + error.message);
+        alert("Error al guardar: " + error.message);
         return;
       }
     }
-    setSaving(false);
     onSaved();
     onClose();
   };

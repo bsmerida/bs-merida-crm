@@ -85,6 +85,7 @@ export default function FinanzasPage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingDeal, setEditingDeal] = useState<any>(null);
   const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [showAllDeals, setShowAllDeals] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [historialData, setHistorialData] = useState<any[]>([]);
   const [editingMetas, setEditingMetas] = useState(false);
@@ -328,39 +329,84 @@ export default function FinanzasPage() {
   const totalPonderado = pipelineStages.reduce((s, p) => s + p.ponderado, 0);
 
   // ── MARKETING ROI — CAC, ROAS, ROI real ───────────────────────────────────
+
+  // Detecta el canal de un gasto por su campo marketing_channel, descripción o proveedor
+  const inferChannel = (e: any): string | null => {
+    if (e.marketing_channel) return e.marketing_channel;
+
+    const text = `${e.description || ""} ${e.vendor || ""} ${e.notes || ""}`.toLowerCase();
+
+    const KEYWORDS: [string, string][] = [
+      // Portales
+      ["inmuebles24",      "Inmuebles24"],
+      ["lamudi",           "Lamudi by Proppit"],
+      ["proppit",          "Lamudi by Proppit"],
+      ["mercado libre",    "Mercado Libre"],
+      ["propiedades.com",  "Propiedades.com"],
+      ["easybroker",       "EasyBroker"],
+      ["easy broker",      "EasyBroker"],
+      ["tokko",            "Tokko"],
+      ["tuportalonline",   "TuPortalOnline"],
+      ["tu portal",        "TuPortalOnline"],
+      ["inmoexperts",      "InmoExperts"],
+      ["properstar",       "Properstar"],
+      ["pincali",          "Pincali"],
+      ["clasco",           "Clasco"],
+      // Redes sociales / digital
+      ["facebook",         "Facebook"],
+      ["meta ads",         "Facebook"],
+      ["meta ",            "Facebook"],
+      ["instagram",        "Instagram"],
+      ["tiktok",           "TikTok"],
+      ["google ads",       "Google"],
+      ["google ",          "Google"],
+      ["whatsapp",         "WhatsApp directo"],
+    ];
+
+    for (const [keyword, channel] of KEYWORDS) {
+      if (text.includes(keyword)) return channel;
+    }
+
+    // Por categoría como último recurso
+    if (e.category === "portales_inmobiliarios") return "Portales (sin canal)";
+    if (e.category === "marketing_digital")      return "Marketing digital (sin canal)";
+
+    return null;
+  };
+
   const marketingByChannel = useMemo(() => {
-    // Gasto por canal usando la misma lógica de amortización que el P&L
-    // (un diferido anual pagado en enero se distribuye en los 12 meses)
     const periodStartM = new Date(start.getFullYear(), start.getMonth(), 1);
     const periodEndM   = new Date(end.getFullYear(), end.getMonth() + 1, 0);
     const spendByChannel: Record<string, number> = {};
 
+    const mktCategories = ["marketing_digital", "portales_inmobiliarios"];
+
     expenses.forEach((e: any) => {
-      if (!e.marketing_channel) return;
+      if (!mktCategories.includes(e.category)) return;
+      const channel = inferChannel(e);
+      if (!channel) return;
+
       const isDeferred = e.is_deferred && e.amortization_months > 1;
 
       if (!isDeferred) {
-        // Gasto directo: cae en el período si su fecha de pago está dentro
         const payDate = new Date(e.expense_date);
         if (payDate >= start && payDate <= end) {
-          spendByChannel[e.marketing_channel] = (spendByChannel[e.marketing_channel] || 0) + Number(e.amount);
+          spendByChannel[channel] = (spendByChannel[channel] || 0) + Number(e.amount);
         }
         return;
       }
 
-      // Gasto diferido: calcular solapamiento de cobertura con el período
       const coverFrom  = e.deferred_start_date ? new Date(e.deferred_start_date) : new Date(e.expense_date);
       const coverStart = new Date(coverFrom.getFullYear(), coverFrom.getMonth(), 1);
       const coverEnd   = new Date(coverFrom.getFullYear(), coverFrom.getMonth() + e.amortization_months, 0);
-
       const overlapStart = new Date(Math.max(coverStart.getTime(), periodStartM.getTime()));
       const overlapEnd   = new Date(Math.min(coverEnd.getTime(), periodEndM.getTime()));
-      if (overlapStart > overlapEnd) return; // sin solapamiento
+      if (overlapStart > overlapEnd) return;
 
       const overlapMonths = (overlapEnd.getFullYear() - overlapStart.getFullYear()) * 12
         + overlapEnd.getMonth() - overlapStart.getMonth() + 1;
       const monthly = Number(e.amount) / e.amortization_months;
-      spendByChannel[e.marketing_channel] = (spendByChannel[e.marketing_channel] || 0) + (monthly * overlapMonths);
+      spendByChannel[channel] = (spendByChannel[channel] || 0) + (monthly * overlapMonths);
     });
 
     // Leads y deals por canal (todos los leads, no solo del período — para ver el total histórico)
@@ -815,13 +861,29 @@ export default function FinanzasPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line flex items-center justify-between">
-              <h3 className="font-semibold text-ink">Detalle de operaciones</h3>
+            <div className="p-5 border-b border-ink-line flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-ink">Detalle de operaciones</h3>
+                <div className="flex bg-ink-ghost rounded-lg p-0.5 text-xs">
+                  <button onClick={() => setShowAllDeals(false)}
+                    className={`px-3 py-1 rounded-md transition ${!showAllDeals ? "bg-white text-ink shadow-sm font-medium" : "text-ink-muted"}`}>
+                    Del período
+                  </button>
+                  <button onClick={() => setShowAllDeals(true)}
+                    className={`px-3 py-1 rounded-md transition ${showAllDeals ? "bg-white text-ink shadow-sm font-medium" : "text-ink-muted"}`}>
+                    Todas ({deals.length})
+                  </button>
+                </div>
+              </div>
               <button onClick={() => setShowDealForm(true)}
-                className="text-xs text-brand-600 hover:underline">+ Nueva operación</button>
+                className="text-xs text-brand-600 border border-brand-200 rounded-full px-3 py-1.5 hover:bg-brand-50">
+                + Nueva operación
+              </button>
             </div>
-            {dealsInPeriod.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">Sin operaciones en este período.</div>
+            {(showAllDeals ? deals : dealsInPeriod).length === 0 ? (
+              <div className="p-12 text-center text-sm text-ink-muted">
+                {showAllDeals ? "Sin operaciones registradas." : `Sin operaciones en este período. Si tienes operaciones de otro mes, usa "Todas" o cambia el período a Semestre/Año.`}
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -831,7 +893,7 @@ export default function FinanzasPage() {
                     ))}</tr>
                   </thead>
                   <tbody>
-                    {dealsInPeriod.map((d: any) => (
+                  {(showAllDeals ? deals : dealsInPeriod).map((d: any) => (
                       <tr key={d.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
                         <td className="px-3 py-3 text-sm text-ink truncate max-w-[130px]">{d.property?.title || "—"}</td>
                         <td className="px-3 py-3 text-sm text-ink-muted">{d.lead?.name || "—"}</td>

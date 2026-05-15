@@ -40,6 +40,7 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
     deferred_start_date: expense?.deferred_start_date || new Date().toISOString().slice(0, 10),
     recurring:           expense?.recurring           || false,
     invoiced:            expense?.invoiced            || false,
+    marketing_channel:   expense?.marketing_channel   || "",
     notes:               expense?.notes               || "",
   });
 
@@ -66,6 +67,7 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
       deferred_start_date: form.is_deferred ? form.deferred_start_date : null,
       recurring:           form.recurring,
       invoiced:            form.invoiced,
+      marketing_channel:   ["marketing_digital","portales_inmobiliarios"].includes(form.category) ? form.marketing_channel || null : null,
       notes:               form.notes || null,
     };
     const { error } = isEditing
@@ -101,7 +103,37 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
             </div>
           </div>
 
-          {/* Descripción y proveedor */}
+          {/* Canal de marketing — solo para gastos de marketing */}
+          {["marketing_digital", "portales_inmobiliarios"].includes(form.category) && (
+            <div>
+              <label className="text-xs text-ink-muted font-medium block mb-1.5">
+                Canal específico <span className="text-ink-soft">(para calcular ROI, CAC y ROAS por canal)</span>
+              </label>
+              <select value={form.marketing_channel} onChange={e => set("marketing_channel", e.target.value)} className={inp}>
+                <option value="">— Sin atribuir a canal específico</option>
+                <optgroup label="Redes sociales">
+                  <option value="Facebook">Facebook / Meta Ads</option>
+                  <option value="Instagram">Instagram Orgánico</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="Google">Google Ads</option>
+                  <option value="WhatsApp directo">WhatsApp</option>
+                </optgroup>
+                <optgroup label="Portales">
+                  <option value="Inmuebles24">Inmuebles24</option>
+                  <option value="Lamudi by Proppit">Lamudi by Proppit</option>
+                  <option value="Mercado Libre">Mercado Libre</option>
+                  <option value="Propiedades.com">Propiedades.com</option>
+                  <option value="EasyBroker">EasyBroker</option>
+                  <option value="Tokko">Tokko</option>
+                  <option value="TuPortalOnline">TuPortalOnline</option>
+                  <option value="InmoExperts">InmoExperts</option>
+                  <option value="Properstar">Properstar</option>
+                  <option value="Pincali">Pincali</option>
+                  <option value="Clasco">Clasco</option>
+                </optgroup>
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-ink-muted font-medium block mb-1.5">Descripción *</label>

@@ -174,6 +174,16 @@ export function DealForm({
       }
     }
     onSaved();
+
+    // Avisar si la operación quedó fuera del período visible actual
+    const dealDate = new Date(form.closing_date);
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (dealDate < thisMonth) {
+      const mes = dealDate.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+      alert(`✓ Operación guardada correctamente.\n\nNota: la fecha de cierre es ${mes}. Para verla en Finanzas, cambia el período a "Semestre" o "Año".`);
+    }
+
     onClose();
   };
 

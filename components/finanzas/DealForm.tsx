@@ -124,20 +124,13 @@ export function DealForm({
       transaction_value:        tv,
       commission_rate:          rate,
       gross_commission:         gross,
-      // Compartida
-      shared_agency_name:       form.deal_type === "compartida" ? form.shared_agency_name || null : null,
-      shared_pct:               sharedPct,
-      shared_amount:            sharedAmt,
-      // Referido
       referral_name:            form.referral_name || null,
       referral_pct:             refPct,
       referral_amount:          refAmt,
-      // Asesores
       agent_split_pct:          agentPct,
       agent_commission:         agentAmt,
       agent2_split_pct:         agent2Pct,
       agent2_commission:        agent2Amt,
-      // Resultado
       net_commission:           netAmt,
       closing_date:             form.closing_date,
       expected_collection_date: form.expected_collection_date || null,
@@ -146,12 +139,35 @@ export function DealForm({
       notes:                    form.notes || null,
     };
 
+    // Campos nuevos (requieren migración SQL) — los agrega si están disponibles
+    try {
+      payload.shared_agency_name = form.deal_type === "compartida" ? form.shared_agency_name || null : null;
+      payload.shared_pct         = sharedPct;
+      payload.shared_amount      = sharedAmt;
+    } catch (_) {}
+
     const { error } = isEditing
       ? await supabase.from("deals").update(payload).eq("id", deal.id)
       : await supabase.from("deals").insert(payload);
 
+    if (error) {
+      // Si falla por columnas que no existen, reintentar sin ellas
+      if (error.message?.includes("shared")) {
+        delete payload.shared_agency_name;
+        delete payload.shared_pct;
+        delete payload.shared_amount;
+        const { error: error2 } = isEditing
+          ? await supabase.from("deals").update(payload).eq("id", deal.id)
+          : await supabase.from("deals").insert(payload);
+        setSaving(false);
+        if (error2) { alert("Error: " + error2.message); return; }
+      } else {
+        setSaving(false);
+        alert("Error: " + error.message);
+        return;
+      }
+    }
     setSaving(false);
-    if (error) { alert("Error: " + error.message); return; }
     onSaved();
     onClose();
   };

@@ -189,6 +189,18 @@ export default function FinanzasPage() {
     setEditingMetas(false);
   };
 
+  const deleteDeal = async (id: string) => {
+    if (!confirm("¿Eliminar esta operación? Esta acción no se puede deshacer.")) return;
+    await supabase.from("deals").delete().eq("id", id);
+    reload();
+  };
+
+  const deleteExpense = async (id: string) => {
+    if (!confirm("¿Eliminar este gasto? Esta acción no se puede deshacer.")) return;
+    await supabase.from("expenses").delete().eq("id", id);
+    reload();
+  };
+
   const reload = () => setRefresh(r => r + 1);
 
   useEffect(() => {
@@ -315,23 +327,53 @@ export default function FinanzasPage() {
   });
   const totalPonderado = pipelineStages.reduce((s, p) => s + p.ponderado, 0);
 
-  // ── MARKETING ROI ──────────────────────────────────────────────────────────
-  const bySource = Object.entries(
-    leads.reduce((acc: any, l: any) => {
-      const k = l.source || "Sin origen"; acc[k] = acc[k] || { leads: 0, cerrados: 0 };
-      acc[k].leads++;
-      if (l.status === "Cerrado ganado") acc[k].cerrados++;
-      return acc;
-    }, {})
-  ).map(([source, data]: any) => ({
-    source, leads: data.leads,
-    cerrados: data.cerrados,
-    conv: data.leads > 0 ? ((data.cerrados / data.leads) * 100).toFixed(1) : "0",
-    ingresos: dealsInPeriod.filter(d => {
-      const lead = leads.find(l => l.id === d.lead_id);
-      return lead?.source === source;
-    }).reduce((s: number, d: any) => s + Number(d.gross_commission), 0),
-  })).sort((a, b) => b.leads - a.leads);
+  // ── MARKETING ROI — CAC, ROAS, ROI real ───────────────────────────────────
+  const marketingByChannel = useMemo(() => {
+    // Gasto por canal en el período (expenses con marketing_channel asignado)
+    const spendByChannel: Record<string, number> = {};
+    expensesCashInPeriod.forEach((e: any) => {
+      if (!e.marketing_channel) return;
+      const ch = e.is_deferred && e.amortization_months > 1
+        ? Number(e.amount) / e.amortization_months   // amortizado para P&L
+        : Number(e.amount);
+      spendByChannel[e.marketing_channel] = (spendByChannel[e.marketing_channel] || 0) + ch;
+    });
+
+    // Leads y deals por canal (todos los leads, no solo del período — para ver el total histórico)
+    const leadsByChannel: Record<string, { leads: number; cerrados: number; revenue: number }> = {};
+    leads.forEach((l: any) => {
+      const ch = l.source || "Sin origen";
+      if (!leadsByChannel[ch]) leadsByChannel[ch] = { leads: 0, cerrados: 0, revenue: 0 };
+      leadsByChannel[ch].leads++;
+      if (l.status === "Cerrado ganado") leadsByChannel[ch].cerrados++;
+    });
+    // Revenue de deals del período cuyo lead tenga ese origen
+    dealsInPeriod.forEach((d: any) => {
+      const lead = leads.find((l: any) => l.id === d.lead_id);
+      const ch = lead?.source || "Sin origen";
+      if (!leadsByChannel[ch]) leadsByChannel[ch] = { leads: 0, cerrados: 0, revenue: 0 };
+      leadsByChannel[ch].revenue += Number(d.net_commission || 0);
+    });
+
+    // Unir todos los canales conocidos
+    const allChannels = new Set([...Object.keys(leadsByChannel), ...Object.keys(spendByChannel)]);
+
+    return Array.from(allChannels).map(ch => {
+      const data    = leadsByChannel[ch] || { leads: 0, cerrados: 0, revenue: 0 };
+      const spend   = spendByChannel[ch] || 0;
+      const revenue = data.revenue;
+      const profit  = revenue - spend;
+      const roi     = spend > 0 ? ((profit / spend) * 100) : null;       // %
+      const roas    = spend > 0 ? revenue / spend : null;                 // veces
+      const cac     = data.cerrados > 0 && spend > 0
+        ? spend / data.cerrados : null;                                   // $ por cliente
+      const conv    = data.leads > 0
+        ? ((data.cerrados / data.leads) * 100).toFixed(1) : "0";
+
+      return { channel: ch, leads: data.leads, cerrados: data.cerrados,
+               conv, spend, revenue, profit, roi, roas, cac };
+    }).sort((a, b) => (b.revenue + (b.roi || 0)) - (a.revenue + (a.roi || 0)));
+  }, [leads, dealsInPeriod, expensesCashInPeriod]);
 
   // ── FLUJO DE CAJA ──────────────────────────────────────────
   const flujoMeses = useMemo(() => {
@@ -421,13 +463,13 @@ export default function FinanzasPage() {
           <ReportExporterPro data={{
             period: PERIODOS.find(p => p.value === period)?.label || period,
             pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
-            deals: dealsInPeriod, expenses: expensesCashInPeriod, agentStats, bySource,
+            deals: dealsInPeriod, expenses: expensesCashInPeriod, agentStats, marketingByChannel,
             pipelineData: pipelineStages, totalLeads: leads.length, history: historialData,
           }} />
           <FinanzasAI data={{
             period: PERIODOS.find(p => p.value === period)?.label || period,
             pnl: { ingresoVenta, ingresoRenta, ingresoTotal, gastoComisiones, gastoNomina, gastoMarketing, gastoAdmin, gastoTotal, utilidadBruta, utilidadOp, margenNeto },
-            deals: dealsInPeriod, expenses: expensesCashInPeriod, agentStats, bySource,
+            deals: dealsInPeriod, expenses: expensesCashInPeriod, agentStats, marketingByChannel,
             pipelineData: pipelineStages, totalLeads: leads.length,
           }} />
           <a href="/admin/finanzas/historicos"
@@ -792,10 +834,16 @@ export default function FinanzasPage() {
                           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[d.status] || ""}`}>{d.status}</span>
                         </td>
                         <td className="px-3 py-3">
-                          <button onClick={() => { setEditingDeal(d); setShowDealForm(true); }}
-                            className="text-xs text-brand-600 hover:text-brand-700 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
-                            Editar
-                          </button>
+                          <div className="flex gap-1.5">
+                            <button onClick={() => { setEditingDeal(d); setShowDealForm(true); }}
+                              className="text-xs text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                              Editar
+                            </button>
+                            <button onClick={() => deleteDeal(d.id)}
+                              className="text-xs text-red-500 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-50">
+                              Eliminar
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -900,42 +948,100 @@ export default function FinanzasPage() {
       {/* ── MARKETING ROI ── */}
       {tab === "marketing" && (
         <div className="space-y-6">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-sm text-amber-800">
-            💡 Para calcular CAC y ROAS, ve a <strong>Gastos</strong> y registra tus inversiones en marketing digital y portales.
+          {/* KPIs resumen */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPICard label="Gasto total marketing" value={fmtMXN(marketingByChannel.reduce((s, c) => s + c.spend, 0))} color="text-red-500" sub="En el período" />
+            <KPICard label="Ingresos atribuidos" value={fmtMXN(marketingByChannel.reduce((s, c) => s + c.revenue, 0))} color="text-emerald-600" sub="Neto de comisiones" />
+            <KPICard label="ROAS global"
+              value={marketingByChannel.reduce((s,c) => s+c.spend,0) > 0
+                ? `${(marketingByChannel.reduce((s,c)=>s+c.revenue,0) / marketingByChannel.reduce((s,c)=>s+c.spend,0)).toFixed(1)}×`
+                : "—"}
+              sub="Por cada $1 invertido" />
+            <KPICard label="CAC promedio"
+              value={(() => {
+                const totalCerrados = marketingByChannel.filter(c=>c.spend>0).reduce((s,c)=>s+c.cerrados,0);
+                const totalSpend    = marketingByChannel.reduce((s,c)=>s+c.spend,0);
+                return totalCerrados > 0 ? fmtMXN(totalSpend / totalCerrados) : "—";
+              })()}
+              sub="Costo por cliente captado" />
           </div>
+
+          {/* Aviso si no hay gastos atribuidos */}
+          {marketingByChannel.every(c => c.spend === 0) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-sm text-amber-800">
+              💡 Para ver CAC, ROAS y ROI real, ve a <strong>Gastos</strong>, registra tus inversiones en marketing y selecciona el <strong>canal específico</strong> (Facebook, Inmuebles24, etc.).
+            </div>
+          )}
+
+          {/* Tabla por canal */}
           <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
             <div className="p-5 border-b border-ink-line">
-              <h3 className="font-semibold text-ink">Rendimiento por canal de origen</h3>
+              <h3 className="font-semibold text-ink">Análisis por canal</h3>
+              <p className="text-xs text-ink-muted mt-0.5">Ingresos del período · leads históricos</p>
             </div>
-            {bySource.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">Sin datos de origen.</div>
+            {marketingByChannel.length === 0 ? (
+              <div className="p-12 text-center text-sm text-ink-muted">Sin datos de origen en clientes.</div>
             ) : (
               <table className="w-full">
                 <thead className="bg-ink-ghost/40 border-b border-ink-line">
-                  <tr>{["Canal", "Leads", "Cerrados", "Conversión", "Ingresos generados"].map(h => (
+                  <tr>{["Canal", "Leads", "Clientes", "Conversión", "Inversión", "Ingresos netos", "ROI", "ROAS", "CAC"].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
-                  {bySource.map((s: any) => (
-                    <tr key={s.source} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                      <td className="px-4 py-3 font-medium text-sm text-ink">{s.source}</td>
-                      <td className="px-4 py-3 text-sm text-ink-muted">{s.leads}</td>
-                      <td className="px-4 py-3 text-sm text-emerald-600">{s.cerrados}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-ink-ghost rounded-full overflow-hidden">
-                            <div className="h-full bg-brand-400 rounded-full" style={{ width: `${s.conv}%` }} />
+                  {marketingByChannel.map(c => {
+                    const roiOk   = c.roi !== null && c.roi >= 100;
+                    const roiWarn = c.roi !== null && c.roi >= 0 && c.roi < 100;
+                    const roiBad  = c.roi !== null && c.roi < 0;
+                    return (
+                      <tr key={c.channel} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                        <td className="px-4 py-3 font-medium text-sm text-ink">{c.channel}</td>
+                        <td className="px-4 py-3 text-sm text-ink-muted">{c.leads}</td>
+                        <td className="px-4 py-3 text-sm text-emerald-600 font-medium">{c.cerrados}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-14 h-1.5 bg-ink-ghost rounded-full overflow-hidden">
+                              <div className="h-full bg-brand-400 rounded-full" style={{ width: `${Math.min(Number(c.conv), 100)}%` }} />
+                            </div>
+                            <span className="text-xs text-ink">{c.conv}%</span>
                           </div>
-                          <span className="text-xs text-ink">{s.conv}%</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-ink">{fmtMXN(s.ingresos)}</td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-red-500">
+                          {c.spend > 0 ? fmtMXN(c.spend) : <span className="text-ink-soft text-xs">Sin dato</span>}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-emerald-600">
+                          {c.revenue > 0 ? fmtMXN(c.revenue) : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {c.roi !== null ? (
+                            <span className={`text-sm font-semibold ${roiOk ? "text-emerald-600" : roiWarn ? "text-amber-600" : "text-red-500"}`}>
+                              {c.roi >= 0 ? "+" : ""}{c.roi.toFixed(0)}%
+                            </span>
+                          ) : <span className="text-xs text-ink-soft">—</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          {c.roas !== null ? (
+                            <span className={`text-sm font-semibold ${c.roas >= 2 ? "text-emerald-600" : c.roas >= 1 ? "text-amber-600" : "text-red-500"}`}>
+                              {c.roas.toFixed(1)}×
+                            </span>
+                          ) : <span className="text-xs text-ink-soft">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-ink-muted">
+                          {c.cac !== null ? fmtMXN(c.cac) : <span className="text-ink-soft text-xs">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
+          </div>
+
+          <div className="bg-ink-ghost rounded-2xl px-5 py-4 text-xs text-ink-muted space-y-1">
+            <p><strong className="text-ink">ROI</strong> = (Ingresos − Inversión) / Inversión × 100. Por encima de 0% recuperas la inversión.</p>
+            <p><strong className="text-ink">ROAS</strong> = Ingresos / Inversión. 2× significa que por cada $1 invertido regresaron $2.</p>
+            <p><strong className="text-ink">CAC</strong> = Inversión / Clientes captados. Lo que costó adquirir cada cliente que cerró.</p>
+            <p className="text-ink-soft">Los ingresos son comisiones netas (ya descontados asesores y referidos) de deals del período.</p>
           </div>
         </div>
       )}
@@ -1058,10 +1164,16 @@ export default function FinanzasPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
-                            className="text-xs text-brand-600 hover:text-brand-700 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
-                            Editar
-                          </button>
+                          <div className="flex gap-1.5">
+                            <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
+                              className="text-xs text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                              Editar
+                            </button>
+                            <button onClick={() => deleteExpense(e.id)}
+                              className="text-xs text-red-500 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-50">
+                              Eliminar
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

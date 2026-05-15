@@ -87,7 +87,10 @@ export function DealForm({
   // ── Cálculos en tiempo real ─────────────────────────────────
   const tv    = Number(form.transaction_value) || 0;
   const rate  = Number(form.commission_rate)   || 0;
-  const gross = tv * rate;
+  // Rentas: el ingreso es el honorario directo (transaction_value), no tv × rate
+  // Ventas: el ingreso es tv × rate (% de comisión sobre el valor de venta)
+  const isRenta = form.operation_type === "renta";
+  const gross = isRenta ? tv : tv * rate;
 
   // Compartida con otra inmobiliaria
   const sharedPct    = form.deal_type === "compartida" ? Number(form.shared_pct) || 0 : 0;
@@ -261,14 +264,27 @@ export function DealForm({
           {/* Valor y comisión */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-ink-muted">Valor de la operación (MXN) *</label>
+              <label className="text-xs text-ink-muted">
+                {isRenta ? "Renta mensual (MXN) *" : "Valor de la operación (MXN) *"}
+              </label>
               <div className="mt-1.5">
                 <input type="number" value={form.transaction_value}
                   onChange={e => set("transaction_value", e.target.value)}
-                  placeholder="Ej. 3,500,000" className={inp} />
+                  placeholder={isRenta ? "Ej. 20,000" : "Ej. 3,500,000"} className={inp} />
               </div>
             </div>
-            {pctField("% Comisión bruta *", "commission_rate")}
+            {isRenta ? (
+              <div>
+                <label className="text-xs text-ink-muted">Honorarios de renta (MXN) *</label>
+                <div className="mt-1.5 bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5 text-sm text-brand-700 flex items-center justify-between">
+                  <span>{tv > 0 ? fmtMXN(tv) : "—"}</span>
+                  <span className="text-xs text-brand-500">= monto de renta ingresado</span>
+                </div>
+                <p className="text-[10px] text-ink-muted mt-1">Para rentas, el honorario es el total de la renta (generalmente 1 mes).</p>
+              </div>
+            ) : (
+              pctField("% Comisión bruta *", "commission_rate")
+            )}
           </div>
 
           {/* Compartida con otra inmobiliaria */}
@@ -341,14 +357,16 @@ export function DealForm({
           {/* Desglose de comisión en tiempo real */}
           {tv > 0 && (
             <div className="bg-ink-ghost rounded-2xl p-4">
-              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">Desglose de la comisión</p>
+              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
+              {isRenta ? "Distribución del honorario de renta" : "Desglose de la comisión"}
+            </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-muted">Valor de la operación</span>
+                  <span className="text-ink-muted">{isRenta ? "Renta mensual" : "Valor de la operación"}</span>
                   <span className="font-medium text-ink">{fmtMXN(tv)}</span>
                 </div>
                 <div className="flex justify-between text-sm border-t border-ink-line pt-2">
-                  <span className="text-ink-muted">Comisión bruta ({(rate * 100).toFixed(1)}%)</span>
+                  <span className="text-ink-muted">{isRenta ? "Honorario total (100% de la renta)" : `Comisión bruta (${(rate * 100).toFixed(1)}%)`}</span>
                   <span className="font-medium text-ink">{fmtMXN(gross)}</span>
                 </div>
                 {sharedAmt > 0 && (

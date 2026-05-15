@@ -357,6 +357,19 @@ export default function FinanzasPage() {
       if (!mesesMap[key]) return;
       mesesMap[key].salidas += Number(e.amount || 0);
     });
+    // Salidas: pagos de comisiones a terceros (compartida, referidos, asesores)
+    // Se registran en la fecha de cierre del deal como salida de caja
+    deals.forEach((d: any) => {
+      if (!d.closing_date) return;
+      const key = d.closing_date.slice(0, 7);
+      if (!mesesMap[key]) return;
+      const pagosComisiones =
+        Number(d.shared_amount    || 0) +
+        Number(d.referral_amount  || 0) +
+        Number(d.agent_commission || 0) +
+        Number(d.agent2_commission|| 0);
+      mesesMap[key].salidas += pagosComisiones;
+    });
     // Construir array con flujo neto y acumulado
     let acumulado = 0;
     return Object.entries(mesesMap).map(([mes, v]) => {

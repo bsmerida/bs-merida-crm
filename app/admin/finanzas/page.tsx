@@ -329,14 +329,38 @@ export default function FinanzasPage() {
 
   // ── MARKETING ROI — CAC, ROAS, ROI real ───────────────────────────────────
   const marketingByChannel = useMemo(() => {
-    // Gasto por canal en el período (expenses con marketing_channel asignado)
+    // Gasto por canal usando la misma lógica de amortización que el P&L
+    // (un diferido anual pagado en enero se distribuye en los 12 meses)
+    const periodStartM = new Date(start.getFullYear(), start.getMonth(), 1);
+    const periodEndM   = new Date(end.getFullYear(), end.getMonth() + 1, 0);
     const spendByChannel: Record<string, number> = {};
-    expensesCashInPeriod.forEach((e: any) => {
+
+    expenses.forEach((e: any) => {
       if (!e.marketing_channel) return;
-      const ch = e.is_deferred && e.amortization_months > 1
-        ? Number(e.amount) / e.amortization_months   // amortizado para P&L
-        : Number(e.amount);
-      spendByChannel[e.marketing_channel] = (spendByChannel[e.marketing_channel] || 0) + ch;
+      const isDeferred = e.is_deferred && e.amortization_months > 1;
+
+      if (!isDeferred) {
+        // Gasto directo: cae en el período si su fecha de pago está dentro
+        const payDate = new Date(e.expense_date);
+        if (payDate >= start && payDate <= end) {
+          spendByChannel[e.marketing_channel] = (spendByChannel[e.marketing_channel] || 0) + Number(e.amount);
+        }
+        return;
+      }
+
+      // Gasto diferido: calcular solapamiento de cobertura con el período
+      const coverFrom  = e.deferred_start_date ? new Date(e.deferred_start_date) : new Date(e.expense_date);
+      const coverStart = new Date(coverFrom.getFullYear(), coverFrom.getMonth(), 1);
+      const coverEnd   = new Date(coverFrom.getFullYear(), coverFrom.getMonth() + e.amortization_months, 0);
+
+      const overlapStart = new Date(Math.max(coverStart.getTime(), periodStartM.getTime()));
+      const overlapEnd   = new Date(Math.min(coverEnd.getTime(), periodEndM.getTime()));
+      if (overlapStart > overlapEnd) return; // sin solapamiento
+
+      const overlapMonths = (overlapEnd.getFullYear() - overlapStart.getFullYear()) * 12
+        + overlapEnd.getMonth() - overlapStart.getMonth() + 1;
+      const monthly = Number(e.amount) / e.amortization_months;
+      spendByChannel[e.marketing_channel] = (spendByChannel[e.marketing_channel] || 0) + (monthly * overlapMonths);
     });
 
     // Leads y deals por canal (todos los leads, no solo del período — para ver el total histórico)
@@ -373,7 +397,7 @@ export default function FinanzasPage() {
       return { channel: ch, leads: data.leads, cerrados: data.cerrados,
                conv, spend, revenue, profit, roi, roas, cac };
     }).sort((a, b) => (b.revenue + (b.roi || 0)) - (a.revenue + (a.roi || 0)));
-  }, [leads, dealsInPeriod, expensesCashInPeriod]);
+  }, [leads, dealsInPeriod, expenses, start, end]);
 
   // ── FLUJO DE CAJA ──────────────────────────────────────────
   const flujoMeses = useMemo(() => {
@@ -1065,7 +1089,7 @@ export default function FinanzasPage() {
               </div>
               <table className="w-full">
                 <thead className="bg-ink-ghost/40 border-b border-ink-line">
-                  <tr>{["Descripción", "Pago total", "Cobertura", "Impacto mensual", "Estado"].map(h => (
+                  <tr>{["Descripción", "Pago total", "Cobertura", "Impacto mensual", "Estado", ""].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
                 </thead>
@@ -1099,6 +1123,18 @@ export default function FinanzasPage() {
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-ink-ghost text-ink-muted"}`}>
                             {isActive ? "Activo" : coverEnd < nowDate ? "Vencido" : "Pendiente"}
                           </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1.5">
+                            <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
+                              className="text-xs text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                              Editar
+                            </button>
+                            <button onClick={() => deleteExpense(e.id)}
+                              className="text-xs text-red-500 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-50">
+                              Eliminar
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

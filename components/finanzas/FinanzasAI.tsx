@@ -30,7 +30,8 @@ export function FinanzasAI({ data }: { data: ReportData }) {
   const [loading, setLoading] = useState(false);
 
   const buildContext = () => {
-    const { pnl, deals, agentStats, bySource, pipelineData, period, totalLeads } = data;
+    const { pnl, deals, agentStats, marketingByChannel, bySource, pipelineData, period, totalLeads } = data;
+    const canales = marketingByChannel || bySource || [];
     return `
 Eres el CFO virtual de BS Mérida, una inmobiliaria familiar en México.
 Modelo: renta = 1er mes de renta como comisión. Venta = 3-5% del valor.
@@ -53,7 +54,7 @@ ASESORES:
 ${agentStats.map((a: any) => `- ${a.full_name}: ${a.myLeads} leads, ${a.cerrados} cierres, ${a.conv}% conv, ${fmtMXN(a.ingresos)} ingresos`).join("\n")}
 
 CANALES DE MARKETING:
-${bySource.slice(0, 8).map((s: any) => `- ${s.source}: ${s.leads} leads, ${s.cerrados} cerrados, ${s.conv}% conv, ${fmtMXN(s.ingresos)} ingresos`).join("\n")}
+${canales.slice(0, 8).map((s: any) => `- ${s.channel || s.source}: ${s.leads} leads, ${s.cerrados} cerrados, ${s.conv}% conv, ingresos: ${fmtMXN(s.revenue || s.ingresos || 0)}${s.spend > 0 ? `, inversión: ${fmtMXN(s.spend)}, ROI: ${s.roi?.toFixed(0)}%` : ""}`).join("\n")}
 
 PIPELINE:
 ${pipelineData.map((p: any) => `- ${p.estado}: ${p.count} leads, ingreso ponderado: ${fmtMXN(p.ponderado)}`).join("\n")}

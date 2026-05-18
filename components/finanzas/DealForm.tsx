@@ -127,8 +127,8 @@ export function DealForm({
       operation_type:           form.operation_type,
       deal_type:                form.deal_type,
       transaction_value:        tv,
-      commission_rate:          rate,
-      gross_commission:         gross,
+      commission_rate:          isRenta ? 1 : rate,
+      gross_commission:         gross,  // para rentas: gross = tv (calculado arriba)
       referral_name:            form.referral_name || null,
       referral_pct:             refPct,
       referral_amount:          refAmt,

@@ -277,8 +277,16 @@ export default function FinanzasPage() {
   }, [expenses, start, end]);
 
   // ── P&L ────────────────────────────────────────────────────────────────────
-  const ingresoVenta   = dealsInPeriod.filter(d => d.operation_type === "venta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
-  const ingresoRenta   = dealsInPeriod.filter(d => d.operation_type === "renta").reduce((s: number, d: any) => s + Number(d.gross_commission), 0);
+  // Para rentas: el ingreso es el valor de la renta completo (transaction_value)
+  // Para ventas: el ingreso es gross_commission (tv × % comisión)
+  // Esto corrige deals existentes que pudieran tener gross_commission calculado con %
+  const getIncome = (d: any) =>
+    d.operation_type === "renta"
+      ? Number(d.transaction_value || d.gross_commission || 0)
+      : Number(d.gross_commission || 0);
+
+  const ingresoVenta   = dealsInPeriod.filter(d => d.operation_type === "venta").reduce((s: number, d: any) => s + getIncome(d), 0);
+  const ingresoRenta   = dealsInPeriod.filter(d => d.operation_type === "renta").reduce((s: number, d: any) => s + getIncome(d), 0);
   const ingresoTotal   = ingresoVenta + ingresoRenta;
 
   const gastoCompartida = dealsInPeriod.reduce((s: number, d: any) => s + Number(d.shared_amount || 0), 0);

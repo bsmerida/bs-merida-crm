@@ -67,7 +67,7 @@ ${history && history.length > 0 ? "## Análisis Histórico y Tendencias\n" : ""}
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20251022",
+        model: process.env.ANTHROPIC_MODEL_SONNET || "claude-sonnet-4-6",
         max_tokens: 2000,
         system,
         messages: [{ role: "user", content: prompt }],

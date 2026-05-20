@@ -642,7 +642,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         doc.rect(0, pageH - 14, pageW, 14, "F");
         doc.setFontSize(7);
         doc.setTextColor(...GRAY);
-        doc.text(`BS Mérida · Reporte Financiero · ${data.period} · Confidencial`, 14, pageH - 5);
+        doc.text(`Duclaud · Reporte Financiero · ${data.period} · Confidencial`, 14, pageH - 5);
         doc.text(`Página ${i} de ${totalPages}`, pageW - 14, pageH - 5, { align: "right" });
       }
 
@@ -658,11 +658,11 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
     <div className="flex items-center gap-2">
       <button onClick={exportExcel} disabled={exporting !== null}
         className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-full text-sm font-medium disabled:opacity-50">
-        {exporting === "excel" ? "⏳ Generando..." : "📊 Excel CFO"}
+        {exporting === "excel" ? "Generando..." : "Exportar Excel"}
       </button>
       <button onClick={exportPDF} disabled={exporting !== null}
         className="flex items-center gap-1.5 px-4 py-2 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-full text-sm font-medium disabled:opacity-50">
-        {exporting === "pdf" ? `⏳ ${pdfStep || "Generando..."}` : "📄 Reporte Ejecutivo"}
+        {exporting === "pdf" ? (pdfStep || "Generando...") : "Reporte Ejecutivo PDF"}
       </button>
     </div>
   );

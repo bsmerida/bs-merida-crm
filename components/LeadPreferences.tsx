@@ -173,7 +173,7 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
             {["Venta", "Renta"].map(op => (
               <button key={op} onClick={() => set("operation", prefs.operation === op ? "" : op)}
                 className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${prefs.operation === op ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
-                {op === "Venta" ? "🏠 Comprar" : "🔑 Rentar"}
+                {op === "Venta" ? "Comprar" : "Rentar"}
               </button>
             ))}
           </div>

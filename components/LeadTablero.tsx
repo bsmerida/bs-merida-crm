@@ -190,14 +190,14 @@ export function LeadTablero({ lead }: { lead: any }) {
   // ── Sin tablero ────────────────────────────────────────────
   if (!board) return (
     <div className="bg-white rounded-2xl border border-ink-line shadow-card p-10 text-center space-y-4">
-      <div className="text-5xl">🏠</div>
+      <div><svg className="w-12 h-12 text-stone-dk" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
       <h3 className="font-semibold text-ink text-lg">Crea un tablero para {lead.name}</h3>
       <p className="text-sm text-ink-muted max-w-md mx-auto">
         Un tablero es una selección personalizada de propiedades que le mandas al cliente por WhatsApp. La IA analiza su perfil y sugiere las mejores opciones automáticamente.
       </p>
       <button onClick={createBoard} disabled={creating}
         className="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-full font-medium text-sm disabled:opacity-50">
-        {creating ? "Creando..." : "✨ Crear tablero con IA"}
+        {creating ? "Creando..." : "Crear tablero con IA"}
       </button>
     </div>
   );
@@ -241,7 +241,7 @@ export function LeadTablero({ lead }: { lead: any }) {
           {matching ? (
             <><span className="animate-spin">⟳</span> Analizando con IA...</>
           ) : (
-            <><span>✨</span> {aiDone ? "Volver a analizar con IA" : "Sugerir propiedades con IA"}</>
+            <>{aiDone ? "Volver a analizar con IA" : "Sugerir propiedades con IA"}</>
           )}
         </button>
         <button onClick={() => setShowPicker(v => !v)}
@@ -271,7 +271,7 @@ export function LeadTablero({ lead }: { lead: any }) {
                 )}
                 {p.added_by === "ai" && (
                   <div className="absolute top-2 left-2 bg-brand-500 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
-                    ✨ IA · {p.ai_score}/10
+                    IA · {p.ai_score}/10
                   </div>
                 )}
                 <button onClick={() => removeProp(p.id)}
@@ -285,7 +285,7 @@ export function LeadTablero({ lead }: { lead: any }) {
                 <p className="text-ink-muted text-xs mt-1">{[p.zone, p.city].filter(Boolean).join(", ")}</p>
                 {p.ai_reason && (
                   <p className="text-xs text-brand-600 bg-brand-50 rounded-lg px-2 py-1.5 mt-2">
-                    ✨ {p.ai_reason}
+                    {p.ai_reason}
                   </p>
                 )}
               </div>

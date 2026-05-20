@@ -1,62 +1,47 @@
 import Link from "next/link";
-import { Logo } from "./Logo";
-import { Icon } from "./Icon";
 
 export function PublicFooter() {
-  const addr = process.env.NEXT_PUBLIC_BUSINESS_ADDRESS || "Calle 13 #147, Col. México Oriente, Mérida, Yucatán";
-  const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
-  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815";
-  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com";
-
-  const social = [
-    { name: "Facebook", href: "https://www.facebook.com/ContactoInmobiliariaBS/", icon: "facebook" },
-    { name: "Instagram", href: "https://www.instagram.com/inmobiliariabs/", icon: "instagram" },
-  ];
+  const wa    = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
+  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE    || "999 303 4815";
+  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL    || "contacto@duclaud.mx";
+  const addr  = process.env.NEXT_PUBLIC_BUSINESS_ADDRESS  || "Mérida, Yucatán · México";
 
   return (
-    <footer className="border-t border-ink-line mt-20 bg-white">
-      <div className="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
-        <div className="md:col-span-2">
-          <Logo />
-          <p className="text-sm text-ink-muted mt-4 leading-relaxed max-w-xs">
-            Asesores inmobiliarios certificados con presencia en Yucatán, Quintana Roo y Nuevo León.
-          </p>
-          <div className="flex items-center gap-3 mt-6">
-            {social.map(s => (
-              <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.name}
-                className="w-9 h-9 rounded-full border border-ink-line flex items-center justify-center text-ink-muted hover:text-brand-600 hover:border-brand-300 transition">
-                <Icon name={s.icon} className="w-4 h-4" />
-              </a>
-            ))}
+    <footer className="bg-navy text-white mt-24">
+      <div className="max-w-7xl mx-auto px-8 pt-16 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-12 border-b border-white/10">
+          <div className="md:col-span-5">
+            <div className="font-serif text-2xl font-light tracking-[0.16em] uppercase mb-5">
+              D<span className="text-gold mx-0.5">·</span>UCLAUD
+            </div>
+            <p className="text-white/40 text-sm leading-relaxed max-w-xs">
+              Consultoría inmobiliaria con criterio legal y financiero. Socios AMPI. Mérida, Yucatán.
+            </p>
+          </div>
+          <div className="md:col-span-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-white/25 mb-5">Navegación</div>
+            <ul className="space-y-3">
+              {[["Inicio","/"],["Comprar","/comprar"],["Rentar","/rentar"],["La firma","/nosotros"],["Contacto","/contacto"]].map(([l,h]) => (
+                <li key={h}><Link href={h} className="text-sm text-white/45 hover:text-gold transition-colors">{l}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div className="md:col-span-4">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-white/25 mb-5">Contacto</div>
+            <ul className="space-y-3 text-sm text-white/45">
+              <li><a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">{phone}</a></li>
+              <li><a href={`mailto:${email}`} className="hover:text-gold transition-colors">{email}</a></li>
+              <li>{addr}</li>
+            </ul>
           </div>
         </div>
-
-        <div>
-          <div className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-3">Empresa</div>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/nosotros" className="text-ink hover:text-brand-600">Nosotros</Link></li>
-            <li><Link href="/contacto" className="text-ink hover:text-brand-600">Contacto</Link></li>
-            <li><a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-ink hover:text-brand-600">WhatsApp</a></li>
-            <li><a href={`tel:${phone.replace(/\s/g, "")}`} className="text-ink hover:text-brand-600">{phone}</a></li>
-            <li><a href={`mailto:${email}`} className="text-ink hover:text-brand-600 break-all">{email}</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <div className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-3">Legal</div>
-          <ul className="space-y-2 text-sm">
-            <li><Link href="/aviso-privacidad" className="text-ink hover:text-brand-600">Aviso de privacidad</Link></li>
-            <li><Link href="/derechos-clientes" className="text-ink hover:text-brand-600">Derechos del consumidor</Link></li>
-            <li className="text-ink-muted">PROFECO 5589-2022</li>
-            <li className="text-ink-muted">AMPI Mérida</li>
-            <li><Link href="/login" className="text-ink-soft hover:text-ink-muted">Acceso staff</Link></li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="border-t border-ink-line py-5">
-        <div className="max-w-7xl mx-auto px-8 text-xs text-ink-muted text-center">
-          © {new Date().getFullYear()} Inmobiliaria BS Mérida · {addr}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-white/20">
+          <span>© {new Date().getFullYear()} Duclaud Consultoría Inmobiliaria. Todos los derechos reservados.</span>
+          <div className="flex items-center gap-5">
+            <Link href="/aviso-privacidad" className="hover:text-white/40 transition-colors">Aviso de privacidad</Link>
+            <span>AMPI · PROFECO 5589-2022</span>
+            <Link href="/login" className="hover:text-white/40 transition-colors">Acceso staff</Link>
+          </div>
         </div>
       </div>
     </footer>

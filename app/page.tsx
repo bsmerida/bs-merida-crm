@@ -4,7 +4,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyCard } from "@/components/PropertyCard";
-import { PropertySearch } from "./PropertySearch";
+import { SearchBox } from "@/components/SearchBox";
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -43,7 +43,7 @@ export default async function HomePage() {
 
           {/* Buscador funcional */}
           <div className="mt-12">
-            <PropertySearch zones={zones} />
+            <SearchBox zones={zones} />
           </div>
         </div>
       </section>

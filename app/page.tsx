@@ -39,14 +39,6 @@ export default async function HomePage() {
           <div className="mt-12">
             <SearchBox zones={zones} />
           </div>
-          <div className="flex gap-3 mt-5">
-            <Link href="/comprar" className="text-[11px] uppercase tracking-[0.08em] text-white/50 hover:text-gold border border-white/15 hover:border-gold/40 px-5 py-2.5 rounded-full transition-colors">
-              Ver en venta
-            </Link>
-            <Link href="/rentar" className="text-[11px] uppercase tracking-[0.08em] text-white/50 hover:text-gold border border-white/15 hover:border-gold/40 px-5 py-2.5 rounded-full transition-colors">
-              Ver en renta
-            </Link>
-          </div>
         </div>
       </section>
 

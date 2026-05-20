@@ -217,7 +217,7 @@ export function PropertyForm({ property }: Props) {
             <input value={form.reference} onChange={e => set("reference", e.target.value)} placeholder="Ej. BS-2505-001" className={`${inp} flex-1`} />
             <button type="button" onClick={generateReference}
               className="px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm whitespace-nowrap">
-              ✨ Generar
+              Generar
             </button>
           </div>
         </Field>

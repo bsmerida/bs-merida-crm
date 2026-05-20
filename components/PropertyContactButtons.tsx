@@ -28,7 +28,7 @@ export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl,
       </a>
       <button onClick={openSofia}
         className="w-full bg-white border border-ink-line text-ink font-medium py-3 rounded-full hover:border-brand-300 hover:bg-brand-50 transition">
-        Consultar con Sofía ✨
+        Consultar con Sofía
       </button>
       <div className="flex gap-2">
         <a href={`/api/propiedad/${propertyId}/pdf?mode=cliente`}

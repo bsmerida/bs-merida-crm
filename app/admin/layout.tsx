@@ -8,12 +8,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  const { count: leadsNuevos } = await supabase.from("leads").select("*", { count: "exact", head: true }).eq("status", "Nuevo");
+  const { count: leadsNuevos } = await supabase
+    .from("leads").select("*", { count: "exact", head: true }).eq("status", "Nuevo");
 
   return (
-    <div className="flex">
+    <div className="flex bg-cream min-h-screen">
       <AdminSidebar profile={profile} leadsNuevos={leadsNuevos || 0} />
-      <main className="flex-1 min-h-screen">{children}</main>
+      <main className="flex-1 min-h-screen overflow-x-hidden">
+        {children}
+      </main>
     </div>
   );
 }

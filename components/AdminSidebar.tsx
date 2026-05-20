@@ -2,46 +2,60 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import {
-  Home, Users, Building2, TrendingUp, Wallet,
-  Globe, Settings, LogOut, Sparkles, ChevronRight
-} from "lucide-react";
 
 type Profile = { full_name: string | null; email: string | null; role: string; initials: string | null };
+
+const icons: Record<string, JSX.Element> = {
+  home:      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>,
+  users:     <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></>,
+  building:  <><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M3 9h6M3 15h6M15 3v18M15 9h6M15 15h6"/></>,
+  trending:  <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
+  coins:     <><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18"/><path d="M7 6h1v4"/></>,
+  globe:     <><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></>,
+  settings:  <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3h.1a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8v.1a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></>,
+  sparkle:   <path d="M12 3l1.88 5.76a1 1 0 00.63.63L20.24 11.35 14.48 13.12a1 1 0 00-.63.63L12 19.5l-1.85-5.75a1 1 0 00-.63-.63L3.76 11.35l5.76-1.96a1 1 0 00.63-.63L12 3z"/>,
+  logout:    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>,
+};
+
+function SvgIcon({ name, size = 16 }: { name: string; size?: number }) {
+  return (
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.75"
+      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="shrink-0">
+      {icons[name] ?? <circle cx="12" cy="12" r="9"/>}
+    </svg>
+  );
+}
 
 export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null; leadsNuevos: number }) {
   const pathname = usePathname();
   const router   = useRouter();
   const supabase = createClient();
   const isAdmin  = profile?.role === "admin";
-  const initials = profile?.initials || profile?.full_name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "D";
+  const initials = profile?.initials || profile?.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2) || "D";
 
-  const mainNav = [
-    { href: "/admin",             label: "Inicio",      Icon: Home },
-    { href: "/admin/leads",       label: "Clientes",    Icon: Users,     badge: leadsNuevos > 0 ? leadsNuevos : null },
-    { href: "/admin/propiedades", label: "Propiedades", Icon: Building2 },
+  const mainNav  = [
+    { href: "/admin",             label: "Inicio",      icon: "home",     badge: null },
+    { href: "/admin/leads",       label: "Clientes",    icon: "users",    badge: leadsNuevos > 0 ? leadsNuevos : null },
+    { href: "/admin/propiedades", label: "Propiedades", icon: "building", badge: null },
   ];
   const adminNav = [
-    { href: "/admin/kpis",     label: "KPIs",     Icon: TrendingUp },
-    { href: "/admin/finanzas", label: "Finanzas",  Icon: Wallet     },
-    { href: "/admin/portales", label: "Portales",  Icon: Globe      },
-    { href: "/admin/ajustes",  label: "Ajustes",   Icon: Settings   },
+    { href: "/admin/kpis",     label: "KPIs",    icon: "trending" },
+    { href: "/admin/finanzas", label: "Finanzas", icon: "coins"   },
+    { href: "/admin/portales", label: "Portales", icon: "globe"   },
+    { href: "/admin/ajustes",  label: "Ajustes",  icon: "settings"},
   ];
 
-  const NavItem = ({ href, label, Icon: ItemIcon, badge }: any) => {
-    const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
-    return (
-      <Link href={href}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm transition-all ${
-          active
-            ? "bg-gold/15 text-gold font-medium"
-            : "text-white/45 hover:bg-white/6 hover:text-white/80"}`}>
-        <ItemIcon size={16} strokeWidth={1.75} className="shrink-0" />
-        <span className="flex-1">{label}</span>
-        {badge && <span className="bg-gold text-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge}</span>}
-      </Link>
-    );
-  };
+  const isActive = (href: string) => pathname === href || (href !== "/admin" && pathname.startsWith(href));
+
+  const item = (href: string, label: string, icon: string, badge?: number | null) => (
+    <Link key={href} href={href}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm transition-all ${
+        isActive(href) ? "bg-gold/15 text-gold font-medium" : "text-white/45 hover:bg-white/6 hover:text-white/75"}`}>
+      <SvgIcon name={icon} />
+      <span className="flex-1">{label}</span>
+      {badge ? <span className="bg-gold text-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge}</span> : null}
+    </Link>
+  );
 
   return (
     <aside className="w-60 bg-navy flex flex-col h-screen sticky top-0">
@@ -55,24 +69,18 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
       </div>
 
       <nav className="flex-1 py-4 px-3 overflow-y-auto">
-        {mainNav.map(item => <NavItem key={item.href} {...item} />)}
-
+        {mainNav.map(n => item(n.href, n.label, n.icon, n.badge))}
         {isAdmin && (
           <>
-            <div className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.16em] px-3 pt-5 pb-2">
-              Análisis
-            </div>
-            {adminNav.map(item => <NavItem key={item.href} {...item} />)}
+            <div className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.16em] px-3 pt-5 pb-2">Análisis</div>
+            {adminNav.map(n => item(n.href, n.label, n.icon))}
           </>
         )}
-
         <div className="mt-4 pt-4 border-t border-white/8">
           <Link href="/admin/asistente"
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-              pathname.startsWith("/admin/asistente")
-                ? "bg-gold/15 text-gold font-medium"
-                : "text-gold/60 hover:bg-gold/10 hover:text-gold"}`}>
-            <Sparkles size={16} strokeWidth={1.75} className="shrink-0" />
+              isActive("/admin/asistente") ? "bg-gold/15 text-gold font-medium" : "text-gold/60 hover:bg-gold/10 hover:text-gold"}`}>
+            <SvgIcon name="sparkle" />
             <span className="flex-1">Asistente IA</span>
             <span className="text-[9px] text-gold/50 border border-gold/20 px-1.5 py-0.5 rounded-full">IA</span>
           </Link>
@@ -91,7 +99,7 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
         </div>
         <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); router.refresh(); }}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-          <LogOut size={13} strokeWidth={1.75} /> Cerrar sesión
+          <SvgIcon name="logout" size={13} /> Cerrar sesión
         </button>
       </div>
     </aside>

@@ -27,7 +27,7 @@ export default function GeocodeBatchPage() {
       return;
     }
 
-    addLog(`📋 ${props.length} propiedades sin coordenadas. Iniciando...`);
+    addLog(`${props.length} propiedades sin coordenadas. Iniciando...`);
 
     let ok = 0, fail = 0;
 
@@ -78,7 +78,7 @@ export default function GeocodeBatchPage() {
         disabled={running}
         className="px-6 py-3 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full font-medium"
       >
-        {running ? "⏳ Procesando..." : "📍 Iniciar geocodificación"}
+        {running ? "Procesando..." : "Iniciar geocodificación"}
       </button>
 
       {done && (

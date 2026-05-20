@@ -1,7 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
 import { PropertyCard } from "@/components/PropertyCard";
-import { SlidersHorizontal, X } from "lucide-react";
 
 type Prop = any;
 
@@ -15,19 +14,19 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const [priceMax, setPriceMax]     = useState("");
   const [sortBy, setSortBy]         = useState("recent");
 
-  const types = ["Todos", ...Array.from(new Set(props.map((p: Prop) => p.type)))];
-  const zones = ["Todas", ...Array.from(new Set(props.map((p: Prop) => p.zone || p.city).filter(Boolean)))];
+  const types = ["Todos", ...Array.from(new Set(props.map((p: Prop) => p.type)))] as string[];
+  const zones = ["Todas", ...Array.from(new Set(props.map((p: Prop) => p.zone || p.city).filter(Boolean)))] as string[];
 
   const filtered = useMemo(() => {
-    let r = props.filter((p: Prop) => {
-      return (filterType === "Todos" || p.type === filterType)
-        && (filterZone === "Todas" || p.zone === filterZone || p.city === filterZone)
-        && (filterBeds === "0" || p.bedrooms >= Number(filterBeds))
-        && (!priceMin || p.price >= Number(priceMin))
-        && (!priceMax || p.price <= Number(priceMax));
-    });
-    if (sortBy === "price_asc")  r = [...r].sort((a,b) => a.price - b.price);
-    if (sortBy === "price_desc") r = [...r].sort((a,b) => b.price - a.price);
+    let r = props.filter((p: Prop) =>
+      (filterType === "Todos" || p.type === filterType) &&
+      (filterZone === "Todas" || p.zone === filterZone || p.city === filterZone) &&
+      (filterBeds === "0" || p.bedrooms >= Number(filterBeds)) &&
+      (!priceMin || p.price >= Number(priceMin)) &&
+      (!priceMax || p.price <= Number(priceMax))
+    );
+    if (sortBy === "price_asc")  r = [...r].sort((a: Prop, b: Prop) => a.price - b.price);
+    if (sortBy === "price_desc") r = [...r].sort((a: Prop, b: Prop) => b.price - a.price);
     return r;
   }, [props, filterType, filterZone, filterBeds, priceMin, priceMax, sortBy]);
 
@@ -38,32 +37,29 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
 
   return (
     <div className="space-y-8">
-      {/* Tipos */}
+      {/* Tipo pills */}
       <div className="flex flex-wrap gap-2">
-        {(types as string[]).map(t => (
+        {types.map(t => (
           <button key={t} onClick={() => setFilterType(t)}
             className={`text-[11px] uppercase tracking-[0.08em] px-4 py-2 rounded-full border transition-all ${
-              filterType === t
-                ? "bg-navy text-white border-navy shadow-sm"
-                : "bg-white text-ink-muted border-stone hover:border-navy hover:text-navy"}`}>
+              filterType === t ? "bg-navy text-white border-navy shadow-sm" : "bg-white text-ink-muted border-stone hover:border-navy hover:text-navy"}`}>
             {t}
           </button>
         ))}
       </div>
 
-      {/* Filtros secundarios */}
+      {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-2xl border border-stone shadow-card">
-        <SlidersHorizontal size={14} className="text-ink-muted shrink-0" />
+        <svg className="w-4 h-4 text-ink-muted shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+        </svg>
         <select value={filterZone} onChange={e => setFilterZone(e.target.value)} className={sel}>
-          {(zones as string[]).map(z => <option key={z}>{z}</option>)}
+          {zones.map(z => <option key={z}>{z}</option>)}
         </select>
         {operation === "Venta" && (
           <select value={filterBeds} onChange={e => setFilterBeds(e.target.value)} className={sel}>
             <option value="0">Recámaras</option>
-            <option value="1">1+</option>
-            <option value="2">2+</option>
-            <option value="3">3+</option>
-            <option value="4">4+</option>
+            {["1","2","3","4"].map(n => <option key={n} value={n}>{n}+</option>)}
           </select>
         )}
         <input type="number" placeholder="Precio mín." value={priceMin} onChange={e => setPriceMin(e.target.value)}
@@ -77,8 +73,9 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
         </select>
         <div className="ml-auto flex items-center gap-3">
           {hasFilters && (
-            <button onClick={clear} className="flex items-center gap-1 text-xs text-ink-muted hover:text-navy transition-colors">
-              <X size={12} /> Limpiar
+            <button onClick={clear} className="text-xs text-ink-muted hover:text-navy transition-colors flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              Limpiar
             </button>
           )}
           <span className="text-xs text-ink-muted bg-stone px-3 py-1.5 rounded-full">

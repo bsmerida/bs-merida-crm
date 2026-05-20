@@ -4,7 +4,6 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyCard } from "@/components/PropertyCard";
-import { Icon } from "@/components/Icon";
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -20,95 +19,165 @@ export default async function HomePage() {
     <>
       <PublicHeader />
 
-      <section className="hero-gradient relative overflow-hidden">
-        <div className="max-w-5xl mx-auto px-8 pt-28 pb-24 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur border border-brand-100 text-brand-700 text-xs font-medium px-4 py-1.5 rounded-full mb-8 shadow-card">
-            <span className="w-1.5 h-1.5 bg-brand-500 rounded-full"></span>
-            Asesoría inmobiliaria certificada AMPI
-          </div>
-          <h1 className="text-5xl md:text-7xl font-semibold text-ink tracking-tight leading-[1.02]">
-            Sabemos proteger<br />
-            <span className="bg-gradient-to-r from-brand-500 to-brand-700 bg-clip-text text-transparent">tus intereses.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-ink-muted mt-8 max-w-2xl mx-auto leading-relaxed">
-            Acompañamiento integral con enfoque inmobiliario, legal y financiero. Operamos en Yucatán, Quintana Roo y Nuevo León.
+      {/* Hero */}
+      <section className="bg-navy min-h-[92vh] flex items-end relative overflow-hidden">
+        {/* Decoración */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] border border-gold/10 rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] border border-gold/6 rounded-full -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-8 pb-20 pt-32 w-full relative z-10">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-gold mb-8">
+            Consultoría inmobiliaria · Mérida, Yucatán
           </p>
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/comprar" className="bg-brand-500 text-white px-8 py-3.5 rounded-full font-medium hover:bg-brand-600 shadow-float transition">Ver propiedades en venta</Link>
-            <Link href="/rentar" className="bg-white border border-brand-100 text-ink px-8 py-3.5 rounded-full font-medium hover:border-brand-300 hover:bg-brand-50 transition">Ver en renta</Link>
-          </div>
-        </div>
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-warm-100 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-      </section>
+          <h1 className="font-serif text-5xl md:text-7xl font-light text-white leading-[1.03] tracking-tight max-w-3xl">
+            Estructura que protege<br />
+            <em className="italic text-gold">su inversión.</em>
+          </h1>
+          <p className="text-white/45 text-base md:text-lg leading-relaxed mt-8 max-w-lg">
+            Asesoría con criterio legal y financiero. Equipo certificado AMPI con presencia en Yucatán, Quintana Roo y Nuevo León.
+          </p>
 
-      <section className="max-w-7xl mx-auto px-8 py-20">
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-brand-600 font-semibold">Selección destacada</div>
-            <h2 className="text-3xl font-semibold text-ink tracking-tight mt-2">Propiedades disponibles</h2>
-          </div>
-          <Link href="/comprar" className="text-sm text-brand-600 hover:text-brand-700 font-medium hidden md:flex items-center gap-1">
-            Ver todas <Icon name="arrowRight" className="w-4 h-4" />
-          </Link>
-        </div>
-        {properties && properties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(properties as any[]).map(p => {
-              const cover = p.property_images?.find((i: any) => i.is_cover)?.url
-                || p.property_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url
-                || null;
-              return <PropertyCard key={p.id} p={p} coverUrl={cover} />;
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-20 text-ink-muted">
-            <p className="text-sm">Aún no hay propiedades publicadas. El equipo está cargando el inventario.</p>
-            <p className="text-xs mt-2">Si eres del equipo, <Link href="/login" className="text-brand-600 hover:underline">inicia sesión</Link> para agregar tu primera propiedad.</p>
-          </div>
-        )}
-      </section>
-
-      <section className="py-24 bg-gradient-to-b from-white to-ink-ghost">
-        <div className="max-w-5xl mx-auto px-8">
-          <div className="text-center mb-16">
-            <div className="text-xs uppercase tracking-wider text-brand-600 font-semibold">Por qué BS Mérida</div>
-            <h2 className="text-3xl md:text-4xl font-semibold text-ink tracking-tight mt-3">Aliados estratégicos, no simples vendedores.</h2>
-            <p className="text-base text-ink-muted mt-4 max-w-xl mx-auto">Cuidamos cada operación como si fuera nuestra. Nuestro enfoque integra lo inmobiliario, legal y financiero.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { t: "Asesores certificados", d: "Equipo con certificación AMPI y conocimiento profundo del mercado.", icon: "users" },
-              { t: "Acompañamiento 24/7", d: "Asistente IA y asesores humanos atentos cuando los necesitas.", icon: "chat" },
-              { t: "Propiedades verificadas", d: "Cada inmueble es revisado en sitio antes de publicarse.", icon: "check" },
-            ].map((f, i) => (
-              <div key={i} className="bg-white rounded-3xl border border-brand-100 p-8 hover:shadow-float hover:border-brand-200 transition">
-                <div className="w-12 h-12 rounded-2xl warm-gradient text-white flex items-center justify-center mb-6 shadow-card">
-                  <Icon name={f.icon} className="w-5 h-5" />
+          {/* Buscador rápido */}
+          <div className="mt-12 bg-white/5 border border-white/10 inline-flex">
+            <div className="flex divide-x divide-white/10">
+              {[
+                { label: "Tipo", placeholder: "Casa, Depto..." },
+                { label: "Zona", placeholder: "Altabrisa, Mérida..." },
+                { label: "Presupuesto", placeholder: "Sin límite" },
+              ].map(f => (
+                <div key={f.label} className="px-5 py-4 min-w-[160px]">
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-gold mb-1.5">{f.label}</p>
+                  <p className="text-sm text-white/50">{f.placeholder}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-ink tracking-tight">{f.t}</h3>
-                <p className="text-sm text-ink-muted mt-3 leading-relaxed">{f.d}</p>
+              ))}
+              <Link href="/comprar"
+                className="px-8 py-4 bg-gold hover:bg-gold-lt text-navy text-[11px] uppercase tracking-[0.1em] font-medium flex items-center transition-colors">
+                Buscar
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <Link href="/comprar"
+              className="text-[11px] uppercase tracking-[0.08em] text-white/50 hover:text-gold border border-white/15 hover:border-gold/40 px-5 py-2.5 transition-colors">
+              Ver en venta
+            </Link>
+            <Link href="/rentar"
+              className="text-[11px] uppercase tracking-[0.08em] text-white/50 hover:text-gold border border-white/15 hover:border-gold/40 px-5 py-2.5 transition-colors">
+              Ver en renta
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="bg-navy border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+            {[
+              { n: "191+", l: "Propiedades en inventario" },
+              { n: "10",   l: "Años de experiencia" },
+              { n: "3",    l: "Estados · Yuc, Q. Roo, N.L." },
+              { n: "AMPI", l: "Certificación vigente" },
+            ].map(s => (
+              <div key={s.n} className="py-8 px-6">
+                <p className="font-serif text-3xl font-light text-white">{s.n}</p>
+                <p className="text-[11px] uppercase tracking-[0.1em] text-white/35 mt-1">{s.l}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-8 py-24 text-center">
-        <h2 className="text-4xl md:text-5xl font-semibold text-ink tracking-tight">Hablemos directamente.</h2>
-        <p className="text-lg text-ink-muted mt-5 max-w-xl mx-auto leading-relaxed">¿Tienes una propiedad para vender o rentar? ¿Buscas algo específico? Contáctanos por el medio que prefieras.</p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10">
-          <a href={`https://wa.me/${process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272"}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-6 py-3.5 rounded-full font-medium">
-            <Icon name="chat" className="w-4 h-4" /> WhatsApp {process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272"}
-          </a>
-          <a href={`tel:${(process.env.NEXT_PUBLIC_BUSINESS_PHONE || "9993034815").replace(/\s/g, "")}`} className="flex items-center gap-2 bg-white border border-ink-line hover:border-ink-soft text-ink px-6 py-3.5 rounded-full font-medium">
-            <Icon name="bell" className="w-4 h-4" /> {process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815"}
-          </a>
-          <a href={`mailto:${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com"}`} className="flex items-center gap-2 bg-white border border-ink-line hover:border-ink-soft text-ink px-6 py-3.5 rounded-full font-medium">
-            <Icon name="send" className="w-4 h-4" /> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com"}
-          </a>
+      {/* Propiedades destacadas */}
+      <section className="max-w-7xl mx-auto px-8 py-20">
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gold mb-3">Selección</p>
+            <h2 className="font-serif text-4xl font-light text-navy">Propiedades disponibles</h2>
+          </div>
+          <Link href="/comprar" className="text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-navy flex items-center gap-2 transition-colors">
+            Ver inventario completo
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </Link>
         </div>
-        <p className="text-xs text-ink-muted mt-6">Respondemos en menos de 30 minutos en horario hábil.</p>
+
+        {properties && properties.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-stone">
+            {(properties as any[]).map(p => {
+              const cover = p.property_images?.find((i: any) => i.is_cover)?.url
+                || p.property_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url || null;
+              return <div key={p.id} className="bg-cream"><PropertyCard p={p} coverUrl={cover} /></div>;
+            })}
+          </div>
+        ) : (
+          <div className="py-24 text-center text-sm text-ink-muted border border-stone">
+            Cargando inventario...
+          </div>
+        )}
+      </section>
+
+      {/* Por qué Duclaud */}
+      <section className="bg-navy py-24">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold mb-6">La diferencia Duclaud</p>
+              <h2 className="font-serif text-4xl md:text-5xl font-light text-white leading-tight">
+                Aliados estratégicos,<br />
+                <em className="italic text-gold">no simples intermediarios.</em>
+              </h2>
+              <p className="text-white/45 text-sm leading-relaxed mt-6 max-w-md">
+                Cada operación se analiza con criterio legal y financiero. Cuidamos su patrimonio como si fuera el nuestro.
+              </p>
+              <Link href="/nosotros"
+                className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-gold hover:text-gold-lt mt-8 transition-colors">
+                Conocer la firma
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </Link>
+            </div>
+            <div className="border-l border-white/10 pl-12 space-y-0">
+              {[
+                { t: "Asesores certificados AMPI", d: "Conocimiento profundo del marco legal y el mercado local." },
+                { t: "Propiedades verificadas", d: "Cada inmueble revisado en sitio y validado jurídicamente antes de publicarse." },
+                { t: "Criterio financiero integrado", d: "Analizamos la operación desde todos los ángulos para proteger su inversión." },
+                { t: "Atención 24/7 con IA", d: "Sofía responde sus consultas en segundos. Asesores disponibles en horario hábil." },
+              ].map((f, i) => (
+                <div key={f.t} className={`py-7 ${i < 3 ? "border-b border-white/10" : ""}`}>
+                  <div className="flex items-start gap-4">
+                    <span className="w-px h-4 bg-gold mt-1.5 shrink-0" />
+                    <div>
+                      <h3 className="text-sm font-medium text-white">{f.t}</h3>
+                      <p className="text-xs text-white/40 mt-1.5 leading-relaxed">{f.d}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-7xl mx-auto px-8 py-24">
+        <div className="border border-stone bg-white px-10 py-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gold mb-3">Sin compromiso</p>
+            <h2 className="font-serif text-3xl font-light text-navy">Hablemos directamente.</h2>
+            <p className="text-ink-muted text-sm mt-2">Respondemos en menos de 30 minutos en horario hábil.</p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <a href={`https://wa.me/${process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272"}`}
+              target="_blank" rel="noopener noreferrer"
+              className="text-[11px] uppercase tracking-[0.08em] font-medium text-white bg-navy hover:bg-navy-mid px-6 py-3 transition-colors">
+              WhatsApp
+            </a>
+            <Link href="/contacto"
+              className="text-[11px] uppercase tracking-[0.08em] text-navy border border-navy hover:bg-navy hover:text-white px-6 py-3 transition-colors">
+              Formulario
+            </Link>
+          </div>
+        </div>
       </section>
 
       <PublicFooter />

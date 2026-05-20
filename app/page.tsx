@@ -4,16 +4,20 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyCard } from "@/components/PropertyCard";
+import { PropertySearch } from "@/components/PropertySearch";
 
 export default async function HomePage() {
   const supabase = createClient();
-  const { data: properties } = await supabase
-    .from("properties")
-    .select("*, property_images(url, position, is_cover)")
-    .eq("is_published", true)
-    .eq("status", "Disponible")
-    .order("featured", { ascending: false })
-    .limit(6);
+  const [{ data: properties }, { data: zonesData }] = await Promise.all([
+    supabase.from("properties")
+      .select("*, property_images(url, position, is_cover)")
+      .eq("is_published", true).eq("status", "Disponible")
+      .order("featured", { ascending: false }).limit(6),
+    supabase.from("properties")
+      .select("zone, city").eq("is_published", true).eq("status", "Disponible"),
+  ]);
+
+  const zones = [...new Set((zonesData || []).flatMap((p: any) => [p.zone, p.city].filter(Boolean)))].sort();
 
   return (
     <>
@@ -30,42 +34,16 @@ export default async function HomePage() {
             Consultoría inmobiliaria · Mérida, Yucatán
           </p>
           <h1 className="font-serif text-5xl md:text-7xl font-light text-white leading-[1.03] tracking-tight max-w-3xl">
-            Estructura que protege<br />
-            <em className="italic text-gold">su inversión.</em>
+            Inversiones que
+            <em className="italic text-gold">trascienden.</em>
           </h1>
           <p className="text-white/45 text-base md:text-lg leading-relaxed mt-8 max-w-lg">
-            Asesoría con criterio legal y financiero. Equipo certificado AMPI con presencia en Yucatán, Quintana Roo y Nuevo León.
+            La firma inmobiliaria que integra estructura legal y financiera interna. En un sector dominado por la informalidad, somos la alternativa institucional.
           </p>
 
-          {/* Buscador rápido */}
-          <div className="mt-12 bg-white/5 border border-white/10 inline-flex">
-            <div className="flex divide-x divide-white/10">
-              {[
-                { label: "Tipo", placeholder: "Casa, Depto..." },
-                { label: "Zona", placeholder: "Altabrisa, Mérida..." },
-                { label: "Presupuesto", placeholder: "Sin límite" },
-              ].map(f => (
-                <div key={f.label} className="px-5 py-4 min-w-[160px]">
-                  <p className="text-[9px] uppercase tracking-[0.18em] text-gold mb-1.5">{f.label}</p>
-                  <p className="text-sm text-white/50">{f.placeholder}</p>
-                </div>
-              ))}
-              <Link href="/comprar"
-                className="px-8 py-4 bg-gold hover:bg-gold-lt text-navy text-[11px] uppercase tracking-[0.1em] font-medium flex items-center transition-colors">
-                Buscar
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex gap-3 mt-6">
-            <Link href="/comprar"
-              className="text-[11px] uppercase tracking-[0.08em] text-white/50 hover:text-gold border border-white/15 hover:border-gold/40 px-5 py-2.5 transition-colors">
-              Ver en venta
-            </Link>
-            <Link href="/rentar"
-              className="text-[11px] uppercase tracking-[0.08em] text-white/50 hover:text-gold border border-white/15 hover:border-gold/40 px-5 py-2.5 transition-colors">
-              Ver en renta
-            </Link>
+          {/* Buscador funcional */}
+          <div className="mt-12">
+            <PropertySearch zones={zones} />
           </div>
         </div>
       </section>
@@ -75,7 +53,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
             {[
-              { n: "191+", l: "Propiedades en inventario" },
+              { n: "600+", l: "Propiedades gestionadas" },
               { n: "10",   l: "Años de experiencia" },
               { n: "3",    l: "Estados · Yuc, Q. Roo, N.L." },
               { n: "AMPI", l: "Certificación vigente" },
@@ -124,11 +102,11 @@ export default async function HomePage() {
             <div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-gold mb-6">La diferencia Duclaud</p>
               <h2 className="font-serif text-4xl md:text-5xl font-light text-white leading-tight">
-                Aliados estratégicos,<br />
-                <em className="italic text-gold">no simples intermediarios.</em>
+                La firma que protege
+                <em className="italic text-gold">su patrimonio.</em>
               </h2>
               <p className="text-white/45 text-sm leading-relaxed mt-6 max-w-md">
-                Cada operación se analiza con criterio legal y financiero. Cuidamos su patrimonio como si fuera el nuestro.
+                No somos intermediarios — somos la firma que tiene un abogado y un analista financiero en el mismo equipo que su asesor. En bienes raíces, eso cambia todo.
               </p>
               <Link href="/nosotros"
                 className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-gold hover:text-gold-lt mt-8 transition-colors">

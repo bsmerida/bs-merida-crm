@@ -4,7 +4,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyCard } from "@/components/PropertyCard";
-import { PropertySearch } from "@/components/PropertySearch";
+import { PropertySearch } from "./PropertySearch";
 
 export default async function HomePage() {
   const supabase = createClient();

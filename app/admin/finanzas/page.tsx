@@ -552,7 +552,7 @@ export default function FinanzasPage() {
           }} />
           <a href="/admin/finanzas/historicos"
             className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
-            📅 Históricos
+            Históricos
           </a>
           <button onClick={() => setShowExpenseForm(true)}
             className="px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
@@ -617,12 +617,12 @@ export default function FinanzasPage() {
                 const ok   = pct !== null && (invertido ? pct <= 100 : pct >= 90);
                 const warn = pct !== null && (invertido ? pct > 100 && pct <= 115 : pct >= 70 && pct < 90);
                 const bad  = pct !== null && (invertido ? pct > 115 : pct < 70);
-                const semaforo = ok ? "🟢" : warn ? "🟡" : bad ? "🔴" : "⚪";
+                const semaforo = ok ? "ok" : warn ? "warn" : bad ? "bad" : "none";
                 return (
                   <div key={key} className={`rounded-xl border p-4 ${ok ? "border-emerald-200 bg-emerald-50" : warn ? "border-amber-200 bg-amber-50" : bad ? "border-red-200 bg-red-50" : "border-ink-line bg-white"}`}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-ink-muted">{label}</span>
-                      <span className="text-base">{semaforo}</span>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${semaforo === "ok" ? "bg-emerald-100 text-emerald-700" : semaforo === "warn" ? "bg-amber-100 text-amber-700" : semaforo === "bad" ? "bg-red-100 text-red-600" : "bg-ink-ghost text-ink-soft"}`}>{semaforo === "ok" ? "✓" : semaforo === "warn" ? "!" : semaforo === "bad" ? "✗" : "·"}</span>
                     </div>
                     <div className={`text-xl font-semibold tracking-tight ${ok ? "text-emerald-700" : warn ? "text-amber-700" : bad ? "text-red-600" : "text-ink"}`}>
                       {fmt(real)}
@@ -795,7 +795,7 @@ export default function FinanzasPage() {
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 text-sm text-blue-800">
-            💡 Las <strong>entradas</strong> se calculan con los montos cobrados de tus operaciones. Las <strong>salidas</strong> con los gastos registrados. Registra todo en <strong>Comisiones</strong> y <strong>Gastos</strong> para mantener este flujo actualizado.
+            Las <strong>entradas</strong> se calculan con los montos cobrados de tus operaciones. Las <strong>salidas</strong> con los gastos registrados. Registra todo en <strong>Comisiones</strong> y <strong>Gastos</strong> para mantener este flujo actualizado.
           </div>
         </div>
       )}
@@ -1063,7 +1063,7 @@ export default function FinanzasPage() {
           {/* Aviso si no hay gastos atribuidos */}
           {marketingByChannel.every(c => c.spend === 0) && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-sm text-amber-800">
-              💡 Para ver CAC, ROAS y ROI real, ve a <strong>Gastos</strong>, registra tus inversiones en marketing y selecciona el <strong>canal específico</strong> (Facebook, Inmuebles24, etc.).
+              Para ver CAC, ROAS y ROI real, ve a <strong>Gastos</strong>, registra tus inversiones en marketing y selecciona el <strong>canal específico</strong> (Facebook, Inmuebles24, etc.).
             </div>
           )}
 
@@ -1224,7 +1224,7 @@ export default function FinanzasPage() {
               <div className="flex items-center gap-2">
                 <a href="/admin/finanzas/historicos"
                   className="text-xs text-ink-muted hover:text-ink border border-ink-line rounded-full px-3 py-1.5">
-                  📅 Históricos
+                  Históricos
                 </a>
                 <button onClick={() => setShowExpenseForm(true)}
                   className="text-xs text-brand-600 border border-brand-200 hover:bg-brand-50 rounded-full px-3 py-1.5">

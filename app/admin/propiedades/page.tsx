@@ -58,16 +58,25 @@ export default async function AdminPropiedades() {
           {isAdmin && (
             <>
               <Link href="/admin/propiedades/estadisticas"
-                className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
-                📊 Estadísticas
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-stone text-ink rounded-full text-sm hover:border-navy transition-colors">
+                <svg className="w-4 h-4 text-navy" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+                  <path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/>
+                </svg>
+                Estadísticas
               </Link>
               <Link href="/admin/propiedades/tokko"
-                className="flex items-center gap-1.5 px-4 py-2 bg-brand-50 border border-brand-200 text-brand-700 rounded-full text-sm hover:bg-brand-100">
-                🔄 Sincronizar Tokko
+                className="flex items-center gap-2 px-4 py-2 bg-navy/5 border border-navy/20 text-navy rounded-full text-sm hover:bg-navy/10 transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+                  <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                </svg>
+                Sincronizar
               </Link>
               <Link href="/admin/geocode"
-                className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
-                📍 Geocodificar
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-stone text-ink rounded-full text-sm hover:border-navy transition-colors">
+                <svg className="w-4 h-4 text-gold" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                Coordenadas
               </Link>
             </>
           )}

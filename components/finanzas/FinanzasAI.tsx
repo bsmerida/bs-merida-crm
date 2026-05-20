@@ -96,7 +96,7 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
     return (
       <button onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium">
-        ✨ Analizar con IA
+        Analizar con IA
       </button>
     );
   }

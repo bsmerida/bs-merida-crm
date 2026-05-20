@@ -199,7 +199,7 @@ export function PublicChatbot() {
       {/* Botón flotante */}
       <button onClick={() => open ? setOpen(false) : openChat()} className="fixed bottom-6 right-6 z-40">
         <div className="relative">
-          <div className="w-14 h-14 bg-navy hover:bg-navy-mid text-white shadow-float flex items-center justify-center transition-colors">
+          <div className="w-14 h-14 bg-navy hover:bg-navy-mid text-white shadow-float flex items-center justify-center transition-colors rounded-full">
             {open
               ? <Icon name="x" className="w-5 h-5" />
               : <span className="font-serif text-lg text-gold">S</span>}
@@ -213,7 +213,7 @@ export function PublicChatbot() {
         <div className="fixed bottom-24 right-6 z-40 w-[390px] max-w-[calc(100vw-3rem)] bg-white rounded-3xl shadow-float border border-stone overflow-hidden">
           {/* Header */}
           <div className="bg-navy text-white p-4 flex items-center gap-3">
-            <div className="w-9 h-9 bg-gold/20 border border-gold/30 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 bg-gold/20 border border-gold/30 rounded-full flex items-center justify-center shrink-0">
               <span className="font-serif text-base text-gold">S</span>
             </div>
             <div className="flex-1 min-w-0">

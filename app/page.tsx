@@ -103,7 +103,7 @@ export default async function HomePage() {
               <p className="text-[10px] uppercase tracking-[0.2em] text-gold mb-6">La diferencia Duclaud</p>
               <h2 className="font-serif text-4xl md:text-5xl font-light text-white leading-tight">
                 La firma que protege
-                <em className="italic text-gold">su patrimonio.</em>
+                <em className="italic text-gold"> su patrimonio.</em>
               </h2>
               <p className="text-white/45 text-sm leading-relaxed mt-6 max-w-md">
                 No somos intermediarios — somos la firma que tiene un abogado y un analista financiero en el mismo equipo que su asesor. En bienes raíces, eso cambia todo.

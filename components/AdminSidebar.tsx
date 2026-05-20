@@ -15,17 +15,16 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
   type NavItem = { href: string; label: string; icon: string; badge?: number | null; ai?: boolean };
 
   const commonItems: NavItem[] = [
-    { href: "/admin",            label: "Inicio",      icon: "home" },
-    { href: "/admin/leads",      label: "Clientes",    icon: "users", badge: leadsNuevos > 0 ? leadsNuevos : null },
-    { href: "/admin/propiedades",label: "Propiedades", icon: "building" },
+    { href: "/admin",             label: "Inicio",      icon: "home"      },
+    { href: "/admin/leads",       label: "Clientes",    icon: "users",    badge: leadsNuevos > 0 ? leadsNuevos : null },
+    { href: "/admin/propiedades", label: "Propiedades", icon: "building"  },
   ];
 
   const adminItems: NavItem[] = [
-    { href: "/admin/kpis",     label: "KPIs",          icon: "chart" },
-    { href: "/admin/finanzas", label: "Finanzas",       icon: "dollar" },
-    { href: "/admin/portales", label: "Portales",       icon: "globe" },
-    { href: "/admin/branding", label: "Marca",          icon: "spark" },
-    { href: "/admin/ajustes",  label: "Ajustes",        icon: "settings" },
+    { href: "/admin/kpis",     label: "KPIs",      icon: "trending"  },
+    { href: "/admin/finanzas", label: "Finanzas",   icon: "coins"     },
+    { href: "/admin/portales", label: "Portales",   icon: "globe"     },
+    { href: "/admin/ajustes",  label: "Ajustes",    icon: "settings"  },
   ];
 
   const items: NavItem[] = isAdmin ? [...commonItems, ...adminItems] : commonItems;

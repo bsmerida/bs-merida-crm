@@ -6,7 +6,7 @@ const CATEGORIES: { value: string; label: string; icon: string }[] = [
   { value: "nomina",                 label: "Nómina",                      icon: "👥" },
   { value: "comisiones_asesores",    label: "Comisiones asesores",         icon: "🤝" },
   { value: "marketing_digital",      label: "Marketing digital",            icon: "📱" },
-  { value: "portales_inmobiliarios", label: "Portales inmobiliarios",       icon: "🏠" },
+  { value: "portales_inmobiliarios", label: "Portales inmobiliarios",       icon: "building" },
   { value: "software",               label: "Software y herramientas",      icon: "💻" },
   { value: "renta_oficina",          label: "Renta de oficina",             icon: "🏢" },
   { value: "servicios",              label: "Servicios (luz, internet...)", icon: "⚡" },

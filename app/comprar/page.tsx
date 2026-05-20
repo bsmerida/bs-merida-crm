@@ -6,13 +6,14 @@ import { PropertyListWithFilters } from "@/components/PropertyListWithFilters";
 
 export const metadata = { title: "Propiedades en Venta — Duclaud" };
 
-export default async function ComprarPage() {
+export default async function ComprarPage({ searchParams }: { searchParams: { type?: string; zone?: string; max?: string } }) {
   const supabase = createClient();
-  const { data } = await supabase
-    .from("properties")
+  let query = supabase.from("properties")
     .select("*, property_images(url, position, is_cover)")
     .eq("is_published", true).eq("operation", "Venta").neq("status", "Vendida")
     .order("featured", { ascending: false }).order("created_at", { ascending: false });
+  if (searchParams.max) query = (query as any).lte("price", Number(searchParams.max));
+  const { data } = await query;
 
   const props = (data || []).map((p: any) => ({
     ...p,
@@ -31,7 +32,8 @@ export default async function ComprarPage() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-8 py-16 pb-24">
-        <PropertyListWithFilters props={props} operation="Venta" />
+        <PropertyListWithFilters props={props} operation="Venta"
+          initialType={searchParams.type} initialZone={searchParams.zone} />
       </div>
       <PublicFooter />
       <PublicChatbot />

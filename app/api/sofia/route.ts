@@ -124,7 +124,7 @@ REGLAS: respuestas cortas (1-3 oraciones), mostrar propiedades de inmediato si d
           bedrooms: p.bedrooms,
           bathrooms: p.bathrooms,
           m2: p.m2_construction,
-          cover: coverMap[p.id] || null,
+          cover: coverMap[p.id] || null, 
           url: `${siteUrl}/propiedad/${p.id}`,
         }));
     }

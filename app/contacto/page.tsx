@@ -4,7 +4,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { createClient } from "@/lib/supabase/client";
-import { Phone, Mail, MapPin, Check, MessageCircle } from "lucide-react";
+
 
 export default function ContactoPage() {
   const [form, setForm]   = useState({ name: "", email: "", phone: "", message: "" });
@@ -48,13 +48,13 @@ export default function ContactoPage() {
             </p>
             <div className="space-y-4">
               {[
-                { Icon: MessageCircle, l: "WhatsApp", v: phone, href: `https://wa.me/${wa}` },
-                { Icon: Mail,          l: "Correo",   v: email, href: `mailto:${email}` },
-                { Icon: MapPin,        l: "Sede",     v: "Mérida, Yucatán · México", href: undefined },
-              ].map(({ Icon, l, v, href }) => (
+                { svg: <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>, l: "WhatsApp", v: phone, href: `https://wa.me/${wa}` },
+                { svg: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>, l: "Correo", v: email, href: `mailto:${email}` },
+                { svg: <><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>, l: "Sede", v: "Mérida, Yucatán · México", href: undefined },
+              ].map(({ svg, l, v, href }) => (
                 <div key={l} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-stone hover:border-gold/40 transition-colors group">
                   <div className="w-10 h-10 bg-navy/5 rounded-xl flex items-center justify-center text-gold shrink-0 group-hover:bg-gold/10 transition-colors">
-                    <Icon size={18} strokeWidth={1.75} />
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">{svg}</svg>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.14em] text-ink-soft">{l}</p>
@@ -73,7 +73,7 @@ export default function ContactoPage() {
           {sent ? (
             <div className="bg-white border border-stone rounded-3xl p-12 flex flex-col items-center justify-center text-center gap-5">
               <div className="w-14 h-14 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center">
-                <Check size={22} className="text-gold" strokeWidth={2.5} />
+                <svg className="w-5 h-5 text-gold" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <h3 className="font-serif text-2xl font-light text-navy">Mensaje recibido</h3>
               <p className="text-sm text-ink-muted max-w-xs">Un consultor Duclaud le contactará en menos de 24 horas.</p>

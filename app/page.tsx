@@ -35,10 +35,10 @@ export default async function HomePage() {
           </p>
           <h1 className="font-serif text-5xl md:text-7xl font-light text-white leading-[1.03] tracking-tight max-w-3xl">
             Inversiones que
-            <em className="italic text-gold">trascienden.</em>
+            <em className="italic text-gold"> trascienden.</em>
           </h1>
           <p className="text-white/45 text-base md:text-lg leading-relaxed mt-8 max-w-lg">
-            La firma inmobiliaria que integra estructura legal y financiera interna. En un sector dominado por la informalidad, somos la alternativa institucional.
+            Para quienes buscan algo más que un intermediario: un socio real en las decisiones que más importan.
           </p>
 
           {/* Buscador funcional */}
@@ -106,7 +106,7 @@ export default async function HomePage() {
                 <em className="italic text-gold"> su patrimonio.</em>
               </h2>
               <p className="text-white/45 text-sm leading-relaxed mt-6 max-w-md">
-                No somos intermediarios — somos la firma que tiene un abogado y un analista financiero en el mismo equipo que su asesor. En bienes raíces, eso cambia todo.
+                Con un equipo que integra criterio legal y financiero desde adentro, para quienes buscan algo más que un intermediario.
               </p>
               <Link href="/nosotros"
                 className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-gold hover:text-gold-lt mt-8 transition-colors">

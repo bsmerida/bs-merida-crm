@@ -258,7 +258,7 @@ export function LeadEditor({
               {["Comprar", "Rentar"].map(op => (
                 <button key={op} type="button" onClick={() => set("search_operation", form.search_operation === op ? "" : op)}
                   className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${form.search_operation === op ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
-                  {op === "Comprar" ? "🏠 Comprar" : "🔑 Rentar"}
+                  {op === "Comprar" ? "Comprar" : "Rentar"}
                 </button>
               ))}
             </div>
@@ -440,7 +440,7 @@ export function LeadEditor({
         {/* Ayuda para nuevo cliente */}
         {isNew && (
           <div className="bg-brand-50 border border-brand-200 rounded-2xl p-5">
-            <div className="text-sm font-semibold text-brand-800 mb-2">💡 Nuevo cliente manual</div>
+            <div className="text-sm font-semibold text-brand-800 mb-2">Nuevo cliente manual</div>
             <div className="text-xs text-brand-700 space-y-1">
               <div>• Solo el nombre es obligatorio</div>
               <div>• Al crear, podrás agregar actividades y cambiar el estado</div>

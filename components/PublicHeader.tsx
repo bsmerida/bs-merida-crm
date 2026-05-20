@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageCircle, Lock } from "lucide-react";
 
 const NAV = [
   { href: "/",         l: "Inicio"   },
@@ -22,7 +21,6 @@ export function PublicHeader() {
             D<span className="text-gold mx-0.5">·</span>UCLAUD
           </span>
         </Link>
-
         <nav className="hidden md:flex items-center gap-7 flex-1 justify-center">
           {NAV.map(n => (
             <Link key={n.href} href={n.href}
@@ -32,15 +30,16 @@ export function PublicHeader() {
             </Link>
           ))}
         </nav>
-
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/login"
             className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.08em] text-white/35 hover:text-white/60 transition-colors px-3 py-2 rounded-full border border-white/10 hover:border-white/25">
-            <Lock size={11} strokeWidth={2} /> Staff
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            Staff
           </Link>
           <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2 text-[11px] tracking-[0.08em] uppercase text-navy bg-gold hover:bg-gold-lt transition-colors px-5 py-2 rounded-full font-medium">
-            <MessageCircle size={13} strokeWidth={2} />
             Agendar consulta
           </a>
         </div>

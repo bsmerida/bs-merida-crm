@@ -3,14 +3,20 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "./Icon";
 
-const TYPES = ["Casa","Departamento","Terreno","Oficina","Local","Bodega"];
+const TYPES = ["Casa", "Departamento", "Terreno", "Oficina", "Local", "Bodega"];
 
-export function PropertySearch({ zones }: { zones: string[] }) {
-  const router   = useRouter();
-  const [op,   setOp]   = useState<"Venta"|"Renta">("Venta");
+type Operation = "Venta" | "Renta";
+
+interface PropertySearchProps {
+  zones: string[];
+}
+
+export function PropertySearch({ zones }: PropertySearchProps) {
+  const router = useRouter();
+  const [op, setOp]     = useState<Operation>("Venta");
   const [type, setType] = useState("");
   const [zone, setZone] = useState("");
-  const [max,  setMax]  = useState("");
+  const [max, setMax]   = useState("");
 
   const search = () => {
     const params = new URLSearchParams();
@@ -21,50 +27,54 @@ export function PropertySearch({ zones }: { zones: string[] }) {
     router.push(`${base}?${params.toString()}`);
   };
 
+  const fieldClass = "w-full bg-transparent text-sm text-white/80 focus:outline-none appearance-none cursor-pointer";
+
   return (
     <div className="bg-white/5 border border-white/10 backdrop-blur-sm">
-      {/* Tabs Comprar / Rentar */}
       <div className="flex border-b border-white/10">
-        {(["Venta","Renta"] as const).map(o => (
+        {(["Venta", "Renta"] as Operation[]).map(o => (
           <button key={o} onClick={() => setOp(o)}
             className={`px-6 py-3 text-[11px] uppercase tracking-[0.1em] transition-colors ${
-              op === o ? "text-gold border-b-2 border-gold" : "text-white/40 hover:text-white/70"}`}>
+              op === o
+                ? "text-gold border-b-2 border-gold"
+                : "text-white/40 hover:text-white/70"}`}>
             {o === "Venta" ? "Comprar" : "Rentar"}
           </button>
         ))}
       </div>
 
-      {/* Campos */}
       <div className="flex flex-wrap md:flex-nowrap divide-y md:divide-y-0 md:divide-x divide-white/10">
-        {/* Tipo */}
         <div className="px-5 py-4 flex-1 min-w-[160px]">
           <p className="text-[9px] uppercase tracking-[0.18em] text-gold mb-1.5">Tipo de propiedad</p>
-          <select value={type} onChange={e => setType(e.target.value)}
-            className="w-full bg-transparent text-sm text-white/80 focus:outline-none appearance-none cursor-pointer">
-            <option value="" className="text-navy">Todos los tipos</option>
-            {TYPES.map(t => <option key={t} value={t} className="text-navy">{t}</option>)}
+          <select value={type} onChange={e => setType(e.target.value)} className={fieldClass}>
+            <option value="" className="text-navy bg-white">Todos los tipos</option>
+            {TYPES.map(t => (
+              <option key={t} value={t} className="text-navy bg-white">{t}</option>
+            ))}
           </select>
         </div>
 
-        {/* Zona */}
         <div className="px-5 py-4 flex-1 min-w-[160px]">
           <p className="text-[9px] uppercase tracking-[0.18em] text-gold mb-1.5">Zona o ciudad</p>
-          <select value={zone} onChange={e => setZone(e.target.value)}
-            className="w-full bg-transparent text-sm text-white/80 focus:outline-none appearance-none cursor-pointer">
-            <option value="" className="text-navy">Cualquier zona</option>
-            {zones.map(z => <option key={z} value={z} className="text-navy">{z}</option>)}
+          <select value={zone} onChange={e => setZone(e.target.value)} className={fieldClass}>
+            <option value="" className="text-navy bg-white">Cualquier zona</option>
+            {zones.map(z => (
+              <option key={z} value={z} className="text-navy bg-white">{z}</option>
+            ))}
           </select>
         </div>
 
-        {/* Presupuesto */}
         <div className="px-5 py-4 flex-1 min-w-[160px]">
           <p className="text-[9px] uppercase tracking-[0.18em] text-gold mb-1.5">Presupuesto máx.</p>
-          <input type="number" value={max} onChange={e => setMax(e.target.value)}
+          <input
+            type="number"
+            value={max}
+            onChange={e => setMax(e.target.value)}
             placeholder="Sin límite"
-            className="w-full bg-transparent text-sm text-white/80 placeholder:text-white/30 focus:outline-none" />
+            className="w-full bg-transparent text-sm text-white/80 placeholder:text-white/30 focus:outline-none"
+          />
         </div>
 
-        {/* Botón */}
         <button onClick={search}
           className="px-8 py-4 bg-gold hover:bg-gold-lt text-navy text-[11px] uppercase tracking-[0.1em] font-medium flex items-center gap-2 transition-colors whitespace-nowrap">
           <Icon name="search" className="w-4 h-4" />

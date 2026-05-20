@@ -22,7 +22,7 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
   }, [lightbox, prev, next]);
 
   if (!images.length) return (
-    <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl">🏠</div>
+    <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl"><svg className="w-20 h-20 text-stone-dk" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
   );
 
   return (

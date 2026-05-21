@@ -45,7 +45,7 @@ export function PropertyCard({ p, coverUrl }: { p: Property & { currency?: strin
         </div>
         <div className="mt-4 pt-4 border-t border-stone flex items-center justify-between">
           <div>
-            <p className="font-serif text-2xl font-bold text-navy tracking-tight leading-tight">
+            <p className="text-2xl font-bold text-navy tracking-tight leading-tight">
               {fmt(Number(p.price), currency)}
             </p>
             {p.operation === "Renta" && <p className="text-[10px] text-ink-soft mt-0.5 uppercase tracking-wider">por mes</p>}

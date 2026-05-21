@@ -375,7 +375,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.text("BS MÉRIDA · ANÁLISIS EJECUTIVO", 14, 12);
+        doc.text("DUCLAUD · ANÁLISIS EJECUTIVO", 14, 12);
         doc.text(data.period, pageW - 14, 12, { align: "right" });
 
         doc.setTextColor(...DARK);
@@ -400,7 +400,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(9);
             doc.setFont("helvetica", "bold");
-            doc.text("BS MÉRIDA · ANÁLISIS EJECUTIVO", 14, 12);
+            doc.text("DUCLAUD · ANÁLISIS EJECUTIVO", 14, 12);
             doc.text(data.period, pageW - 14, 12, { align: "right" });
             y = 30;
           }
@@ -442,14 +442,126 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         }
       }
 
-      // ── PÁGINA 3: ESTADO DE RESULTADOS ─────────────────
+      // ── PÁGINA: ANÁLISIS AUTOMÁTICO CON GRÁFICAS ───────
+      doc.addPage();
+      doc.setFillColor(...BRAND);
+      doc.rect(0, 0, pageW, 18, "F");
+      doc.setFillColor(...([196, 149, 106] as [number, number, number]));
+      doc.rect(0, 18, pageW, 3, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("DUCLAUD · ANÁLISIS DEL PERÍODO", 14, 12);
+      doc.text(data.period, pageW - 14, 12, { align: "right" });
+
+      // ── Conclusiones automáticas ─────────────────────
+      const totalIng   = data.pnl.ingresoTotal || 1;
+      const margen     = data.pnl.margenNeto * 100;
+      const topAgent   = data.agentStats.length > 0 ? data.agentStats.sort((a: any, b: any) => b.cerrados - a.cerrados)[0] : null;
+      const topChannel = (data.marketingByChannel || []).filter((c: any) => c.revenue > 0).sort((a: any, b: any) => b.revenue - a.revenue)[0];
+      const cxcTotal   = data.deals.filter((d: any) => d.status !== "cobrado" && d.status !== "cancelado").reduce((s: number, d: any) => s + Number(d.gross_commission || 0), 0);
+
+      const conclusiones: string[] = [
+        `Ingresos totales: ${fmt(data.pnl.ingresoTotal)} · Margen neto: ${margen.toFixed(1)}% ${margen >= 30 ? "— saludable" : margen >= 0 ? "— mejorable" : "— negativo, revisar gastos"}.`,
+        data.pnl.utilidadOp >= 0
+          ? `Utilidad operativa positiva de ${fmt(data.pnl.utilidadOp)}. La firma cubre sus costos y genera excedente.`
+          : `Utilidad operativa negativa de ${fmt(data.pnl.utilidadOp)}. Los gastos superan los ingresos en el período.`,
+        `Gastos de comisiones a asesores: ${fmt(data.pnl.gastoComisiones)} (${(data.pnl.gastoComisiones / totalIng * 100).toFixed(1)}% de ingresos).`,
+        topAgent
+          ? `Asesor con más cierres: ${topAgent.full_name} — ${topAgent.cerrados} cierres, conversión ${topAgent.conv}%.`
+          : `Sin operaciones registradas en el período.`,
+        cxcTotal > 0
+          ? `Cuentas por cobrar pendientes: ${fmt(cxcTotal)}. Priorizar cobranza de estas operaciones.`
+          : `Sin cuentas por cobrar pendientes — cobranza al día.`,
+        topChannel
+          ? `Canal más rentable: ${topChannel.channel} con ${fmt(topChannel.revenue)} en ingresos${topChannel.spend > 0 ? ` y ROI de ${topChannel.roi?.toFixed(0)}%` : ""}.`
+          : `Registre gastos de marketing por canal para ver ROI y CAC.`,
+      ];
+
+      let y = 30;
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...DARK);
+      doc.text("Conclusiones del período", 14, y); y += 5;
+      doc.setFillColor(...([196, 149, 106] as [number, number, number]));
+      doc.rect(14, y, 40, 1.5, "F"); y += 10;
+
+      conclusiones.forEach((c, i) => {
+        const isNeg = c.includes("negativo") || c.includes("negativa") || c.includes("superan");
+        const isPos = c.includes("saludable") || c.includes("positiva") || c.includes("al día");
+        doc.setFillColor(...(isNeg ? [254, 226, 226] as [number, number, number] : isPos ? [220, 252, 231] as [number, number, number] : [237, 233, 225] as [number, number, number]));
+        const textLines = doc.splitTextToSize(`${i + 1}. ${c}`, pageW - 36) as string[];
+        const boxH = textLines.length * 5 + 8;
+        doc.rect(14, y - 2, pageW - 28, boxH, "F");
+        doc.setTextColor(isNeg ? 127 : isPos ? 20 : 17, isNeg ? 29 : isPos ? 83 : 24, isNeg ? 29 : isPos ? 45 : 39);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(textLines, 19, y + 4);
+        y += boxH + 4;
+      });
+
+      // ── Gráfica de barras: ingresos por tipo ──────────
+      y += 8;
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...DARK);
+      doc.text("Composición de ingresos", 14, y); y += 8;
+
+      const ingItems = [
+        { label: "Com. de venta", val: data.pnl.ingresoVenta, color: BRAND as [number, number, number] },
+        { label: "Com. de renta", val: data.pnl.ingresoRenta, color: [196, 149, 106] as [number, number, number] },
+        { label: "Gastos comisiones", val: data.pnl.gastoComisiones, color: [239, 68, 68] as [number, number, number] },
+        { label: "Gastos marketing", val: data.pnl.gastoMarketing, color: [245, 158, 11] as [number, number, number] },
+        { label: "Gastos nómina", val: data.pnl.gastoNomina, color: [156, 163, 175] as [number, number, number] },
+        { label: "Utilidad operativa", val: Math.max(data.pnl.utilidadOp, 0), color: [16, 185, 129] as [number, number, number] },
+      ].filter(i => i.val > 0);
+
+      const maxBar = Math.max(...ingItems.map(i => i.val));
+      const barAreaW = pageW - 100;
+      ingItems.forEach(item => {
+        const barW = Math.max((item.val / maxBar) * barAreaW, 2);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...DARK);
+        doc.text(item.label, 14, y + 5);
+        doc.setFillColor(...item.color);
+        doc.roundedRect(82, y, barW, 8, 1, 1, "F");
+        doc.setTextColor(...DARK);
+        doc.text(fmt(item.val), 85 + barW, y + 5.5);
+        y += 13;
+      });
+
+      // ── Gráfica de barras: asesores ──────────────────
+      if (data.agentStats.length > 0 && y < pageH - 80) {
+        y += 8;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...DARK);
+        doc.text("Ingresos por asesor", 14, y); y += 8;
+
+        const maxAgent = Math.max(...data.agentStats.map((a: any) => Number(a.ingresos)));
+        data.agentStats.slice(0, 5).forEach((a: any, i: number) => {
+          const bw = Math.max((Number(a.ingresos) / maxAgent) * barAreaW, 2);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(...DARK);
+          const shortName = (a.full_name || "Asesor").split(" ").slice(0, 2).join(" ");
+          doc.text(shortName, 14, y + 5);
+          doc.setFillColor(...BRAND);
+          doc.roundedRect(82, y, bw, 8, 1, 1, "F");
+          doc.text(fmt(Number(a.ingresos)), 85 + bw, y + 5.5);
+          y += 13;
+        });
+      }
+
+      // ── PÁGINA: ESTADO DE RESULTADOS ─────────────────
       doc.addPage();
       doc.setFillColor(...BRAND);
       doc.rect(0, 0, pageW, 18, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("BS MÉRIDA · ESTADO DE RESULTADOS", 14, 12);
+      doc.text("DUCLAUD · ESTADO DE RESULTADOS", 14, 12);
       doc.text(data.period, pageW - 14, 12, { align: "right" });
 
       doc.setTextColor(...DARK);
@@ -457,25 +569,25 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
       doc.setFont("helvetica", "bold");
       doc.text("Estado de Resultados", 14, 32);
 
-      const totalIng = data.pnl.ingresoTotal || 1;
+      const totalIngPnl = data.pnl.ingresoTotal || 1;
       autoTable(doc, {
         startY: 38,
         head: [["Concepto", "Monto", "% Ingresos"]],
         body: [
           ["INGRESOS", "", ""],
-          ["  Comisiones de venta", fmt(data.pnl.ingresoVenta), pct(data.pnl.ingresoVenta / totalIng)],
-          ["  Comisiones de renta", fmt(data.pnl.ingresoRenta), pct(data.pnl.ingresoRenta / totalIng)],
+          ["  Comisiones de venta", fmt(data.pnl.ingresoVenta), pct(data.pnl.ingresoVenta / totalIngPnl)],
+          ["  Comisiones de renta", fmt(data.pnl.ingresoRenta), pct(data.pnl.ingresoRenta / totalIngPnl)],
           ["TOTAL INGRESOS", fmt(data.pnl.ingresoTotal), "100.0%"],
           ["", "", ""],
           ["COSTOS DIRECTOS", "", ""],
-          ["  Comisiones asesores / referidos", fmt(data.pnl.gastoComisiones), pct(data.pnl.gastoComisiones / totalIng)],
-          ["UTILIDAD BRUTA", fmt(data.pnl.utilidadBruta), pct(data.pnl.utilidadBruta / totalIng)],
+          ["  Comisiones asesores / referidos", fmt(data.pnl.gastoComisiones), pct(data.pnl.gastoComisiones / totalIngPnl)],
+          ["UTILIDAD BRUTA", fmt(data.pnl.utilidadBruta), pct(data.pnl.utilidadBruta / totalIngPnl)],
           ["", "", ""],
           ["GASTOS OPERATIVOS", "", ""],
-          ["  Nómina", fmt(data.pnl.gastoNomina), pct(data.pnl.gastoNomina / totalIng)],
-          ["  Marketing y publicidad", fmt(data.pnl.gastoMarketing), pct(data.pnl.gastoMarketing / totalIng)],
-          ["  Gastos administrativos", fmt(data.pnl.gastoAdmin), pct(data.pnl.gastoAdmin / totalIng)],
-          ["TOTAL GASTOS", fmt(data.pnl.gastoTotal), pct(data.pnl.gastoTotal / totalIng)],
+          ["  Nómina", fmt(data.pnl.gastoNomina), pct(data.pnl.gastoNomina / totalIngPnl)],
+          ["  Marketing y publicidad", fmt(data.pnl.gastoMarketing), pct(data.pnl.gastoMarketing / totalIngPnl)],
+          ["  Gastos administrativos", fmt(data.pnl.gastoAdmin), pct(data.pnl.gastoAdmin / totalIngPnl)],
+          ["TOTAL GASTOS", fmt(data.pnl.gastoTotal), pct(data.pnl.gastoTotal / totalIngPnl)],
           ["", "", ""],
           ["UTILIDAD OPERATIVA (EBIT)", fmt(data.pnl.utilidadOp), pct(data.pnl.margenNeto)],
         ],
@@ -510,7 +622,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.text("BS MÉRIDA · OPERACIONES", 14, 12);
+        doc.text("DUCLAUD · OPERACIONES", 14, 12);
         doc.text(data.period, pageW - 14, 12, { align: "right" });
 
         doc.setTextColor(...DARK);
@@ -560,7 +672,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.text("BS MÉRIDA · DESEMPEÑO ASESORES", 14, 12);
+        doc.text("DUCLAUD · DESEMPEÑO ASESORES", 14, 12);
         doc.text(data.period, pageW - 14, 12, { align: "right" });
 
         doc.setTextColor(...DARK);
@@ -572,7 +684,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
           startY: 38,
           head: [["#", "Asesor", "Leads", "Cierres", "Conversión", "Ingresos", "Comisión", "Neto empresa"]],
           body: data.agentStats.map((a: any, i: number) => [
-            i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : String(i + 1),
+            i === 0 ? "1°" : i === 1 ? "2°" : i === 2 ? "3°" : String(i + 1),
             a.full_name,
             a.myLeads,
             a.cerrados,
@@ -596,7 +708,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.text("BS MÉRIDA · ANÁLISIS HISTÓRICO", 14, 12);
+        doc.text("DUCLAUD · ANÁLISIS HISTÓRICO", 14, 12);
 
         doc.setTextColor(...DARK);
         doc.setFontSize(16);
@@ -638,11 +750,11 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
       const totalPages = (doc as any).internal.getNumberOfPages();
       for (let i = 2; i <= totalPages; i++) {
         doc.setPage(i);
-        doc.setFillColor(245, 243, 255);
+        doc.setFillColor(237, 233, 225);
         doc.rect(0, pageH - 14, pageW, 14, "F");
         doc.setFontSize(7);
-        doc.setTextColor(...GRAY);
-        doc.text(`Duclaud · Reporte Financiero · ${data.period} · Confidencial`, 14, pageH - 5);
+        doc.setTextColor(...BRAND);
+        doc.text(`DUCLAUD · Reporte Financiero · ${data.period} · Confidencial`, 14, pageH - 5);
         doc.text(`Página ${i} de ${totalPages}`, pageW - 14, pageH - 5, { align: "right" });
       }
 

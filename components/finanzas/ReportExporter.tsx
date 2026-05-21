@@ -100,7 +100,7 @@ export function ReportExporter({ data }: { data: ReportData }) {
       wsMkt["!cols"] = [{ wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 18 }];
       XLSX.utils.book_append_sheet(wb, wsMkt, "Marketing");
 
-      XLSX.writeFile(wb, `BS-Merida-Finanzas-${data.period.replace(/\s/g, "-")}.xlsx`);
+      XLSX.writeFile(wb, `Duclaud-Finanzas-${data.period.replace(/\s/g, "-")}.xlsx`);
     } catch (e) {
       alert("Error al generar Excel: " + e);
     }
@@ -217,10 +217,10 @@ export function ReportExporter({ data }: { data: ReportData }) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text(`BS Mérida · Reporte Financiero · ${data.period} · Pág. ${i}/${totalPages}`, pageW / 2, 290, { align: "center" });
+        doc.text(`Duclaud · Reporte Financiero · ${data.period} · Pág. ${i}/${totalPages}`, pageW / 2, 290, { align: "center" });
       }
 
-      doc.save(`BS-Merida-Finanzas-${data.period.replace(/\s/g, "-")}.pdf`);
+      doc.save(`Duclaud-Finanzas-${data.period.replace(/\s/g, "-")}.pdf`);
     } catch (e) {
       alert("Error al generar PDF: " + e);
     }

@@ -71,9 +71,9 @@ export function PropertyForm({ property }: Props) {
     const ym = `${String(now.getFullYear()).slice(2)}${String(now.getMonth() + 1).padStart(2, "0")}`;
     const { count } = await supabase
       .from("properties").select("*", { count: "exact", head: true })
-      .like("reference", `BS-${ym}-%`);
+      .like("reference", `DLC-${ym}-%`);
     const seq = String((count || 0) + 1).padStart(3, "0");
-    set("reference", `BS-${ym}-${seq}`);
+    set("reference", `DLC-${ym}-${seq}`);
   };
 
   const geocode = async () => {
@@ -214,7 +214,7 @@ export function PropertyForm({ property }: Props) {
         </Field>
         <Field label="Código identificador">
           <div className="flex gap-2">
-            <input value={form.reference} onChange={e => set("reference", e.target.value)} placeholder="Ej. BS-2505-001" className={`${inp} flex-1`} />
+            <input value={form.reference} onChange={e => set("reference", e.target.value)} placeholder="Ej. DLC-2505-001" className={`${inp} flex-1`} />
             <button type="button" onClick={generateReference}
               className="px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm whitespace-nowrap">
               Generar

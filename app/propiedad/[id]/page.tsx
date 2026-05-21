@@ -8,21 +8,29 @@ import { PropertyContactButtons } from "@/components/PropertyContactButtons";
 import { PropertyGallery } from "@/components/PropertyGallery";
 import { PropertyMapEmbed } from "@/components/PropertyMapEmbed";
 import { PropertyViewTracker } from "@/components/PropertyViewTracker";
-import { Icon } from "@/components/Icon";
-import { fmtMXN } from "@/lib/utils";
 import type { Property, PropertyImage, Profile } from "@/lib/supabase/types";
 
-const PLACEHOLDER_EMOJI: Record<string, string> = {
-  Casa: "🏡", Departamento: "🏢", Oficina: "🏢", Local: "🏬", Terreno: "🌳", Bodega: "🏭",
-};
+const fmt = (n: number, cur = "MXN") =>
+  new Intl.NumberFormat(cur === "USD" ? "en-US" : "es-MX", {
+    style: "currency", currency: cur, maximumFractionDigits: 0,
+  }).format(n);
 
-function formatPrice(price: number, priceType: string, operation: string) {
-  const base = fmtMXN(price);
-  if (priceType === "m2") return `${base} / m²`;
-  if (priceType === "lineal") return `${base} / ml`;
-  if (operation === "Renta") return `${base} / mes`;
-  return base;
+function SpecBox({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-6 px-4 text-center bg-white rounded-2xl border border-stone">
+      <div className="text-gold">{icon}</div>
+      <span className="text-xl font-bold text-navy">{value}</span>
+      <span className="text-[10px] uppercase tracking-[0.1em] text-ink-soft">{label}</span>
+    </div>
+  );
 }
+
+const IBed  = <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path d="M3 7v13M21 7v13M3 14h18M3 7a4 4 0 014-4h10a4 4 0 014 4"/></svg>;
+const IBath = <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path d="M4 12h16v3a5 5 0 01-5 5H9a5 5 0 01-5-5v-3z"/><path d="M6 12V5a2 2 0 014 0"/></svg>;
+const ISqm  = <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path d="M15 3h6v6M14 10l6.1-6.1M9 21H3v-6M10 14l-6.1 6.1"/></svg>;
+const ICar  = <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24"><path d="M5 17H3v-5l3-6h12l3 6v5h-2"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>;
+const IPin  = <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+const IChk  = <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>;
 
 export default async function PropiedadDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -36,90 +44,174 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
     : { data: null };
 
   const property = p as Property;
-  const images = (imgs || []) as PropertyImage[];
-  const cover = images.find(i => i.is_cover) || images[0];
-  const priceType = (property as any).price_type || "total";
-  const lat = (property as any).lat;
-  const lng = (property as any).lng;
+  const images   = (imgs || []) as PropertyImage[];
+  const currency = (property as any).currency || "MXN";
+  const priceType= (property as any).price_type || "total";
+  const lat      = (property as any).lat;
+  const lng      = (property as any).lng;
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bsmerida.com";
-  const propUrl = `${baseUrl}/propiedad/${property.id}`;
-  const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
-  const waMsg = `Hola, me interesa esta propiedad:\n\n*${property.title}*\n${propUrl}\n\n¿Me pueden dar más información?`;
+  const baseUrl  = process.env.NEXT_PUBLIC_SITE_URL || "https://duclaud.mx";
+  const propUrl  = `${baseUrl}/propiedad/${property.id}`;
+  const wa       = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
+  const waMsg    = `Hola, me interesa esta propiedad:\n\n*${property.title}*\n${propUrl}\n\n¿Me pueden dar más información?`;
+
+  const priceLabel = (() => {
+    const base = fmt(property.price, currency);
+    if (priceType === "m2") return `${base} / m²`;
+    if (property.operation === "Renta") return `${base} / mes`;
+    return base;
+  })();
 
   return (
     <>
       <PublicHeader />
-      {/* Registrar vista en el cliente (sin bloquear SSR) */}
       <PropertyViewTracker propertyId={property.id} />
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <Link href="/comprar" className="text-sm text-ink-muted hover:text-ink mb-6 inline-flex items-center gap-1">← Regresar</Link>
+      {/* Hero navy con precio */}
+      <div className="bg-navy pb-0">
+        <div className="max-w-7xl mx-auto px-8 pt-10 pb-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-[11px] text-white/40 mb-6">
+            <Link href="/" className="hover:text-gold transition-colors">Inicio</Link>
+            <span>/</span>
+            <Link href={property.operation === "Renta" ? "/rentar" : "/comprar"}
+              className="hover:text-gold transition-colors capitalize">{property.operation}</Link>
+            <span>/</span>
+            <span className="text-white/60 truncate max-w-xs">{property.title}</span>
+          </div>
 
-        <PropertyGallery images={images} title={property.title} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-10">
-          <div className="lg:col-span-2 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end">
             <div>
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-brand-600 font-semibold">
-                {property.type} · {property.operation}
-                {(property as any).development && <span className="ml-2 text-ink-muted normal-case">· {(property as any).development}</span>}
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="text-[10px] uppercase tracking-[0.1em] font-semibold px-3 py-1 rounded-full bg-gold/20 text-gold border border-gold/30">
+                  {property.type}
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.1em] font-medium px-3 py-1 rounded-full bg-white/10 text-white/70">
+                  En {property.operation}
+                </span>
+                {(property as any).development && (
+                  <span className="text-[10px] px-3 py-1 rounded-full bg-white/10 text-white/60">
+                    {(property as any).development}
+                  </span>
+                )}
               </div>
-              <h1 className="text-4xl font-semibold text-ink tracking-tight mt-2">{property.title}</h1>
-              {property.reference && <div className="text-xs font-mono text-ink-soft mt-1">{property.reference}</div>}
-              <div className="flex items-center gap-1.5 text-ink-muted mt-2">
-                <Icon name="pin" className="w-4 h-4" />
-                <span className="text-sm">{property.address || [property.zone, property.city, property.state].filter(Boolean).join(", ")}</span>
+              <h1 className="font-serif text-3xl md:text-4xl font-light text-white leading-tight">{property.title}</h1>
+              {property.reference && (
+                <p className="text-[10px] font-mono text-white/30 mt-2 tracking-widest">{property.reference}</p>
+              )}
+              <div className="flex items-center gap-2 text-white/50 mt-3 text-sm">
+                <span className="text-gold">{IPin}</span>
+                <span>{property.address || [property.zone, property.city, property.state].filter(Boolean).join(", ")}</span>
               </div>
             </div>
 
-            {/* Características */}
-            <div className="flex flex-wrap gap-6 text-sm text-ink py-6 border-y border-ink-line">
-              {property.bedrooms > 0 && <div className="flex items-center gap-2"><Icon name="bed" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bedrooms}</span> recámaras</span></div>}
-              {property.bathrooms > 0 && <div className="flex items-center gap-2"><Icon name="bath" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.bathrooms}</span> baños</span></div>}
-              {property.m2_construction && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_construction}</span> m² const.</span></div>}
-              {property.m2_land && <div className="flex items-center gap-2"><Icon name="sqm" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.m2_land}</span> m² terreno</span></div>}
-              {property.parking > 0 && <div className="flex items-center gap-2"><Icon name="car" className="w-5 h-5 text-ink-muted"/><span><span className="font-semibold">{property.parking}</span> cajones</span></div>}
+            <div className="lg:text-right">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-gold/70 mb-2">
+                {property.operation === "Renta" ? "Renta mensual" : "Precio de venta"}
+              </p>
+              <p className="font-serif text-4xl md:text-5xl font-bold text-white tracking-tight">{priceLabel}</p>
+              {currency === "USD" && (
+                <p className="text-[11px] text-white/40 mt-1 uppercase tracking-wider">Precio en dólares americanos</p>
+              )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Galería */}
+      <div className="bg-navy pb-0">
+        <PropertyGallery images={images} title={property.title} />
+      </div>
+
+      {/* Contenido principal */}
+      <div className="max-w-7xl mx-auto px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Columna principal */}
+          <div className="lg:col-span-2 space-y-10">
+
+            {/* Specs */}
+            {(property.bedrooms > 0 || property.bathrooms > 0 || property.m2_construction || property.parking > 0) && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {property.bedrooms > 0  && <SpecBox icon={IBed}  label="Recámaras"        value={String(property.bedrooms)} />}
+                {property.bathrooms > 0 && <SpecBox icon={IBath} label="Baños"            value={String(property.bathrooms)} />}
+                {property.m2_construction && <SpecBox icon={ISqm} label="m² construcción" value={`${property.m2_construction}`} />}
+                {property.parking > 0   && <SpecBox icon={ICar}  label="Estacionamientos" value={String(property.parking)} />}
+              </div>
+            )}
 
             {/* Descripción */}
             {property.description && (
-              <div>
-                <h2 className="text-xl font-semibold text-ink mb-4">Descripción</h2>
-                <p className="text-ink-muted leading-relaxed whitespace-pre-line">{property.description}</p>
+              <div className="bg-white rounded-2xl border border-stone p-8">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-gold mb-5">Descripción</p>
+                <p className="text-ink-muted text-sm leading-relaxed whitespace-pre-line">{property.description}</p>
+              </div>
+            )}
+
+            {/* Detalles técnicos */}
+            {(property.m2_land || (property as any).floors || (property as any).year_built) && (
+              <div className="bg-white rounded-2xl border border-stone p-8">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-gold mb-5">Detalles técnicos</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {property.m2_land && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-ink-soft">Terreno</p>
+                      <p className="text-sm font-semibold text-navy mt-1">{property.m2_land} m²</p>
+                    </div>
+                  )}
+                  {(property as any).floors && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-ink-soft">Niveles</p>
+                      <p className="text-sm font-semibold text-navy mt-1">{(property as any).floors}</p>
+                    </div>
+                  )}
+                  {(property as any).year_built && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-ink-soft">Año de construcción</p>
+                      <p className="text-sm font-semibold text-navy mt-1">{(property as any).year_built}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Amenidades */}
             {property.amenities?.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold text-ink mb-4">Amenidades</h2>
+              <div className="bg-white rounded-2xl border border-stone p-8">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-gold mb-5">Amenidades</p>
                 <div className="flex flex-wrap gap-2">
                   {property.amenities.map((a: string) => (
-                    <span key={a} className="bg-brand-50 text-brand-700 border border-brand-100 px-3 py-1.5 rounded-full text-sm">{a}</span>
+                    <span key={a} className="flex items-center gap-2 text-xs text-navy border border-stone px-3 py-2 rounded-full bg-cream">
+                      <span className="text-gold">{IChk}</span>{a}
+                    </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Mapa de ubicación */}
+            {/* Mapa */}
             {lat && lng && (
-              <div>
-                <h2 className="text-xl font-semibold text-ink mb-4">Ubicación</h2>
-                <PropertyMapEmbed lat={lat} lng={lng} title={property.title} />
+              <div className="bg-white rounded-2xl border border-stone overflow-hidden">
+                <div className="px-8 py-5 border-b border-stone">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-gold">Ubicación</p>
+                  <p className="text-sm text-ink-muted mt-1">{[property.zone, property.city, property.state].filter(Boolean).join(", ")}</p>
+                </div>
+                <div className="h-72">
+                  <PropertyMapEmbed lat={lat} lng={lng} title={property.title} />
+                </div>
               </div>
             )}
           </div>
 
           {/* Sidebar */}
-          <div>
-            <div className="bg-white rounded-3xl border border-ink-line shadow-card p-6 sticky top-24">
-              <div className="text-3xl font-semibold text-ink tracking-tight">
-                {formatPrice(property.price, priceType, property.operation)}
+          <div className="space-y-5">
+            {/* Precio y contacto */}
+            <div className="bg-white rounded-2xl border border-stone p-6 sticky top-24">
+              <div className="pb-5 mb-5 border-b border-stone">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-ink-soft mb-1">
+                  {property.operation === "Renta" ? "Renta mensual" : "Precio"}
+                </p>
+                <p className="font-serif text-3xl font-bold text-navy">{priceLabel}</p>
               </div>
-              {priceType !== "total" && (
-                <div className="text-xs text-ink-muted mt-1">precio {priceType === "m2" ? "por m²" : "por metro lineal"}</div>
-              )}
 
               <PropertyContactButtons
                 propertyId={property.id}
@@ -130,24 +222,37 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
                 waMsg={waMsg}
               />
 
+              {/* Asesor */}
               {agent && (
-                <div className="mt-6 pt-6 border-t border-ink-line">
-                  <div className="text-xs text-ink-muted">Asesor a cargo</div>
-                  <div className="flex items-center gap-3 mt-3">
-                    <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
-                      {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
+                <div className="mt-5 pt-5 border-t border-stone">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-ink-soft mb-3">Consultor a cargo</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-navy rounded-xl flex items-center justify-center shrink-0">
+                      <span className="font-serif text-sm text-gold">
+                        {(agent as Profile).initials || (agent as Profile).full_name?.split(" ").map((w: string) => w[0]).join("").slice(0,2)}
+                      </span>
                     </div>
                     <div>
-                      <div className="font-medium text-sm text-ink">{(agent as Profile).full_name}</div>
-                      <div className="text-xs text-ink-muted">Inmobiliaria BS Mérida</div>
+                      <p className="text-sm font-semibold text-navy">{(agent as Profile).full_name}</p>
+                      <p className="text-[10px] text-ink-muted uppercase tracking-wider">Consultor Duclaud</p>
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* Credenciales */}
+              <div className="mt-5 pt-5 border-t border-stone space-y-2">
+                {["Socios AMPI Mérida", "Certificación ECO 110.02", "PROFECO 5589-2022", "Criterio legal y financiero"].map(c => (
+                  <div key={c} className="flex items-center gap-2 text-[11px] text-ink-muted">
+                    <span className="text-gold">{IChk}</span>{c}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
       <PublicFooter />
       <PublicChatbot />
     </>

@@ -51,7 +51,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     // Modo asesor: tampoco mostrar datos del asesor asignado
     agent: isAsesor ? null : agent,
     biz,
-    hideHeader: isAsesor, // PropertyPDF usa esto para ocultar el header "BS | INMOBILIARIA"
+    hideHeader: isAsesor, // PropertyPDF usa esto para ocultar el header "DUCLAUD"
   });
 
   const stream = await renderToStream(element);
@@ -64,7 +64,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
 
   const suffix = isAsesor ? "-asesor" : "-cliente";
-  const filename = `BS-${prop.reference || prop.id.slice(0, 8)}${suffix}.pdf`;
+  const filename = `DLC-${prop.reference || prop.id.slice(0, 8)}${suffix}.pdf`;
 
   return new Response(webStream, {
     headers: {

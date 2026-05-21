@@ -38,10 +38,10 @@ function cellStyle(wb: any, XLSX: any, opts: {
       wrapText: opts.wrapText || false,
     },
     border: opts.border ? {
-      top: { style: "thin", color: { rgb: "CCCCCC" } },
-      bottom: { style: "thin", color: { rgb: "CCCCCC" } },
-      left: { style: "thin", color: { rgb: "CCCCCC" } },
-      right: { style: "thin", color: { rgb: "CCCCCC" } },
+      top: { style: "thin", color: { rgb: "EDE9E1" } },
+      bottom: { style: "thin", color: { rgb: "EDE9E1" } },
+      left: { style: "thin", color: { rgb: "EDE9E1" } },
+      right: { style: "thin", color: { rgb: "EDE9E1" } },
     } : undefined,
     numFmt: opts.numFmt,
   };
@@ -58,8 +58,8 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
       const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
 
-      const BRAND = "3E2370";
-      const BRAND_LIGHT = "EDE9F7";
+      const BRAND = "1C2B4B";
+      const BRAND_LIGHT = "EDE9E1";
       const GREEN = "14532D";
       const GREEN_LIGHT = "DCFCE7";
       const RED = "7F1D1D";
@@ -268,7 +268,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         XLSX.utils.book_append_sheet(wb, wsHist, "📈 Histórico");
       }
 
-      XLSX.writeFile(wb, `BS-Merida-CFO-${data.period.replace(/\s/g, "-")}.xlsx`);
+      XLSX.writeFile(wb, `Duclaud-Finanzas-${data.period.replace(/\s/g, "-")}.xlsx`);
     } catch (e: any) {
       alert("Error al generar Excel: " + e.message);
     }
@@ -302,8 +302,8 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
       const doc = new jsPDF({ orientation: "portrait", format: "a4" });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
-      const BRAND: [number, number, number] = [62, 35, 112];
-      const BRAND_LIGHT: [number, number, number] = [237, 233, 247];
+      const BRAND: [number, number, number] = [28, 43, 75];
+      const BRAND_LIGHT: [number, number, number] = [237, 233, 225];
       const DARK: [number, number, number] = [17, 24, 39];
       const GRAY: [number, number, number] = [107, 114, 128];
       const GREEN: [number, number, number] = [16, 185, 129];
@@ -322,12 +322,12 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(32);
       doc.setFont("helvetica", "bold");
-      doc.text("BS MÉRIDA", 24, 80);
+      doc.text("DUCLAUD", 24, 80);
 
       doc.setFontSize(14);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(200, 185, 240);
-      doc.text("INMOBILIARIA · REPORTE FINANCIERO EJECUTIVO", 24, 92);
+      doc.setTextColor(196, 149, 106);
+      doc.text("CONSULTORÍA INMOBILIARIA · REPORTE FINANCIERO", 24, 92);
 
       doc.setFontSize(28);
       doc.setFont("helvetica", "bold");
@@ -360,10 +360,10 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
 
       // Footer portada
       doc.setFontSize(8);
-      doc.setTextColor(150, 130, 190);
+      doc.setTextColor(196, 149, 106);
       doc.setFont("helvetica", "normal");
       doc.text(`Generado: ${new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" })}`, 14, pageH - 20);
-      doc.text("Confidencial · BS Mérida · Uso interno", pageW - 14, pageH - 20, { align: "right" });
+      doc.text("Duclaud · Confidencial · Uso interno", pageW - 14, pageH - 20, { align: "right" });
 
       // ── PÁGINA 2: NARRATIVA IA ──────────────────────────
       if (narrative) {
@@ -646,7 +646,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         doc.text(`Página ${i} de ${totalPages}`, pageW - 14, pageH - 5, { align: "right" });
       }
 
-      doc.save(`BS-Merida-McKinsey-${data.period.replace(/\s/g, "-")}.pdf`);
+      doc.save(`Duclaud-Reporte-${data.period.replace(/\s/g, "-")}.pdf`);
     } catch (e: any) {
       alert("Error al generar PDF: " + e.message);
     }

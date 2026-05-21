@@ -109,7 +109,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               <p className="text-[10px] uppercase tracking-[0.18em] text-gold/70 mb-2">
                 {property.operation === "Renta" ? "Renta mensual" : "Precio de venta"}
               </p>
-              <p className="font-serif text-4xl md:text-5xl font-bold text-white tracking-tight">{priceLabel}</p>
+              <p className="text-4xl md:text-5xl font-bold text-white tracking-tight">{priceLabel}</p>
               {currency === "USD" && (
                 <p className="text-[11px] text-white/40 mt-1 uppercase tracking-wider">Precio en dólares americanos</p>
               )}
@@ -210,7 +210,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
                 <p className="text-[10px] uppercase tracking-[0.14em] text-ink-soft mb-1">
                   {property.operation === "Renta" ? "Renta mensual" : "Precio"}
                 </p>
-                <p className="font-serif text-3xl font-bold text-navy">{priceLabel}</p>
+                <p className="text-3xl font-bold text-navy">{priceLabel}</p>
               </div>
 
               <PropertyContactButtons

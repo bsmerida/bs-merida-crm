@@ -586,7 +586,17 @@ export default function FinanzasPage() {
                 onClick={() => editingMetas ? saveMetas() : setEditingMetas(true)}
                 disabled={savingMetas}
                 className="text-xs text-brand-600 hover:underline px-3 py-1.5 border border-brand-200 rounded-full disabled:opacity-50">
-                {savingMetas ? "Guardando..." : editingMetas ? "✓ Guardar metas" : "✏️ Editar metas"}
+                {savingMetas ? "Guardando..." : editingMetas ? (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    Guardar metas
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Editar metas
+                  </span>
+                )}
               </button>
             </div>
 

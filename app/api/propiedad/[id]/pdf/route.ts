@@ -38,11 +38,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     whatsapp: "",
     web: "",
   } : {
-    name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "Inmobiliaria BS Mérida",
-    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815",
-    email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com",
+    name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "Duclaud Consultoría Inmobiliaria",
+    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272",
+    email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "contacto@duclaud.mx",
     whatsapp: process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272",
-    web: "bsmerida.com",
+    web: "duclaud.mx",
   };
 
   const element: any = React.createElement(PropertyPDF as any, {

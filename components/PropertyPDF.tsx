@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
-const BRAND = "#5E4B8E";
+const BRAND = "#1C2B4B";
 const INK = "#2A2640";
 const MUTED = "#6E6987";
 const LINE = "#EAE5F2";
@@ -65,7 +65,7 @@ export function PropertyPDF({ property: p, images, agent, biz, hideHeader }: {
         {showBiz && (
           <View style={s.topBar}>
             <View>
-              <Text style={s.brand}>BS | INMOBILIARIA</Text>
+              <Text style={s.brand}>DUCLAUD</Text>
               <Text style={s.brandSub}>{biz.name}</Text>
             </View>
             {p.reference && <Text style={s.refTag}>Ref. {p.reference}</Text>}
@@ -142,7 +142,7 @@ export function PropertyPDF({ property: p, images, agent, biz, hideHeader }: {
         <Page size="A4" style={s.page}>
           {showBiz && (
             <View style={s.topBar}>
-              <View><Text style={s.brand}>BS | INMOBILIARIA</Text><Text style={s.brandSub}>Galería  ·  {p.title}</Text></View>
+              <View><Text style={s.brand}>DUCLAUD</Text><Text style={s.brandSub}>Galería  ·  {p.title}</Text></View>
               {p.reference && <Text style={s.refTag}>Ref. {p.reference}</Text>}
             </View>
           )}
@@ -164,7 +164,7 @@ export function PropertyPDF({ property: p, images, agent, biz, hideHeader }: {
       {showBiz && (
         <Page size="A4" style={s.page}>
           <View style={s.topBar}>
-            <Text style={s.brand}>BS | INMOBILIARIA</Text>
+            <Text style={s.brand}>DUCLAUD</Text>
             {p.reference && <Text style={s.refTag}>Ref. {p.reference}</Text>}
           </View>
           <Text style={s.sectionTitle}>Contacto</Text>

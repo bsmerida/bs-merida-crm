@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { DUCLAUD_LOGO_WHITE } from "@/lib/duclaud-logo";
 
 export function PublicFooter() {
   const wa    = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
@@ -11,8 +13,14 @@ export function PublicFooter() {
       <div className="max-w-7xl mx-auto px-8 pt-16 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-12 border-b border-white/10">
           <div className="md:col-span-5">
-            <div className="font-serif text-2xl font-light tracking-[0.16em] uppercase mb-5">
-              D<span className="text-gold mx-0.5">·</span>UCLAUD
+            <div className="mb-5">
+              <Image
+                src={DUCLAUD_LOGO_WHITE}
+                alt="D.UCLAUD Bienes Raíces"
+                width={200}
+                height={56}
+                className="h-12 w-auto"
+              />
             </div>
             <p className="text-white/40 text-sm leading-relaxed max-w-xs">
               Consultoría inmobiliaria con criterio legal y financiero. Socios AMPI. Mérida, Yucatán.

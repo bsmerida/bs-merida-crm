@@ -17,14 +17,14 @@ export function PublicHeader() {
   const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
   return (
     <header className="sticky top-0 z-30 bg-navy border-b border-white/[0.08]">
-      <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between gap-8">
+      <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between gap-8">
         <Link href="/" className="select-none shrink-0">
           <Image
             src={DUCLAUD_LOGO_WHITE}
             alt="D.UCLAUD Bienes Raíces"
-            width={160}
-            height={44}
-            className="h-9 w-auto"
+            width={200}
+            height={56}
+            className="h-12 w-auto"
             priority
           />
         </Link>

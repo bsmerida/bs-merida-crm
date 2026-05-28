@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { DUCLAUD_LOGO_WHITE } from "@/lib/duclaud-logo";
 
 const NAV = [
   { href: "/",         l: "Inicio"   },
@@ -17,9 +19,14 @@ export function PublicHeader() {
     <header className="sticky top-0 z-30 bg-navy border-b border-white/[0.08]">
       <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between gap-8">
         <Link href="/" className="select-none shrink-0">
-          <span className="font-serif text-xl font-light tracking-[0.16em] text-white uppercase">
-            D<span className="text-gold mx-0.5">·</span>UCLAUD
-          </span>
+          <Image
+            src={DUCLAUD_LOGO_WHITE}
+            alt="D.UCLAUD Bienes Raíces"
+            width={160}
+            height={44}
+            className="h-9 w-auto"
+            priority
+          />
         </Link>
         <nav className="hidden md:flex items-center gap-7 flex-1 justify-center">
           {NAV.map(n => (

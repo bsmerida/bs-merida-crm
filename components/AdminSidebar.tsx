@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
+import { DUCLAUD_LOGO_WHITE } from "@/lib/duclaud-logo";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -61,10 +63,15 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
     <aside className="w-60 bg-navy flex flex-col h-screen sticky top-0">
       <div className="px-5 py-5 border-b border-white/8">
         <Link href="/admin" className="select-none">
-          <span className="font-serif text-lg font-light tracking-[0.16em] text-white uppercase">
-            D<span className="text-gold mx-0.5">·</span>UCLAUD
-          </span>
-          <p className="text-[9px] uppercase tracking-[0.12em] text-white/25 mt-0.5">Panel administrativo</p>
+          <Image
+            src={DUCLAUD_LOGO_WHITE}
+            alt="D.UCLAUD Bienes Raíces"
+            width={160}
+            height={44}
+            className="h-10 w-auto"
+            priority
+          />
+          <p className="text-[9px] uppercase tracking-[0.12em] text-white/25 mt-1">Panel administrativo</p>
         </Link>
       </div>
 

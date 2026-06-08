@@ -39,6 +39,7 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
     { href: "/admin",             label: "Inicio",      icon: "home",     badge: null },
     { href: "/admin/leads",       label: "Clientes",    icon: "users",    badge: leadsNuevos > 0 ? leadsNuevos : null },
     { href: "/admin/propiedades", label: "Propiedades", icon: "building", badge: null },
+    { href: "/admin/citas",       label: "Citas",        icon: "calendar", badge: null },
   ];
   const adminNav = [
     { href: "/admin/kpis",     label: "KPIs",    icon: "trending" },

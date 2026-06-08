@@ -220,6 +220,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
                 propertyOperation={property.operation}
                 waNumber={wa}
                 waMsg={waMsg}
+                agentId={p.agent_id || null}
               />
 
               {/* Asesor */}

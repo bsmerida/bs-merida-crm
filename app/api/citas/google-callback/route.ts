@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 // GET /api/citas/google-callback?code=...&state=PROFILE_ID
 export async function GET(req: NextRequest) {
@@ -29,12 +29,17 @@ export async function GET(req: NextRequest) {
   const tokens = await tokenRes.json();
 
   if (!tokens.access_token || !tokens.refresh_token) {
+    console.error("Google OAuth error:", tokens);
     return NextResponse.redirect(new URL("/admin/ajustes?calendar=error", req.url));
   }
 
-  const supabase = createClient();
+  // Usar service role para saltarse RLS — el callback no tiene sesión activa
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-  await supabase.from("google_calendar_tokens").upsert({
+  const { error } = await supabase.from("google_calendar_tokens").upsert({
     profile_id:    profileId,
     access_token:  tokens.access_token,
     refresh_token: tokens.refresh_token,
@@ -42,6 +47,11 @@ export async function GET(req: NextRequest) {
     calendar_id:   "primary",
     updated_at:    new Date().toISOString(),
   }, { onConflict: "profile_id" });
+
+  if (error) {
+    console.error("Supabase upsert error:", error);
+    return NextResponse.redirect(new URL("/admin/ajustes?calendar=error", req.url));
+  }
 
   return NextResponse.redirect(new URL("/admin/ajustes?calendar=ok", req.url));
 }

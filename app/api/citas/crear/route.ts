@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
 
   const supabase = createClient();
 
-  // Construir start/end en hora Mérida (UTC-6)
   const starts_at = new Date(`${date}T${time}:00-06:00`).toISOString();
   const ends_at   = new Date(new Date(starts_at).getTime() + 60 * 60_000).toISOString();
 
@@ -72,32 +71,69 @@ export async function POST(req: NextRequest) {
         `https://www.googleapis.com/calendar/v3/calendars/${tokenRow.calendar_id || "primary"}/events`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify(event),
         }
       );
-
       const gcData = await gcRes.json();
       googleEventId = gcData.id || null;
     }
   }
 
-  // Guardar en Supabase
+  // ── Auto-crear o actualizar lead ──────────────────────────────────────────
+  // Buscar por teléfono primero, luego por email
+  let leadId: string | null = null;
+
+  const { data: existingByPhone } = client_phone
+    ? await supabase.from("leads").select("id").eq("phone", client_phone).maybeSingle()
+    : { data: null };
+
+  const { data: existingByEmail } = (!existingByPhone && client_email)
+    ? await supabase.from("leads").select("id").eq("email", client_email).maybeSingle()
+    : { data: null };
+
+  const existingLead = existingByPhone || existingByEmail;
+
+  if (existingLead) {
+    // Actualizar last_contact_at y agregar nota de cita
+    await supabase.from("leads").update({
+      last_contact_at: new Date().toISOString(),
+      notes: `Cita agendada para visitar: ${property_title || "propiedad"} el ${date} a las ${time} hrs.`,
+      updated_at: new Date().toISOString(),
+    }).eq("id", existingLead.id);
+    leadId = existingLead.id;
+  } else {
+    // Crear lead nuevo
+    const { data: newLead } = await supabase.from("leads").insert({
+      name:             client_name,
+      phone:            client_phone || null,
+      email:            client_email || null,
+      source:           "Sitio web — Cita",
+      status:           "Nuevo",
+      agent_id:         agent_id || null,
+      interest:         property_title ? `Visitó: ${property_title}` : null,
+      notes:            `Cita agendada para el ${date} a las ${time} hrs.`,
+      consent_privacy:  true,
+      consent_at:       new Date().toISOString(),
+      last_contact_at:  new Date().toISOString(),
+    }).select("id").single();
+    leadId = newLead?.id || null;
+  }
+
+  // Guardar cita en Supabase
   const { data: appt, error } = await supabase
     .from("appointments")
     .insert({
       property_id,
-      agent_id: agent_id || null,
+      agent_id:        agent_id || null,
+      lead_id:         leadId,
       client_name,
       client_phone,
-      client_email: client_email || null,
+      client_email:    client_email || null,
       starts_at,
       ends_at,
       google_event_id: googleEventId,
-      status: "confirmed",
+      status:          "confirmed",
     })
     .select()
     .single();
@@ -106,5 +142,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, appointment: appt });
+  return NextResponse.json({ ok: true, appointment: appt, lead_id: leadId });
 }

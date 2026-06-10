@@ -1,5 +1,5 @@
+// app/admin/citas/page.tsx
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import { CitasClient } from "@/components/CitasClient";
 
 export default async function AdminCitasPage() {
@@ -9,27 +9,28 @@ export default async function AdminCitasPage() {
   const isAdmin = profile?.role === "admin";
 
   const query = supabase
-    .from("appointments")
+    .from("appointment_requests")
     .select(`*, property:properties(id,title,zone,city), agent:profiles(full_name)`)
-    .order("starts_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (!isAdmin) query.eq("agent_id", user!.id);
 
-  const today = new Date(); today.setHours(0,0,0,0);
-  query.gte("starts_at", today.toISOString());
-
   const { data } = await query;
-  const citas = (data || []) as any[];
+  const requests = (data || []) as any[];
+
+  const pending = requests.filter(r => r.status === "pending").length;
 
   return (
     <div className="p-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-ink tracking-tight">Citas</h1>
+        <h1 className="text-2xl font-semibold text-ink tracking-tight">Solicitudes de visita</h1>
         <p className="text-sm text-ink-muted mt-0.5">
-          {citas.length} cita{citas.length !== 1 ? "s" : ""} próxima{citas.length !== 1 ? "s" : ""}
+          {pending > 0
+            ? `${pending} pendiente${pending>1?"s":""} de respuesta`
+            : `${requests.length} solicitud${requests.length!==1?"es":""}` }
         </p>
       </div>
-      <CitasClient citas={citas} isAdmin={isAdmin} />
+      <CitasClient requests={requests} isAdmin={isAdmin} />
     </div>
   );
 }

@@ -3,12 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { emailAsesorNuevaSolicitud, sendEmail } from "@/lib/emails";
 
+const FALLBACK_EMAIL = "bertha@duclaud.com.mx";
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     property_id, property_title, agent_id,
     client_name, client_phone, client_email,
-    options, // [{date, time}, {date, time}, {date, time}]
+    options,
   } = body;
 
   if (!property_id || !client_name || !client_phone || !options?.length) {
@@ -59,13 +61,13 @@ export async function POST(req: NextRequest) {
     .insert({
       property_id,
       property_title,
-      agent_id:     agent_id || null,
-      lead_id:      leadId,
+      agent_id:       agent_id || null,
+      lead_id:        leadId,
       client_name,
       client_phone,
-      client_email: client_email || null,
+      client_email:   client_email || null,
       client_options: options,
-      status:       "pending",
+      status:         "pending",
     })
     .select()
     .single();
@@ -75,34 +77,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Obtener datos del asesor
-  let agentEmail: string | null = null;
-  let agentName  = "Asesor";
+  // Obtener email del asesor — fallback a Bertha si no tiene agent_id
+  let agentEmail: string = FALLBACK_EMAIL;
+  let agentName          = "Bertha";
+
   if (agent_id) {
     const { data: agent } = await supabase
       .from("profiles")
       .select("email, full_name")
       .eq("id", agent_id)
       .single();
-    agentEmail = agent?.email || null;
-    agentName  = agent?.full_name || "Asesor";
+    agentEmail = agent?.email || FALLBACK_EMAIL;
+    agentName  = agent?.full_name || "Bertha";
   }
 
   // Enviar email al asesor
-  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://duclaud.mx"}/admin/citas/${request.id}`;
-  if (agentEmail) {
-    const { html, subject } = emailAsesorNuevaSolicitud({
-      requestId:     request.id,
-      agentName,
-      clientName:    client_name,
-      clientPhone:   client_phone,
-      clientEmail:   client_email,
-      propertyTitle: property_title || "Propiedad",
-      options,
-      adminUrl,
-    });
-    await sendEmail({ to: agentEmail, subject, html });
-  }
+  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://duclaud.com.mx"}/admin/citas/${request.id}`;
+  const { html, subject } = emailAsesorNuevaSolicitud({
+    requestId:     request.id,
+    agentName,
+    clientName:    client_name,
+    clientPhone:   client_phone,
+    clientEmail:   client_email,
+    propertyTitle: property_title || "Propiedad",
+    options,
+    adminUrl,
+  });
+
+  const emailResult = await sendEmail({ to: agentEmail, subject, html });
+  console.log("[solicitar] Email enviado a:", agentEmail, emailResult);
 
   return NextResponse.json({ ok: true, request_id: request.id });
 }

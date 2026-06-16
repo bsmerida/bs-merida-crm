@@ -113,6 +113,7 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-ink-line bg-ink-ghost/40">
               <tr>
@@ -172,6 +173,7 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

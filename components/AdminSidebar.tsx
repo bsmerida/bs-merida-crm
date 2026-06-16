@@ -153,7 +153,6 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
       </aside>
 
       {/* ── Móvil: espaciado para la barra superior ───────────────────────── */}
-      <div className="md:hidden h-14 shrink-0"/>
     </>
   );
 }

@@ -365,6 +365,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b border-ink-line bg-ink-ghost/40">
                   <tr>{["Cliente", "Contacto", "Interés", "Estado", "Asesor", "Fecha", ""].map(h => (
@@ -399,6 +400,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </>

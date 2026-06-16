@@ -12,9 +12,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .from("leads").select("*", { count: "exact", head: true }).eq("status", "Nuevo");
 
   return (
-    <div className="flex bg-cream min-h-screen">
+    <div className="bg-cream min-h-screen md:flex">
       <AdminSidebar profile={profile} leadsNuevos={leadsNuevos || 0} />
-      <main className="flex-1 min-h-screen overflow-x-hidden">
+      <main className="flex-1 min-h-screen overflow-x-hidden pt-14 md:pt-0">
         {children}
       </main>
     </div>

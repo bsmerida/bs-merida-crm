@@ -21,18 +21,18 @@ type Task = {
 type Profile = { id: string; full_name: string | null };
 
 const PRIORITY_MAP: Record<string, [string, string]> = {
-  urgent: ["bg-red-100 text-red-700 border-red-200",    "Urgente"],
+  urgent: ["bg-red-100 text-red-700 border-red-200",     "Urgente"],
   high:   ["bg-amber-100 text-amber-700 border-amber-200","Alta"   ],
-  normal: ["bg-blue-50 text-blue-600 border-blue-200",  "Normal" ],
-  low:    ["bg-stone-100 text-stone-500 border-stone-200","Baja"  ],
+  normal: ["bg-blue-50 text-blue-600 border-blue-200",   "Normal" ],
+  low:    ["bg-stone-100 text-stone-500 border-stone-200","Baja"   ],
 };
 
 const CATEGORY_OPTIONS = ["Seguimiento","Administración","Operaciones","Marketing","Otro"];
 
 const STATUS_COLS: { key: Task["status"]; label: string; color: string }[] = [
-  { key: "todo",        label: "Por hacer",   color: "border-stone bg-stone-50"      },
-  { key: "in_progress", label: "En progreso", color: "border-amber-200 bg-amber-50"  },
-  { key: "done",        label: "Completado",  color: "border-emerald-200 bg-emerald-50" },
+  { key: "todo",        label: "Por hacer",   color: "border-stone bg-stone-50"        },
+  { key: "in_progress", label: "En progreso", color: "border-amber-200 bg-amber-50"   },
+  { key: "done",        label: "Completado",  color: "border-emerald-200 bg-emerald-50"},
 ];
 
 function isOverdue(task: Task) {
@@ -50,7 +50,7 @@ function PriorityBadge({ p }: { p: string }) {
 }
 
 function Avatar({ name, initials }: { name: string | null; initials: string | null }) {
-  const i = initials || name?.split(" ").map(w => w[0]).join("").slice(0,2) || "?";
+  const i = initials || name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "?";
   return (
     <div className="w-6 h-6 rounded-full bg-navy/10 flex items-center justify-center text-[10px] font-semibold text-navy shrink-0" title={name || ""}>
       {i}
@@ -58,7 +58,6 @@ function Avatar({ name, initials }: { name: string | null; initials: string | nu
   );
 }
 
-// ── Modal para crear/editar tarea ──────────────────────────────────────────
 function TaskModal({
   task, profiles, currentUserId, leadId, onSave, onClose,
 }: {
@@ -72,7 +71,7 @@ function TaskModal({
   const [title,       setTitle]       = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
   const [status,      setStatus]      = useState<Task["status"]>(task?.status || "todo");
-  const [priority,    setPriority]    = useState(task?.priority || "normal");
+  const [priority,    setPriority]    = useState<"low"|"normal"|"high"|"urgent">(task?.priority || "normal");
   const [category,    setCategory]    = useState(task?.category || "");
   const [assignedTo,  setAssignedTo]  = useState(task?.assigned_to || currentUserId);
   const [startsAt,    setStartsAt]    = useState(task?.starts_at || "");
@@ -104,12 +103,13 @@ function TaskModal({
         <div className="flex items-center justify-between px-7 py-5 border-b border-stone">
           <h2 className="font-serif text-xl text-navy">{task ? "Editar tarea" : "Nueva tarea"}</h2>
           <button onClick={onClose} className="text-ink-soft hover:text-navy p-1">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
           </button>
         </div>
 
         <div className="p-7 space-y-4">
-          {/* Título */}
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Título *</label>
             <input value={title} onChange={e => setTitle(e.target.value)}
@@ -117,7 +117,6 @@ function TaskModal({
               className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-ink-line focus:outline-none focus:border-navy"/>
           </div>
 
-          {/* Descripción */}
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Descripción</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)}
@@ -126,10 +125,9 @@ function TaskModal({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Prioridad */}
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Prioridad</label>
-              onChange={e => setPriority(e.target.value as "low" | "normal" | "high" | "urgent")}
+              <select value={priority} onChange={e => setPriority(e.target.value as "low"|"normal"|"high"|"urgent")}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
                 <option value="low">Baja</option>
                 <option value="normal">Normal</option>
@@ -138,7 +136,6 @@ function TaskModal({
               </select>
             </div>
 
-            {/* Estado */}
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Estado</label>
               <select value={status} onChange={e => setStatus(e.target.value as Task["status"])}
@@ -149,14 +146,12 @@ function TaskModal({
               </select>
             </div>
 
-            {/* Fecha inicio */}
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Fecha inicio</label>
               <input type="date" value={startsAt} onChange={e => setStartsAt(e.target.value)}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy"/>
             </div>
 
-            {/* Fecha límite */}
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Fecha límite</label>
               <input type="date" value={dueAt} onChange={e => setDueAt(e.target.value)}
@@ -164,7 +159,6 @@ function TaskModal({
             </div>
           </div>
 
-          {/* Categoría */}
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Categoría</label>
             <select value={category} onChange={e => setCategory(e.target.value)}
@@ -174,7 +168,6 @@ function TaskModal({
             </select>
           </div>
 
-          {/* Asignado a */}
           {profiles.length > 0 && (
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Asignado a</label>
@@ -203,7 +196,6 @@ function TaskModal({
   );
 }
 
-// ── Tarjeta de tarea ───────────────────────────────────────────────────────
 function TaskCard({
   task, onEdit, onDelete, onStatusChange,
 }: {
@@ -222,7 +214,6 @@ function TaskCard({
 
   return (
     <div className={`bg-white rounded-2xl border p-4 space-y-3 ${overdue ? "border-red-200" : "border-stone"}`}>
-      {/* Header */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium leading-snug ${task.status === "done" ? "line-through text-ink-muted" : "text-navy"}`}>
@@ -235,7 +226,6 @@ function TaskCard({
         <PriorityBadge p={task.priority}/>
       </div>
 
-      {/* Meta */}
       <div className="flex flex-wrap items-center gap-2">
         {task.category && (
           <span className="text-[10px] text-ink-soft bg-cream px-2 py-0.5 rounded-full capitalize">{task.category}</span>
@@ -247,11 +237,8 @@ function TaskCard({
         )}
       </div>
 
-      {/* Fechas */}
       <div className="flex items-center gap-3 text-[11px]">
-        {task.starts_at && (
-          <span className="text-ink-muted">Inicio: {formatDate(task.starts_at)}</span>
-        )}
+        {task.starts_at && <span className="text-ink-muted">Inicio: {formatDate(task.starts_at)}</span>}
         {task.due_at && (
           <span className={overdue ? "text-red-500 font-semibold" : "text-ink-muted"}>
             {overdue ? "⚠ " : ""}Límite: {formatDate(task.due_at)}
@@ -259,7 +246,6 @@ function TaskCard({
         )}
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-stone">
         <div className="flex items-center gap-2">
           {task.assignee && <Avatar name={task.assignee.full_name} initials={task.assignee.initials}/>}
@@ -295,7 +281,6 @@ function TaskCard({
   );
 }
 
-// ── Vista Kanban ───────────────────────────────────────────────────────────
 function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
   tasks: Task[];
   onEdit: (t: Task) => void;
@@ -313,12 +298,8 @@ function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
               <span className="text-xs text-ink-muted bg-white rounded-full px-2 py-0.5 border border-stone">{colTasks.length}</span>
             </div>
             <div className="space-y-3">
-              {colTasks.length === 0 && (
-                <p className="text-xs text-ink-line text-center py-6">Sin tareas</p>
-              )}
-              {colTasks.map(t => (
-                <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>
-              ))}
+              {colTasks.length === 0 && <p className="text-xs text-ink-line text-center py-6">Sin tareas</p>}
+              {colTasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>)}
             </div>
           </div>
         );
@@ -327,7 +308,6 @@ function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
   );
 }
 
-// ── Vista Lista ────────────────────────────────────────────────────────────
 function ListView({ tasks, onEdit, onDelete, onStatusChange }: {
   tasks: Task[];
   onEdit: (t: Task) => void;
@@ -336,17 +316,12 @@ function ListView({ tasks, onEdit, onDelete, onStatusChange }: {
 }) {
   return (
     <div className="space-y-2">
-      {tasks.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-sm text-ink-muted">No hay tareas que coincidan.</p>
-        </div>
-      )}
+      {tasks.length === 0 && <div className="text-center py-16"><p className="text-sm text-ink-muted">No hay tareas que coincidan.</p></div>}
       {tasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>)}
     </div>
   );
 }
 
-// ── Componente principal ───────────────────────────────────────────────────
 export function TareasClient({
   tasks: initial, profiles, currentUserId, isAdmin, leadId,
 }: {
@@ -366,7 +341,7 @@ export function TareasClient({
 
   const filtered = useMemo(() => tasks.filter(t => {
     if (filterPrio !== "all" && t.priority !== filterPrio) return false;
-    if (filterCat  !== "all" && t.category  !== filterCat)  return false;
+    if (filterCat  !== "all" && t.category  !== filterCat) return false;
     if (search && !t.title.toLowerCase().includes(search.toLowerCase()) &&
         !t.description?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -394,12 +369,11 @@ export function TareasClient({
     if (data.task) handleSave(data.task);
   }
 
-  function openNew()       { setEditTask(null); setShowModal(true); }
-  function openEdit(t: Task){ setEditTask(t);    setShowModal(true); }
+  function openNew()        { setEditTask(null); setShowModal(true); }
+  function openEdit(t: Task) { setEditTask(t);   setShowModal(true); }
 
   return (
     <div className="space-y-5">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <button onClick={openNew}
           className="flex items-center gap-2 bg-navy text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-navy/90 transition">
@@ -410,14 +384,14 @@ export function TareasClient({
         <div className="flex items-center bg-white border border-stone rounded-full p-0.5 text-xs">
           {(["kanban","list"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
-              className={`px-3 py-1.5 rounded-full font-medium transition capitalize ${view===v?"bg-navy text-white":"text-ink-soft hover:text-navy"}`}>
+              className={`px-3 py-1.5 rounded-full font-medium transition ${view===v?"bg-navy text-white":"text-ink-soft hover:text-navy"}`}>
               {v === "kanban" ? "Kanban" : "Lista"}
             </button>
           ))}
         </div>
 
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar tarea..." 
+          placeholder="Buscar tarea..."
           className="border border-stone rounded-full px-4 py-2 text-sm text-navy placeholder:text-ink-line focus:outline-none focus:border-navy flex-1 min-w-[160px]"/>
 
         <select value={filterPrio} onChange={e => setFilterPrio(e.target.value)}
@@ -436,13 +410,11 @@ export function TareasClient({
         </select>
       </div>
 
-      {/* Vista */}
       {view === "kanban"
         ? <KanbanView tasks={filtered} onEdit={openEdit} onDelete={handleDelete} onStatusChange={handleStatusChange}/>
         : <ListView   tasks={filtered} onEdit={openEdit} onDelete={handleDelete} onStatusChange={handleStatusChange}/>
       }
 
-      {/* Modal */}
       {showModal && (
         <TaskModal
           task={editTask}

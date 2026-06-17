@@ -129,7 +129,7 @@ function TaskModal({
             {/* Prioridad */}
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Prioridad</label>
-              <select value={priority} onChange={e => setPriority(e.target.value)}
+              onChange={e => setPriority(e.target.value as "low" | "normal" | "high" | "urgent")}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
                 <option value="low">Baja</option>
                 <option value="normal">Normal</option>

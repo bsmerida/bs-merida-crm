@@ -15,5 +15,20 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Notificar al asignado si es diferente al creador
+  if (task.assigned_to && task.assigned_to !== user.id) {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.duclaud.com.mx'}/api/push/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '📋 Nueva tarea asignada',
+        body:  body.title + (body.due_at ? ` · Vence el ${body.due_at}` : ''),
+        url:   '/admin/tareas',
+        user_ids: [task.assigned_to],
+      }),
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ task });
 }
+

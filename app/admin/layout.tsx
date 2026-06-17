@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { PushPermission } from "@/components/PushPermission";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -15,8 +16,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="bg-cream min-h-screen md:flex">
       <AdminSidebar profile={profile} leadsNuevos={leadsNuevos || 0} />
       <main className="flex-1 min-h-screen overflow-x-hidden pt-14 md:pt-0">
+        <PushPermission />
         {children}
       </main>
     </div>
   );
 }
+

@@ -20,8 +20,6 @@ type Task = {
 
 type Profile = { id: string; full_name: string | null };
 
-const icons: Record<string, React.ReactNode> = {
-  
 const PRIORITY_MAP: Record<string, [string, string]> = {
   urgent: ["bg-red-100 text-red-700 border-red-200",    "Urgente"],
   high:   ["bg-amber-100 text-amber-700 border-amber-200","Alta"   ],

@@ -107,5 +107,17 @@ export async function POST(req: NextRequest) {
   const emailResult = await sendEmail({ to: agentEmail, subject, html });
   console.log("[solicitar] Email enviado a:", agentEmail, emailResult);
 
+  // Enviar push notification al asesor
+  await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx"}/api/push/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "Nueva solicitud de visita",
+      body:  `${client_name} quiere visitar ${property_title || "una propiedad"}`,
+      url:   "/admin/citas",
+      user_ids: agent_id ? [agent_id] : ["15f01899-4206-4613-bb01-e26ea4ba003f"],
+    }),
+  }).catch(() => {}); // No bloquear si falla el push
+
   return NextResponse.json({ ok: true, request_id: request.id });
 }

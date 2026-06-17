@@ -214,3 +214,4 @@ async function confirmRequest(
     await sendEmail({ to: request.client_email, subject, html });
   }
 }
+

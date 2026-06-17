@@ -1,0 +1,19 @@
+name: Notificaciones Duclaud
+
+on:
+  schedule:
+    - cron: '0 * * * *'      # Cada hora (para visitas en 1h)
+    - cron: '0 13 * * *'     # 7am Mérida (UTC-6) → tareas hoy/mañana + seguimiento
+    - cron: '0 14 * * *'     # 8am Mérida (UTC-6) → visitas mañana
+  workflow_dispatch:          # Permite correrlo manualmente para probar
+
+jobs:
+  notificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar notificaciones
+        run: |
+          curl -s -X GET \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/notificaciones" \
+            | jq '.'

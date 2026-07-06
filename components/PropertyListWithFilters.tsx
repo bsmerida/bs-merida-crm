@@ -1,8 +1,79 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { PropertyCard } from "@/components/PropertyCard";
 
 type Prop = any;
+
+function ZoneAutocomplete({ zones, value, onChange }: { zones: string[]; value: string; onChange: (v: string) => void }) {
+  const [query, setQuery] = useState(value === "Todas" ? "" : value);
+  const [open, setOpen]   = useState(false);
+  const boxRef            = useRef<HTMLDivElement>(null);
+
+  const suggestions = ["Todas", ...zones.filter(z =>
+    query.trim() === "" || z.toLowerCase().includes(query.toLowerCase())
+  )];
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  function pick(z: string) {
+    onChange(z);
+    setQuery(z === "Todas" ? "" : z);
+    setOpen(false);
+  }
+
+  function clear() {
+    onChange("Todas");
+    setQuery("");
+  }
+
+  return (
+    <div ref={boxRef} className="relative">
+      <div className="flex items-center gap-1.5 border border-stone bg-white px-3 py-2 focus-within:border-gold transition-colors">
+        <svg className="w-3.5 h-3.5 text-ink-muted shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+        <input
+          type="text"
+          value={query}
+          placeholder="Zona o ciudad..."
+          onChange={e => { setQuery(e.target.value); onChange("Todas"); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={e => { if (e.key === "Escape") setOpen(false); }}
+          className="text-sm text-ink bg-transparent focus:outline-none w-36 placeholder:text-ink-soft"
+        />
+        {query && (
+          <button onClick={clear} className="text-ink-muted hover:text-navy transition-colors">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        )}
+      </div>
+      {open && suggestions.length > 0 && (
+        <div className="absolute left-0 top-full mt-1 w-full min-w-[200px] bg-white border border-stone shadow-xl z-50 overflow-hidden">
+          <div className="max-h-52 overflow-y-auto py-1">
+            {suggestions.map(z => (
+              <button key={z} onMouseDown={() => pick(z)}
+                className={"w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors " +
+                  (value === z ? "text-gold font-medium bg-cream" : "text-ink hover:bg-cream")}>
+                {z === "Todas"
+                  ? <><svg className="w-3 h-3 text-ink-muted shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Todas las zonas</>
+                  : <><svg className="w-3 h-3 text-gold/60 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>{z}</>
+                }
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PropertyListWithFilters({ props, operation, initialType, initialZone }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; }) {
   const [filterType, setFilterType] = useState(initialType || "Todos");
@@ -14,7 +85,7 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const [sortBy, setSortBy]       = useState("recent");
 
   const types = ["Todos", ...Array.from(new Set(props.map((p: Prop) => p.type)))];
-  const zones = ["Todas", ...Array.from(new Set(props.map((p: Prop) => p.zone || p.city).filter(Boolean)))];
+  const zones = Array.from(new Set(props.map((p: Prop) => p.zone || p.city).filter(Boolean))) as string[];
 
   const filtered = useMemo(() => {
     let result = props.filter((p: Prop) => {
@@ -38,7 +109,6 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
 
   return (
     <div className="space-y-8">
-      {/* Tipos — pills */}
       <div className="flex flex-wrap gap-1.5">
         {(types as string[]).map(t => (
           <button key={t} onClick={() => setFilterType(t)}
@@ -49,11 +119,8 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
         ))}
       </div>
 
-      {/* Filtros secundarios */}
       <div className="flex flex-wrap items-center gap-3">
-        <select value={filterZone} onChange={e => setFilterZone(e.target.value)} className={sel}>
-          {(zones as string[]).map(z => <option key={z}>{z}</option>)}
-        </select>
+        <ZoneAutocomplete zones={zones} value={filterZone} onChange={setFilterZone} />
         {operation === "Venta" && (
           <>
             <select value={filterBeds} onChange={e => setFilterBeds(e.target.value)} className={sel}>

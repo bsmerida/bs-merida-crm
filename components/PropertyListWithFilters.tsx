@@ -4,9 +4,9 @@ import { PropertyCard } from "@/components/PropertyCard";
 
 type Prop = any;
 
-export function PropertyListWithFilters({ props, operation }: { props: Prop[]; operation: "Venta" | "Renta" }) {
-  const [filterType, setFilterType] = useState("Todos");
-  const [filterZone, setFilterZone] = useState("Todas");
+export function PropertyListWithFilters({ props, operation, initialType, initialZone }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; }) {
+  const [filterType, setFilterType] = useState(initialType || "Todos");
+  const [filterZone, setFilterZone] = useState(initialZone || "Todas");
   const [filterBeds, setFilterBeds] = useState("0");
   const [filterBaths, setFilterBaths] = useState("0");
   const [priceMin, setPriceMin]   = useState("");

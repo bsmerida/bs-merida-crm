@@ -29,6 +29,8 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
   const [filterStatus, setFilterStatus] = useState("Todos los estados");
   const [filterZone, setFilterZone] = useState("Todas las zonas");
   const [sortBy, setSortBy] = useState<SortKey>("reciente");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
 
   const types = ["Todos los tipos", ...Array.from(new Set(props.map(p => p.type)))];
   const statuses = ["Todos los estados", ...Array.from(new Set(props.map(p => p.status)))];
@@ -47,7 +49,9 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
       const matchOp = filterOp === "Venta y renta" || p.operation === filterOp;
       const matchStatus = filterStatus === "Todos los estados" || p.status === filterStatus;
       const matchZone = filterZone === "Todas las zonas" || p.zone === filterZone || p.city === filterZone;
-      return matchSearch && matchType && matchOp && matchStatus && matchZone;
+      const matchMin = !priceMin || Number(p.price) >= Number(priceMin);
+      const matchMax = !priceMax || Number(p.price) <= Number(priceMax);
+      return matchSearch && matchType && matchOp && matchStatus && matchZone && matchMin && matchMax;
     });
 
     // Ordenar
@@ -56,13 +60,13 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
     else if (sortBy === "vistas") result = [...result].sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [props, search, filterType, filterOp, filterStatus, filterZone, sortBy]);
+  }, [props, search, filterType, filterOp, filterStatus, filterZone, sortBy, priceMin, priceMax]);
 
-  const hasFilters = search || filterType !== "Todos los tipos" || filterOp !== "Venta y renta" || filterStatus !== "Todos los estados" || filterZone !== "Todas las zonas";
+  const hasFilters = search || filterType !== "Todos los tipos" || filterOp !== "Venta y renta" || filterStatus !== "Todos los estados" || filterZone !== "Todas las zonas" || priceMin || priceMax;
 
   const clearFilters = () => {
     setSearch(""); setFilterType("Todos los tipos"); setFilterOp("Venta y renta");
-    setFilterStatus("Todos los estados"); setFilterZone("Todas las zonas");
+    setFilterStatus("Todos los estados"); setFilterZone("Todas las zonas"); setPriceMin(""); setPriceMax("");
   };
 
   const sel = "bg-white border border-ink-line rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-brand-300 cursor-pointer";
@@ -91,6 +95,8 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
         <select value={filterZone} onChange={e => setFilterZone(e.target.value)} className={sel}>
           {zones.map(z => <option key={z}>{z}</option>)}
         </select>
+        <input type="number" placeholder="Precio mín." value={priceMin} onChange={e => setPriceMin(e.target.value)} className="bg-white border border-ink-line rounded-full px-4 py-2.5 text-sm focus:outline-none w-32 placeholder:text-ink-soft" />
+        <input type="number" placeholder="Precio máx." value={priceMax} onChange={e => setPriceMax(e.target.value)} className="bg-white border border-ink-line rounded-full px-4 py-2.5 text-sm focus:outline-none w-32 placeholder:text-ink-soft" />
         <select value={sortBy} onChange={e => setSortBy(e.target.value as SortKey)} className={sel}>
           <option value="reciente">Más recientes</option>
           <option value="precio_desc">Mayor precio</option>

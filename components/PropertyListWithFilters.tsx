@@ -125,7 +125,7 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
           <>
             <select value={filterBeds} onChange={e => setFilterBeds(e.target.value)} className={sel}>
               <option value="0">Recámaras</option>
-              <option value="1">1+ rec.</option>
+              <option value="1">1 rec.</option>
               <option value="2">2+ rec.</option>
               <option value="3">3+ rec.</option>
               <option value="4">4+ rec.</option>

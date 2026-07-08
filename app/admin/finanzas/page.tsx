@@ -520,6 +520,25 @@ export default function FinanzasPage() {
     { id: "gastos",    label: "Gastos" },
   ];
 
+  // ── CXP calcs ──────────────────────────────────────────────────────────────
+  const hoyStr = new Date().toISOString().split("T")[0];
+  const billsProc = bills.map((b: any) => ({ ...b, estado: b.estado === "pendiente" && b.fecha_vencimiento < hoyStr ? "vencido" : b.estado }));
+  const cxpTotalPend = billsProc.filter((b: any) => b.estado !== "pagado").reduce((s: number, b: any) => s + Number(b.monto), 0);
+  const cxpTotalVenc = billsProc.filter((b: any) => b.estado === "vencido").reduce((s: number, b: any) => s + Number(b.monto), 0);
+  const cxpTotalMes  = billsProc.filter((b: any) => b.fecha_vencimiento?.startsWith(hoyStr.slice(0,7))).reduce((s: number, b: any) => s + Number(b.monto), 0);
+  const ESTADOS_CXP: Record<string, string> = { pendiente: "bg-amber-50 text-amber-700", pagado: "bg-emerald-50 text-emerald-700", vencido: "bg-red-50 text-red-700" };
+  const CATS_CXP = ["Renta oficina","Servicios","Marketing","Legal","Nómina","Tecnología","Mantenimiento","Otro"];
+  const cxpInp = "w-full border border-ink-line rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-300";
+  const pagarBill = async (id: string) => { await supabase.from("cuentas_por_pagar").update({ estado: "pagado" }).eq("id", id); setRefresh(r => r + 1); };
+  const borrarBill = async (id: string) => { if (!confirm("¿Eliminar?")) return; await supabase.from("cuentas_por_pagar").delete().eq("id", id); setRefresh(r => r + 1); };
+  const guardarBill = async () => {
+    if (!billForm.concepto || !billForm.monto || !billForm.fecha_vencimiento) return;
+    setSavingBill(true);
+    await supabase.from("cuentas_por_pagar").insert({ ...billForm, monto: Number(billForm.monto) });
+    setBillForm({ concepto: "", proveedor: "", monto: "", fecha_vencimiento: "", categoria: "Otro", notas: "" });
+    setShowBillForm(false); setSavingBill(false); setRefresh(r => r + 1);
+  };
+
   if (loading) return (
     <div className="p-10 flex items-center justify-center h-64">
       <div className="text-ink-muted text-sm">Cargando datos financieros...</div>

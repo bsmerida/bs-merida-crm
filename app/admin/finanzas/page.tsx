@@ -961,7 +961,7 @@ export default function FinanzasPage() {
         </div>
       )}
 
-      {/* ── COMISIONES ── */
+      {/* ── COMISIONES ── */}
       {tab === "comisiones" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

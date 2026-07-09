@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,29 +16,19 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { data: prop } = await supabase
-      .from("properties")
-      .select("*")
-      .eq("id", property_id)
-      .single();
+      .from("properties").select("*").eq("id", property_id).single();
     if (!prop) return NextResponse.json({ error: "Propiedad no encontrada" }, { status: 404 });
 
     const { data: images } = await supabase
-      .from("property_images")
-      .select("url")
-      .eq("property_id", property_id)
-      .order("position")
-      .limit(5);
+      .from("property_images").select("url").eq("property_id", property_id)
+      .order("position").limit(5);
 
     const { data: samples } = await supabase
-      .from("properties")
-      .select("title, description, type, zone, city")
-      .not("description", "is", null)
-      .neq("id", property_id)
-      .gt("description", "")
-      .limit(8);
+      .from("properties").select("title, description, type, zone, city")
+      .not("description", "is", null).neq("id", property_id).limit(8);
 
     const styleExamples = (samples || [])
-      .filter((s: any) => s.description && s.description.trim().length > 80)
+      .filter((s: any) => s.description?.trim().length > 80)
       .slice(0, 5)
       .map((s: any) => `[${s.type} en ${s.zone || s.city}]\n${s.description}`)
       .join("\n\n---\n\n");
@@ -46,22 +36,21 @@ export async function POST(req: NextRequest) {
     const detalles = [
       `Tipo: ${prop.type}`,
       `Operación: ${prop.operation}`,
-      prop.zone         ? `Colonia/Zona: ${prop.zone}` : null,
-      prop.city         ? `Ciudad: ${prop.city}` : null,
-      prop.state        ? `Estado: ${prop.state}` : null,
+      prop.zone            ? `Colonia/Zona: ${prop.zone}` : null,
+      prop.city            ? `Ciudad: ${prop.city}` : null,
+      prop.state           ? `Estado: ${prop.state}` : null,
       (prop as any).development ? `Desarrollo: ${(prop as any).development}` : null,
-      prop.bedrooms     ? `Recámaras: ${prop.bedrooms}` : null,
-      prop.bathrooms    ? `Baños: ${prop.bathrooms}` : null,
+      prop.bedrooms        ? `Recámaras: ${prop.bedrooms}` : null,
+      prop.bathrooms       ? `Baños: ${prop.bathrooms}` : null,
       prop.m2_construction ? `M² construcción: ${prop.m2_construction}` : null,
-      prop.m2_land      ? `M² terreno: ${prop.m2_land}` : null,
-      prop.parking      ? `Cajones de estacionamiento: ${prop.parking}` : null,
+      prop.m2_land         ? `M² terreno: ${prop.m2_land}` : null,
+      prop.parking         ? `Cajones de estacionamiento: ${prop.parking}` : null,
       prop.amenities && (prop.amenities as string[]).length > 0
         ? `Amenidades: ${Array.isArray(prop.amenities) ? (prop.amenities as string[]).join(", ") : prop.amenities}`
         : null,
     ].filter(Boolean).join("\n");
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
     const imageParts: any[] = [];
     for (const img of (images || []).slice(0, 4)) {
@@ -71,9 +60,7 @@ export async function POST(req: NextRequest) {
         const base64 = Buffer.from(buffer).toString("base64");
         const mimeType = (res.headers.get("content-type") || "image/jpeg").split(";")[0];
         imageParts.push({ inlineData: { data: base64, mimeType } });
-      } catch {
-        // imagen no disponible, se omite
-      }
+      } catch { /* imagen no disponible */ }
     }
 
     const prompt = [
@@ -99,16 +86,16 @@ export async function POST(req: NextRequest) {
       "Responde ÚNICAMENTE con la descripción, sin título ni explicaciones adicionales.",
     ].join("\n");
 
-    const parts = imageParts.length > 0
-      ? [...imageParts, { text: prompt }]
-      : [{ text: prompt }];
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-latest",
+      contents: [{ role: "user", parts: [...imageParts, { text: prompt }] }],
+    });
 
-    const result = await model.generateContent(parts);
-    const description = result.response.text().trim();
-
+    const description = (response.text ?? "").trim();
     return NextResponse.json({ description });
+
   } catch (err: any) {
-    console.error("generar-descripcion error:", err?.message, err?.status, JSON.stringify(err));
+    console.error("generar-descripcion error:", err?.message, err?.status);
     return NextResponse.json({ error: err.message || "Error generando descripción" }, { status: 500 });
   }
 }

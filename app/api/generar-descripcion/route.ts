@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { GoogleGenAI } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
 
     const { data: images } = await supabase
       .from("property_images").select("url").eq("property_id", property_id)
-      .order("position").limit(5);
+      .order("position").limit(4);
 
     const { data: samples } = await supabase
-      .from("properties").select("title, description, type, zone, city")
+      .from("properties").select("description, type, zone, city")
       .not("description", "is", null).neq("id", property_id).limit(8);
 
     const styleExamples = (samples || [])
@@ -50,23 +50,21 @@ export async function POST(req: NextRequest) {
         : null,
     ].filter(Boolean).join("\n");
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-    const imageParts: any[] = [];
-    for (const img of (images || []).slice(0, 4)) {
+    const contentParts: any[] = [];
+
+    for (const img of (images || [])) {
       try {
         const res = await fetch(img.url, { signal: AbortSignal.timeout(8000) });
         const buffer = await res.arrayBuffer();
         const base64 = Buffer.from(buffer).toString("base64");
-        const mimeType = (res.headers.get("content-type") || "image/jpeg").split(";")[0];
-        imageParts.push({ inlineData: { data: base64, mimeType } });
+        const mediaType = (res.headers.get("content-type") || "image/jpeg").split(";")[0] as any;
+        contentParts.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
       } catch { /* imagen no disponible */ }
     }
 
     const prompt = [
-      "Eres un experto en redacción de descripciones para propiedades inmobiliarias premium en México.",
-      "Tu tarea es escribir una descripción comercial atractiva y profesional.",
-      "",
       "DATOS DE LA PROPIEDAD:",
       detalles,
       "",
@@ -77,25 +75,29 @@ export async function POST(req: NextRequest) {
       "- Escribe en español, tono formal pero cálido y aspiracional",
       "- 2 a 4 párrafos, máximo 220 palabras",
       "- Empieza destacando la ubicación y el estilo de vida que ofrece",
-      "- Si ves imágenes, describe acabados, materiales o espacios específicos que puedas identificar",
-      "- NO inventes datos que no estén en la información proporcionada ni en las imágenes",
+      "- Si ves imágenes, describe acabados, materiales o espacios que puedas identificar",
+      "- NO inventes datos que no estén en la información o en las imágenes",
       "- NO uses listas ni viñetas, solo párrafos continuos",
       "- NO uses emojis ni símbolos especiales",
-      "- NO incluyas el precio en la descripción",
+      "- NO incluyas el precio",
       "",
       "Responde ÚNICAMENTE con la descripción, sin título ni explicaciones adicionales.",
     ].join("\n");
 
-    const response = await ai.models.generateContent({
-      model: "gemini-flash-latest",
-      contents: [{ role: "user", parts: [...imageParts, { text: prompt }] }],
+    contentParts.push({ type: "text", text: prompt });
+
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 600,
+      system: "Eres un experto en redacción de descripciones para propiedades inmobiliarias premium en México.",
+      messages: [{ role: "user", content: contentParts }],
     });
 
-    const description = (response.text ?? "").trim();
+    const description = (message.content[0] as any).text.trim();
     return NextResponse.json({ description });
 
   } catch (err: any) {
-    console.error("generar-descripcion error:", err?.message, err?.status);
+    console.error("generar-descripcion error:", err?.message);
     return NextResponse.json({ error: err.message || "Error generando descripción" }, { status: 500 });
   }
 }

@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join("\n");
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const imageParts: any[] = [];
     for (const img of (images || []).slice(0, 4)) {
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ description });
   } catch (err: any) {
-    console.error("generar-descripcion error:", err);
+    console.error("generar-descripcion error:", err?.message, err?.status, JSON.stringify(err));
     return NextResponse.json({ error: err.message || "Error generando descripción" }, { status: 500 });
   }
 }

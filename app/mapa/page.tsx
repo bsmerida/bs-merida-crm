@@ -18,18 +18,24 @@ export default async function MapaPage() {
     .not("lng", "is", null)
     .order("created_at", { ascending: false });
 
-  // Obtener primera imagen de cada propiedad
+  // Obtener hasta 5 imágenes por propiedad
+  const propIds = (props || []).map(p => p.id);
   const { data: images } = await supabase
     .from("property_images")
-    .select("property_id, url")
-    .in("property_id", (props || []).map(p => p.id))
-    .eq("is_main", true);
+    .select("property_id, url, sort_order")
+    .in("property_id", propIds)
+    .order("sort_order", { ascending: true });
 
-  const imageMap = Object.fromEntries((images || []).map(i => [i.property_id, i.url]));
+  // Agrupar imágenes por propiedad
+  const imageMap: Record<string, string[]> = {};
+  for (const img of images || []) {
+    if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
+    if (imageMap[img.property_id].length < 5) imageMap[img.property_id].push(img.url);
+  }
 
   const properties = (props || []).map(p => ({
     ...p,
-    image: imageMap[p.id] || null,
+    images: imageMap[p.id] || [],
   }));
 
   return (

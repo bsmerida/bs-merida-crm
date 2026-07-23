@@ -10,6 +10,7 @@ const NAV = [
   { href: "/rentar",   l: "Rentar"   },
   { href: "/nosotros", l: "La firma" },
   { href: "/contacto", l: "Contacto" },
+  { href: "/mapa",     l: "Mapa"     },
 ];
 
 export function PublicHeader() {

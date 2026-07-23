@@ -11,7 +11,7 @@ type MapProperty = {
   zone: string | null;
   lat: number;
   lng: number;
-  image?: string | null;
+  images?: string[];  // múltiples imágenes
 };
 
 type Props = { properties: MapProperty[]; height?: string };
@@ -49,9 +49,7 @@ const MAP_STYLE = [
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#7a6858" }] },
 ];
 
-declare global {
-  interface Window { google: any; __gmapsLoaded?: boolean; }
-}
+declare global { interface Window { google: any } }
 
 let gmapsPromise: Promise<void> | null = null;
 function loadGoogleMaps(apiKey: string): Promise<void> {
@@ -60,24 +58,64 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
     if (window.google?.maps) { resolve(); return; }
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
-    script.async = true;
-    script.defer = true;
+    script.async = true; script.defer = true;
     script.onload = () => resolve();
     document.head.appendChild(script);
   });
   return gmapsPromise;
 }
 
-// SVG pin como data URL — mucho más rápido que OverlayView
 function makePinSvg(label: string, color: string): string {
   const w = Math.max(label.length * 7 + 20, 50);
-  const h = 26;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-    <rect x="0" y="0" width="${w}" height="${h}" rx="13" fill="${color}"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="26">
+    <rect x="0" y="0" width="${w}" height="26" rx="13" fill="${color}"/>
     <text x="${w/2}" y="17" text-anchor="middle" font-size="11" font-weight="700"
       font-family="sans-serif" fill="white">${label}</text>
   </svg>`;
   return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+// ── Mini carrusel de imágenes ─────────────────────────────────────────────
+function ImageCarousel({ images }: { images: string[] }) {
+  const [idx, setIdx] = useState(0);
+  if (!images.length) return null;
+
+  const prev = (e: React.MouseEvent) => { e.stopPropagation(); setIdx(i => (i - 1 + images.length) % images.length); };
+  const next = (e: React.MouseEvent) => { e.stopPropagation(); setIdx(i => (i + 1) % images.length); };
+
+  return (
+    <div className="relative w-full h-32 overflow-hidden bg-cream">
+      <img
+        src={images[idx]}
+        alt=""
+        className="w-full h-full object-cover transition-opacity duration-200"
+      />
+      {images.length > 1 && (
+        <>
+          <button onClick={prev}
+            className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+          <button onClick={next}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+          {/* Dots */}
+          <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1">
+            {images.slice(0, 5).map((_, i) => (
+              <button key={i} onClick={e => { e.stopPropagation(); setIdx(i); }}
+                className={`w-1.5 h-1.5 rounded-full transition ${i === idx ? "bg-white" : "bg-white/40"}`}/>
+            ))}
+            {images.length > 5 && <span className="text-[9px] text-white/60 ml-0.5">+{images.length - 5}</span>}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function PropertiesMap({ properties, height = "600px" }: Props) {
@@ -96,22 +134,20 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
     const init = async () => {
       await loadGoogleMaps(apiKey);
       const G = window.google.maps;
-
       const validProps = properties.filter(p => p.lat && p.lng);
 
       const map = new G.Map(mapRef.current, {
-        center:          { lat: 20.9674, lng: -89.5926 },
-        zoom:            11,
-        styles:          MAP_STYLE,
+        center: { lat: 20.9674, lng: -89.5926 },
+        zoom: 11,
+        styles: MAP_STYLE,
         disableDefaultUI: true,
-        zoomControl:     true,
+        zoomControl: true,
         zoomControlOptions: { position: G.ControlPosition.RIGHT_BOTTOM },
         gestureHandling: "cooperative",
-        clickableIcons:  false,
+        clickableIcons: false,
       });
       mapInst.current = map;
 
-      // Crear todos los markers de una vez — nativo, rápido
       const newMarkers = validProps.map(prop => {
         const op    = prop.operation?.toLowerCase();
         const color = OP_COLOR[op] || "#0D1B2A";
@@ -126,7 +162,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
             size:   new G.Size(w, 26),
             anchor: new G.Point(w / 2, 13),
           },
-          optimized: true, // clave para rendimiento con muchos pins
+          optimized: true,
         });
 
         marker.addListener("click", () => {
@@ -140,7 +176,6 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
 
       markers.current = newMarkers;
 
-      // Fit bounds sobre propiedades reales
       if (validProps.length > 1) {
         const bounds = new G.LatLngBounds();
         validProps.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
@@ -158,7 +193,6 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
     return () => {
       markers.current.forEach(m => m.setMap(null));
       markers.current = [];
-      if (mapInst.current) { mapInst.current = null; }
     };
   }, []);
 
@@ -166,7 +200,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
     <div className="relative w-full rounded-2xl overflow-hidden border border-stone" style={{ height }}>
       <div ref={mapRef} className="w-full h-full"/>
 
-      {/* Leyenda abajo izquierda */}
+      {/* Leyenda */}
       <div className="absolute bottom-10 left-3 z-10 bg-white/90 backdrop-blur-sm rounded-xl shadow px-3 py-2 flex items-center gap-3">
         {Object.entries(OP_COLOR).map(([op, color]) => (
           <div key={op} className="flex items-center gap-1.5">
@@ -176,17 +210,15 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
         ))}
       </div>
 
-      {/* Card seleccionada */}
+      {/* Card con carrusel */}
       {selected && (
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 w-80">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 w-72">
           <div className="bg-white rounded-2xl shadow-xl border border-stone overflow-hidden">
-            {selected.image && (
-              <img src={selected.image} alt={selected.title} className="w-full h-32 object-cover"/>
-            )}
+            <ImageCarousel images={selected.images || []}/>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-navy line-clamp-2">{selected.title}</p>
+                  <p className="text-sm font-semibold text-navy line-clamp-1">{selected.title}</p>
                   {selected.zone && <p className="text-xs text-ink-muted mt-0.5">{selected.zone}</p>}
                 </div>
                 <button onClick={() => setSelected(null)} className="text-ink-soft hover:text-navy p-1 shrink-0">
@@ -197,7 +229,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
               </div>
               <div className="flex items-center justify-between mt-3">
                 <div>
-                  <p className="text-lg font-bold text-navy">${selected.price.toLocaleString("es-MX")}</p>
+                  <p className="text-base font-bold text-navy">${selected.price.toLocaleString("es-MX")}</p>
                   <p className="text-[10px] uppercase tracking-wider text-gold">
                     {selected.type} · {OP_LABEL[selected.operation?.toLowerCase()] || selected.operation}
                   </p>

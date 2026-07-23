@@ -37,102 +37,158 @@ const OP_LABEL: Record<string, string> = {
   ambas: "Venta y Renta",
 };
 
+// Estilo Google Maps sobrio y elegante
+const MAP_STYLE = [
+  { elementType: "geometry",        stylers: [{ color: "#f5f3ef" }] },
+  { elementType: "labels.text.fill",stylers: [{ color: "#6b5e4e" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f3ef" }] },
+  { featureType: "water",           elementType: "geometry",    stylers: [{ color: "#c9d8e8" }] },
+  { featureType: "water",           elementType: "labels.text.fill", stylers: [{ color: "#9eb8cc" }] },
+  { featureType: "road",            elementType: "geometry",    stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.arterial",   elementType: "geometry",    stylers: [{ color: "#ede9e3" }] },
+  { featureType: "road.highway",    elementType: "geometry",    stylers: [{ color: "#ddd5c8" }] },
+  { featureType: "poi",             stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park",        elementType: "geometry",    stylers: [{ color: "#d8e8d0" }, { visibility: "on" }] },
+  { featureType: "transit",         stylers: [{ visibility: "off" }] },
+  { featureType: "administrative",  elementType: "geometry",    stylers: [{ color: "#c8bfb5" }] },
+  { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#9a8070" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#7a6858" }] },
+];
+
+declare global {
+  interface Window { google: any; __gmapsLoaded?: boolean; }
+}
+
+function loadGoogleMaps(apiKey: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (window.google?.maps) { resolve(); return; }
+    if (window.__gmapsLoaded) {
+      const interval = setInterval(() => {
+        if (window.google?.maps) { clearInterval(interval); resolve(); }
+      }, 100);
+      return;
+    }
+    window.__gmapsLoaded = true;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+    script.async = true;
+    script.onload = () => resolve();
+    document.head.appendChild(script);
+  });
+}
+
 export function PropertiesMap({ properties, height = "600px" }: Props) {
-  const mapRef  = useRef<HTMLDivElement>(null);
-  const mapInst = useRef<any>(null);
+  const mapRef    = useRef<HTMLDivElement>(null);
+  const mapInst   = useRef<any>(null);
   const [loaded,   setLoaded]   = useState(false);
   const [selected, setSelected] = useState<MapProperty | null>(null);
 
   useEffect(() => {
     if (!mapRef.current || mapInst.current) return;
 
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-      document.head.appendChild(link);
-    }
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
 
     const init = async () => {
-      const L = (await import("leaflet")).default;
+      await loadGoogleMaps(apiKey);
+      const G = window.google.maps;
 
       const validProps = properties.filter(p => p.lat && p.lng);
+      const center = { lat: 20.9674, lng: -89.5926 }; // Mérida
 
-      // Zoom inicial en Mérida / Yucatán — no México entero
-      const defaultCenter: [number, number] = [20.9674, -89.5926];
-      const defaultZoom = validProps.length > 0 ? 11 : 10;
-
-      const map = L.map(mapRef.current!, {
-        center: defaultCenter,
-        zoom: defaultZoom,
-        zoomControl: false, // lo ponemos abajo derecha manualmente
+      const map = new G.Map(mapRef.current, {
+        center,
+        zoom: 11,
+        styles: MAP_STYLE,
+        disableDefaultUI: true,
+        zoomControl: true,
+        zoomControlOptions: { position: G.ControlPosition.RIGHT_BOTTOM },
+        gestureHandling: "cooperative",
       });
       mapInst.current = map;
 
-      // Controles de zoom — abajo derecha
-      L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      // Tile limpio y elegante (CartoDB Positron — gris minimalista)
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: "© OpenStreetMap © CARTO",
-        subdomains: "abcd",
-        maxZoom: 19,
-      }).addTo(map);
-
-      // Pins
+      // Crear marcadores
       validProps.forEach(prop => {
         const op    = prop.operation?.toLowerCase();
         const color = OP_COLOR[op] || "#0D1B2A";
 
-        const icon = L.divIcon({
-          className: "",
-          html: `<div style="
-            background:${color};
-            color:white;
-            padding:4px 10px;
-            border-radius:20px;
-            font-size:11px;
-            font-weight:700;
-            font-family:sans-serif;
-            white-space:nowrap;
-            box-shadow:0 2px 8px rgba(0,0,0,0.25);
-            border:2px solid rgba(255,255,255,0.2);
-            cursor:pointer;
-            transition:transform .15s;
-          ">${formatPrice(prop.price)}</div>`,
-          iconAnchor: [0, 0],
+        const marker = new G.Marker({
+          position: { lat: prop.lat, lng: prop.lng },
+          map,
+          label: {
+            text: formatPrice(prop.price),
+            color: "white",
+            fontSize: "11px",
+            fontWeight: "700",
+            fontFamily: "sans-serif",
+          },
+          icon: {
+            path: G.SymbolPath.CIRCLE,
+            scale: 0,
+          },
         });
 
-        const marker = L.marker([prop.lat, prop.lng], { icon }).addTo(map);
-        marker.on("click", () => {
-          setSelected(prop);
-          map.setView([prop.lat, prop.lng], Math.max(map.getZoom(), 14));
-        });
+        // Overlay personalizado con div
+        const overlay = new G.OverlayView();
+        overlay.onAdd = function() {
+          const div = document.createElement("div");
+          div.style.cssText = `
+            position: absolute;
+            background: ${color};
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: sans-serif;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            border: 2px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+          `;
+          div.textContent = formatPrice(prop.price);
+          div.addEventListener("click", () => {
+            setSelected(prop);
+            map.panTo({ lat: prop.lat, lng: prop.lng });
+            if (map.getZoom() < 14) map.setZoom(14);
+          });
+          this.getPanes().overlayMouseTarget.appendChild(div);
+          this._div = div;
+        };
+        overlay.draw = function() {
+          const point = this.getProjection().fromLatLngToDivPixel(
+            new G.LatLng(prop.lat, prop.lng)
+          );
+          if (point) {
+            this._div.style.left = point.x + "px";
+            this._div.style.top  = point.y + "px";
+          }
+        };
+        overlay.setMap(map);
       });
 
-      // Fit bounds si hay propiedades
+      // Fit bounds
       if (validProps.length > 1) {
-        const bounds = L.latLngBounds(validProps.map(p => [p.lat, p.lng]));
-        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
+        const bounds = new G.LatLngBounds();
+        validProps.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+        map.fitBounds(bounds, 60);
+        G.event.addListenerOnce(map, "idle", () => {
+          if (map.getZoom() > 13) map.setZoom(13);
+        });
       }
 
       setLoaded(true);
     };
 
     init();
-
-    return () => {
-      if (mapInst.current) { mapInst.current.remove(); mapInst.current = null; }
-    };
   }, []);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-stone" style={{ height }}>
       <div ref={mapRef} className="w-full h-full"/>
 
-      {/* Leyenda — abajo izquierda, sobre el mapa */}
-      <div className="absolute bottom-10 left-3 z-[1000] bg-white/90 backdrop-blur-sm rounded-xl shadow px-3 py-2 flex items-center gap-3">
+      {/* Leyenda — abajo izquierda */}
+      <div className="absolute bottom-10 left-3 z-10 bg-white/90 backdrop-blur-sm rounded-xl shadow px-3 py-2 flex items-center gap-3">
         {Object.entries(OP_COLOR).map(([op, color]) => (
           <div key={op} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }}/>
@@ -143,7 +199,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
 
       {/* Card propiedad seleccionada */}
       {selected && (
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[1000] w-80">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 w-80">
           <div className="bg-white rounded-2xl shadow-xl border border-stone overflow-hidden">
             {selected.image && (
               <img src={selected.image} alt={selected.title} className="w-full h-32 object-cover"/>
@@ -178,7 +234,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
       )}
 
       {!loaded && (
-        <div className="absolute inset-0 bg-cream flex items-center justify-center z-[999]">
+        <div className="absolute inset-0 bg-cream flex items-center justify-center z-10">
           <div className="w-6 h-6 border-2 border-navy/20 border-t-navy rounded-full animate-spin"/>
         </div>
       )}

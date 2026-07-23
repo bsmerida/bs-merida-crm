@@ -1,6 +1,6 @@
 // components/PropertiesMap.tsx
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 type MapProperty = {
   id: string;
@@ -14,10 +14,7 @@ type MapProperty = {
   image?: string | null;
 };
 
-type Props = {
-  properties: MapProperty[];
-  height?: string;
-};
+type Props = { properties: MapProperty[]; height?: string };
 
 function formatPrice(price: number) {
   if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(1)}M`;
@@ -30,28 +27,25 @@ const OP_COLOR: Record<string, string> = {
   renta: "#C4956A",
   ambas: "#2D5A8E",
 };
-
 const OP_LABEL: Record<string, string> = {
   venta: "Venta",
   renta: "Renta",
   ambas: "Venta y Renta",
 };
 
-// Estilo Google Maps sobrio y elegante
 const MAP_STYLE = [
-  { elementType: "geometry",        stylers: [{ color: "#f5f3ef" }] },
-  { elementType: "labels.text.fill",stylers: [{ color: "#6b5e4e" }] },
+  { elementType: "geometry",           stylers: [{ color: "#f5f3ef" }] },
+  { elementType: "labels.text.fill",   stylers: [{ color: "#6b5e4e" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#f5f3ef" }] },
-  { featureType: "water",           elementType: "geometry",    stylers: [{ color: "#c9d8e8" }] },
-  { featureType: "water",           elementType: "labels.text.fill", stylers: [{ color: "#9eb8cc" }] },
-  { featureType: "road",            elementType: "geometry",    stylers: [{ color: "#ffffff" }] },
-  { featureType: "road.arterial",   elementType: "geometry",    stylers: [{ color: "#ede9e3" }] },
-  { featureType: "road.highway",    elementType: "geometry",    stylers: [{ color: "#ddd5c8" }] },
-  { featureType: "poi",             stylers: [{ visibility: "off" }] },
-  { featureType: "poi.park",        elementType: "geometry",    stylers: [{ color: "#d8e8d0" }, { visibility: "on" }] },
-  { featureType: "transit",         stylers: [{ visibility: "off" }] },
-  { featureType: "administrative",  elementType: "geometry",    stylers: [{ color: "#c8bfb5" }] },
-  { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#9a8070" }] },
+  { featureType: "water",    elementType: "geometry",         stylers: [{ color: "#c9d8e8" }] },
+  { featureType: "water",    elementType: "labels.text.fill", stylers: [{ color: "#9eb8cc" }] },
+  { featureType: "road",     elementType: "geometry",         stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.arterial", elementType: "geometry",   stylers: [{ color: "#ede9e3" }] },
+  { featureType: "road.highway",  elementType: "geometry",   stylers: [{ color: "#ddd5c8" }] },
+  { featureType: "poi",            stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "geometry",        stylers: [{ color: "#d8e8d0" }, { visibility: "on" }] },
+  { featureType: "transit",        stylers: [{ visibility: "off" }] },
+  { featureType: "administrative", elementType: "geometry",  stylers: [{ color: "#c8bfb5" }] },
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#7a6858" }] },
 ];
 
@@ -59,33 +53,44 @@ declare global {
   interface Window { google: any; __gmapsLoaded?: boolean; }
 }
 
+let gmapsPromise: Promise<void> | null = null;
 function loadGoogleMaps(apiKey: string): Promise<void> {
-  return new Promise((resolve) => {
+  if (gmapsPromise) return gmapsPromise;
+  gmapsPromise = new Promise((resolve) => {
     if (window.google?.maps) { resolve(); return; }
-    if (window.__gmapsLoaded) {
-      const interval = setInterval(() => {
-        if (window.google?.maps) { clearInterval(interval); resolve(); }
-      }, 100);
-      return;
-    }
-    window.__gmapsLoaded = true;
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
     script.async = true;
+    script.defer = true;
     script.onload = () => resolve();
     document.head.appendChild(script);
   });
+  return gmapsPromise;
+}
+
+// SVG pin como data URL — mucho más rápido que OverlayView
+function makePinSvg(label: string, color: string): string {
+  const w = Math.max(label.length * 7 + 20, 50);
+  const h = 26;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <rect x="0" y="0" width="${w}" height="${h}" rx="13" fill="${color}"/>
+    <text x="${w/2}" y="17" text-anchor="middle" font-size="11" font-weight="700"
+      font-family="sans-serif" fill="white">${label}</text>
+  </svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
 }
 
 export function PropertiesMap({ properties, height = "600px" }: Props) {
-  const mapRef    = useRef<HTMLDivElement>(null);
-  const mapInst   = useRef<any>(null);
+  const mapRef  = useRef<HTMLDivElement>(null);
+  const mapInst = useRef<any>(null);
+  const markers = useRef<any[]>([]);
   const [loaded,   setLoaded]   = useState(false);
   const [selected, setSelected] = useState<MapProperty | null>(null);
 
+  const handleSelect = useCallback((prop: MapProperty) => setSelected(prop), []);
+
   useEffect(() => {
     if (!mapRef.current || mapInst.current) return;
-
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
 
     const init = async () => {
@@ -93,81 +98,49 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
       const G = window.google.maps;
 
       const validProps = properties.filter(p => p.lat && p.lng);
-      const center = { lat: 20.9674, lng: -89.5926 }; // Mérida
 
       const map = new G.Map(mapRef.current, {
-        center,
-        zoom: 11,
-        styles: MAP_STYLE,
+        center:          { lat: 20.9674, lng: -89.5926 },
+        zoom:            11,
+        styles:          MAP_STYLE,
         disableDefaultUI: true,
-        zoomControl: true,
+        zoomControl:     true,
         zoomControlOptions: { position: G.ControlPosition.RIGHT_BOTTOM },
         gestureHandling: "cooperative",
+        clickableIcons:  false,
       });
       mapInst.current = map;
 
-      // Crear marcadores
-      validProps.forEach(prop => {
+      // Crear todos los markers de una vez — nativo, rápido
+      const newMarkers = validProps.map(prop => {
         const op    = prop.operation?.toLowerCase();
         const color = OP_COLOR[op] || "#0D1B2A";
+        const label = formatPrice(prop.price);
+        const w     = Math.max(label.length * 7 + 20, 50);
 
         const marker = new G.Marker({
           position: { lat: prop.lat, lng: prop.lng },
           map,
-          label: {
-            text: formatPrice(prop.price),
-            color: "white",
-            fontSize: "11px",
-            fontWeight: "700",
-            fontFamily: "sans-serif",
-          },
           icon: {
-            path: G.SymbolPath.CIRCLE,
-            scale: 0,
+            url:    makePinSvg(label, color),
+            size:   new G.Size(w, 26),
+            anchor: new G.Point(w / 2, 13),
           },
+          optimized: true, // clave para rendimiento con muchos pins
         });
 
-        // Overlay personalizado con div
-        const overlay = new G.OverlayView();
-        overlay.onAdd = function() {
-          const div = document.createElement("div");
-          div.style.cssText = `
-            position: absolute;
-            background: ${color};
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: sans-serif;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            border: 2px solid rgba(255,255,255,0.2);
-            cursor: pointer;
-            transform: translate(-50%, -50%);
-          `;
-          div.textContent = formatPrice(prop.price);
-          div.addEventListener("click", () => {
-            setSelected(prop);
-            map.panTo({ lat: prop.lat, lng: prop.lng });
-            if (map.getZoom() < 14) map.setZoom(14);
-          });
-          this.getPanes().overlayMouseTarget.appendChild(div);
-          this._div = div;
-        };
-        overlay.draw = function() {
-          const point = this.getProjection().fromLatLngToDivPixel(
-            new G.LatLng(prop.lat, prop.lng)
-          );
-          if (point) {
-            this._div.style.left = point.x + "px";
-            this._div.style.top  = point.y + "px";
-          }
-        };
-        overlay.setMap(map);
+        marker.addListener("click", () => {
+          handleSelect(prop);
+          map.panTo({ lat: prop.lat, lng: prop.lng });
+          if (map.getZoom() < 14) map.setZoom(14);
+        });
+
+        return marker;
       });
 
-      // Fit bounds
+      markers.current = newMarkers;
+
+      // Fit bounds sobre propiedades reales
       if (validProps.length > 1) {
         const bounds = new G.LatLngBounds();
         validProps.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
@@ -181,13 +154,19 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
     };
 
     init();
+
+    return () => {
+      markers.current.forEach(m => m.setMap(null));
+      markers.current = [];
+      if (mapInst.current) { mapInst.current = null; }
+    };
   }, []);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-stone" style={{ height }}>
       <div ref={mapRef} className="w-full h-full"/>
 
-      {/* Leyenda — abajo izquierda */}
+      {/* Leyenda abajo izquierda */}
       <div className="absolute bottom-10 left-3 z-10 bg-white/90 backdrop-blur-sm rounded-xl shadow px-3 py-2 flex items-center gap-3">
         {Object.entries(OP_COLOR).map(([op, color]) => (
           <div key={op} className="flex items-center gap-1.5">
@@ -197,7 +176,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
         ))}
       </div>
 
-      {/* Card propiedad seleccionada */}
+      {/* Card seleccionada */}
       {selected && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 w-80">
           <div className="bg-white rounded-2xl shadow-xl border border-stone overflow-hidden">

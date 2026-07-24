@@ -113,8 +113,7 @@ async function confirmRequest(
   request: any,
   confirmedOption: { date: string; time: string }
 ) {
-  console.log("[DEBUG] confirmRequest iniciado");
-  console.log("[DEBUG] agent_id:", request.agent_id);
+
 
   const starts_at = new Date(`${confirmedOption.date}T${confirmedOption.time}:00-06:00`).toISOString();
   const ends_at   = new Date(new Date(starts_at).getTime() + 60 * 60_000).toISOString();
@@ -122,20 +121,15 @@ async function confirmRequest(
   let googleEventId: string | null = null;
   const agentId = request.agent_id || FALLBACK_AGENT_ID;
 
-  console.log("[DEBUG] agentId final:", agentId);
-
   const { data: tokenRow } = await supabase
     .from("google_calendar_tokens")
     .select("*")
     .eq("profile_id", agentId)
     .single();
 
-  console.log("[GCal] Token encontrado:", !!tokenRow);
-
   if (tokenRow) {
     let accessToken = tokenRow.access_token;
     if (Date.now() > tokenRow.expiry - 60_000) {
-      console.log("[GCal] Refrescando token...");
       const refreshed = await refreshToken(tokenRow.refresh_token);
       if (refreshed.access_token) {
         accessToken = refreshed.access_token;
@@ -149,8 +143,6 @@ async function confirmRequest(
 
     const { data: agentProfile } = await supabase
       .from("profiles").select("email, full_name").eq("id", agentId).single();
-
-    console.log("[GCal] Agent profile:", agentProfile?.email);
 
     const attendees = [];
     if (agentProfile?.email)  attendees.push({ email: agentProfile.email, displayName: agentProfile.full_name });
@@ -173,7 +165,6 @@ async function confirmRequest(
     };
 
     const calendarId = tokenRow.calendar_id || "primary";
-    console.log("[GCal] Creando evento en calendario:", calendarId);
 
     const gcRes = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?sendUpdates=all`,
@@ -188,7 +179,6 @@ async function confirmRequest(
     );
     const gcData = await gcRes.json();
     googleEventId = gcData.id || null;
-    console.log("[GCal] Resultado:", gcData.id ? "OK id=" + gcData.id : "ERROR", JSON.stringify(gcData.error || ""));
   } else {
     console.error("[GCal] No hay token para agentId:", agentId);
   }

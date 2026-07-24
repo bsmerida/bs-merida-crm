@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
+import { EquipoClient } from "@/components/EquipoClient";
 
 export default async function AjustesPage() {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const { data: profiles } = await supabase.from("profiles").select("*").order("created_at");
 
   return (
@@ -36,25 +38,7 @@ export default async function AjustesPage() {
         <p className="text-xs text-ink-soft mt-6">Para cambiar estos datos, edita las variables de entorno en Vercel.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-        <div className="px-6 py-5 border-b border-ink-line">
-          <h3 className="font-semibold text-ink">Usuarios del sistema</h3>
-          <p className="text-xs text-ink-muted mt-1">Para agregar usuarios nuevos, ve a Supabase → Authentication → Users → Add user.</p>
-        </div>
-        <table className="w-full">
-          <thead className="border-b border-ink-line"><tr>{["Usuario", "Rol", "Correo", "Estado"].map(h => <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-6 py-3.5">{h}</th>)}</tr></thead>
-          <tbody>
-            {(profiles || []).map((u: any) => (
-              <tr key={u.id} className="border-b border-ink-line last:border-0">
-                <td className="px-6 py-4 text-sm font-medium text-ink">{u.full_name || "Sin nombre"}</td>
-                <td className="px-6 py-4 text-sm text-ink-muted capitalize">{u.role}</td>
-                <td className="px-6 py-4 text-sm text-ink-muted">{u.email}</td>
-                <td className="px-6 py-4"><span className={`text-xs px-2 py-1 rounded-full ${u.active ? "bg-emerald-50 text-emerald-700" : "bg-ink-ghost text-ink-muted"}`}>{u.active ? "Activo" : "Inactivo"}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <EquipoClient profiles={profiles || []} currentUserId={user?.id || ""} />
 
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
         <h3 className="font-semibold text-ink mb-1">Cumplimiento legal · México</h3>

@@ -2,3 +2,13 @@ node_modules/
 .next/
 .agents/
 skills-lock.json
+ 
+# Environment files — NUNCA subir al repo
+.env
+.env.local
+.env.*.local
+.env.production
+ 
+# Secrets
+*.pem
+*.key

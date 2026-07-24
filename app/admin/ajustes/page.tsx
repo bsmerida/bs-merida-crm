@@ -18,14 +18,14 @@ export default async function AjustesPage() {
         <h3 className="font-semibold text-ink mb-5">Datos de la empresa</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           {[
-            ["Nombre comercial", "Inmobiliaria BS Mérida"],
-            ["Sitio web", "bsmerida.com"],
+            ["Nombre comercial", "Duclaud Bienes Raíces"],
+            ["Sitio web", "www.duclaud.com.mx"],
             ["Dirección oficina principal", "Calle 13 #147, Col. México Oriente, Mérida, Yucatán"],
             ["Sucursal", "San Pedro Garza García, Nuevo León"],
-            ["Teléfono Mérida", "999 303 4815"],
+            ["Teléfono Mérida", "999 746 6272"],
             ["WhatsApp", "999 746 6272"],
             ["Teléfono Monterrey", "81 4010 1300"],
-            ["Correo", "bsmerida19@gmail.com"],
+            ["Correo", "contacto@duclaud.com.mx"],
             ["Membresía", "AMPI Mérida"],
             ["Certificación", "ECO110.02 · D-0036107323"],
           ].map(([l, v]) => (

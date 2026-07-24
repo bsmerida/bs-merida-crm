@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     .select(`*, assignee:profiles!assigned_to(id, full_name, initials), lead:leads(id, name)`)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   // Notificar al asignado si es diferente al creador
   if (task.assigned_to && task.assigned_to !== user.id) {
     await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.duclaud.com.mx'}/api/push/send`, {

@@ -122,7 +122,7 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
   };
 
   return (
-    <div className="flex flex-col h-screen bg-cream">
+    <div className="flex flex-col bg-cream h-[calc(100vh-56px)] md:h-screen">
       {/* Header */}
       <div className="bg-white border-b border-stone px-8 py-5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">

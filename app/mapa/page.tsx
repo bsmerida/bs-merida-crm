@@ -22,9 +22,9 @@ export default async function MapaPage() {
   const propIds = (props || []).map(p => p.id);
   const { data: images } = await supabase
     .from("property_images")
-    .select("property_id, url, sort_order")
+    .select("property_id, url, position, is_cover")
     .in("property_id", propIds)
-    .order("sort_order", { ascending: true });
+    .order("position", { ascending: true });
 
   // Agrupar imágenes por propiedad
   const imageMap: Record<string, string[]> = {};

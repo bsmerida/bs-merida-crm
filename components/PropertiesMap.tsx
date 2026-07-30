@@ -77,6 +77,7 @@ function makePinSvg(label: string, color: string): string {
 
 // ── Mini carrusel de imágenes ─────────────────────────────────────────────
 function ImageCarousel({ images }: { images: string[] }) {
+  console.log("images del carrusel:", images);
   const [idx, setIdx] = useState(0);
   if (!images.length) return null;
 

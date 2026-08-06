@@ -86,7 +86,11 @@ Responde SOLO con JSON válido:
       .eq("is_published", true)
       .order("featured", { ascending: false });
 
-    if (filters.operacion) query = query.ilike("operation", `%${filters.operacion}%`);
+    if (filters.operacion) {
+    const op = filters.operacion.toLowerCase();
+    const opNorm = op.includes("rent") ? "Renta" : (op.includes("compr") || op.includes("vent")) ? "Venta" : filters.operacion;
+    query = query.ilike("operation", `%${opNorm}%`);
+  }
     if (filters.tipo)      query = query.ilike("type", `%${filters.tipo}%`);
     if (filters.zona)      query = query.or(`zone.ilike.%${filters.zona}%,city.ilike.%${filters.zona}%,state.ilike.%${filters.zona}%`);
     if (filters.precio_min) query = query.gte("price", filters.precio_min);

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyImageManager } from "@/components/PropertyImageManager";
 import { PropertyNotes } from "@/components/PropertyNotes";
@@ -7,7 +7,7 @@ import { PropertyStats } from "@/components/PropertyStats";
 import type { Property } from "@/lib/supabase/types";
 
 export default async function EditarPropiedadPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase.from("properties").select("*").eq("id", params.id).single();
   if (!data) notFound();
   const property = data as Property;

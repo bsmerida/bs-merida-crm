@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { AdminPropiedadesList } from "@/components/AdminPropiedadesList";
 
 export default async function AdminPropiedades() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
 

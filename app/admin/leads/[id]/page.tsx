@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { LeadEditor } from "@/components/LeadEditor";
 import { LeadTablero } from "@/components/LeadTablero";
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const [{ data: lead }, { data: agentes }, { data: activities }] = await Promise.all([
     supabase.from("leads").select("*").eq("id", params.id).single(),

@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { LogoUploader } from "@/components/LogoUploader";
 
 export default async function BrandingPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: settings } = await supabase.from("business_settings").select("*").eq("id", 1).single();
 
   return (

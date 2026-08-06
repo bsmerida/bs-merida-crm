@@ -1,9 +1,9 @@
 // app/admin/tareas/page.tsx
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { TareasClient } from "@/components/TareasClient";
 
 export default async function AdminTareasPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
   const isAdmin = profile?.role === "admin";

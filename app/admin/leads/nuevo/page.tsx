@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { LeadEditor } from "@/components/LeadEditor";
 
 export default async function NuevoLeadPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: agentes } = await supabase
     .from("profiles")
     .select("id, full_name")

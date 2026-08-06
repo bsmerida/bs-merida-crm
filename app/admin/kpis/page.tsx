@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { fmtMXN } from "@/lib/utils";
 import Link from "next/link";
 
 export default async function KPIsPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
 

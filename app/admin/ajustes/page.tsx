@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { EquipoClient } from "@/components/EquipoClient";
 
 export default async function AjustesPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profiles } = await supabase.from("profiles").select("*").order("created_at");
 

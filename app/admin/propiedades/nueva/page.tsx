@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyNotes } from "@/components/PropertyNotes";
 
 export default async function NuevaPropiedadPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   return (

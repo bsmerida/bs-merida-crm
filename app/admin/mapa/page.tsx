@@ -1,10 +1,10 @@
 // app/admin/mapa/page.tsx
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { PropertiesMap } from "@/components/PropertiesMap";
 import Link from "next/link";
 
 export default async function AdminMapaPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const { data: props } = await supabase
     .from("properties")

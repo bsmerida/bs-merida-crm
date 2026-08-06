@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { PropertiesStatsClient } from "@/components/PropertiesStatsClient";
 import Link from "next/link";
 
 export default async function PropiedadesEstadisticasPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const [
     { data: properties },

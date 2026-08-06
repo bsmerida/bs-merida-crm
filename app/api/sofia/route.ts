@@ -52,7 +52,9 @@ Responde SOLO con JSON válido:
   "faltan": []
 }
 
-"tiene_suficiente_contexto" es true cuando el cliente ya dio AL MENOS: operacion + (zona O presupuesto).
+"tiene_suficiente_contexto" es true cuando:
+- El cliente ya dio AL MENOS: operacion + (zona O presupuesto), O
+- El cliente dice "muestrame todo", "muestrame todas", "todas las opciones", "todo el inventario", "quiero ver todo" o similares (en ese caso usar los filtros que ya se tengan).
 "faltan" es la lista de campos que aún faltan y son importantes para buscar.`,
       }],
     }),

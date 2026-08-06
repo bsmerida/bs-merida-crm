@@ -66,6 +66,7 @@ Responde SOLO con JSON válido:
     const filterData = await filterRes.json();
     const text = filterData.content?.[0]?.text || "{}";
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+    console.log("[Sofia filtros]", JSON.stringify(parsed));
     filters         = parsed;
     tieneSuficiente = parsed.tiene_suficiente_contexto || false;
     faltan          = parsed.faltan || [];

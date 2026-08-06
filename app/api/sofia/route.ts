@@ -15,9 +15,12 @@ export async function POST(req: NextRequest) {
   );
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx";
-  const lastUserMsg = messages[messages.length - 1]?.content || "";
 
-  // ── Fase 1: Extraer filtros del mensaje del cliente ───────────────────────
+  // ── Fase 1: Extraer contexto acumulado de toda la conversación ─────────────
+  const conversationText = messages
+    .map((m: any) => `${m.role === "user" ? "Cliente" : "Sofía"}: ${m.content}`)
+    .join("\n");
+
   const filterRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -27,134 +30,137 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model:      "claude-haiku-4-5",
-      max_tokens: 200,
+      max_tokens: 300,
       messages: [{
         role: "user",
-        content: `Del siguiente mensaje de un cliente de una inmobiliaria en Mérida, Yucatán, extrae los filtros de búsqueda en JSON.
-Si no se menciona un filtro, usa null.
-Zonas comunes: Mérida, San Pedro, Montejo, Benito Juárez, Itzimná, Altabrisa, Santa Gertrudis, Temozón, Cholul, Dzitya, Conkal, Komchen, etc.
-Tipos: Casa, Departamento, Terreno, Local, Oficina, Bodega, Villa, Penthouse.
-Operaciones: Venta, Renta.
+        content: `Analiza esta conversación entre un cliente y Sofía (asistente de Duclaud, inmobiliaria en México).
+Extrae toda la información que el cliente ya haya dado sobre lo que busca.
+Si no se ha mencionado un campo, usa null.
 
-Mensaje: "${lastUserMsg}"
+Conversación:
+${conversationText}
 
-Responde SOLO con JSON válido, sin markdown:
-{"zona": null, "tipo": null, "operacion": null, "precio_min": null, "precio_max": null, "recamaras_min": null}`,
+Responde SOLO con JSON válido:
+{
+  "operacion": null,
+  "tipo": null,
+  "zona": null,
+  "precio_min": null,
+  "precio_max": null,
+  "recamaras_min": null,
+  "tiene_suficiente_contexto": false,
+  "faltan": []
+}
+
+"tiene_suficiente_contexto" es true cuando el cliente ya dio AL MENOS: operacion + (zona O presupuesto).
+"faltan" es la lista de campos que aún faltan y son importantes para buscar.`,
       }],
     }),
   });
 
   let filters: any = {};
+  let tieneSuficiente = false;
+  let faltan: string[] = [];
+
   try {
     const filterData = await filterRes.json();
     const text = filterData.content?.[0]?.text || "{}";
-    filters = JSON.parse(text.replace(/```json|```/g, "").trim());
+    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+    filters         = parsed;
+    tieneSuficiente = parsed.tiene_suficiente_contexto || false;
+    faltan          = parsed.faltan || [];
   } catch {
     filters = {};
   }
 
-  // ── Fase 2: Buscar propiedades con filtros ────────────────────────────────
-  let query = db
-    .from("properties")
-    .select("id, title, description, type, operation, price, currency, zone, city, state, bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, status, development, reference")
-    .eq("status", "Disponible")
-    .eq("is_published", true)
-    .order("featured", { ascending: false });
+  // ── Fase 2: Buscar propiedades solo si hay suficiente contexto ─────────────
+  let inventario = "";
+  let totalEncontradas = 0;
 
-  // Aplicar filtros detectados
-  if (filters.operacion) {
-    query = query.ilike("operation", `%${filters.operacion}%`);
-  }
-  if (filters.tipo) {
-    query = query.ilike("type", `%${filters.tipo}%`);
-  }
-  if (filters.zona) {
-    query = query.or(`zone.ilike.%${filters.zona}%,city.ilike.%${filters.zona}%,state.ilike.%${filters.zona}%`);
-  }
-  if (filters.precio_min) {
-    query = query.gte("price", filters.precio_min);
-  }
-  if (filters.precio_max) {
-    query = query.lte("price", filters.precio_max);
-  }
-  if (filters.recamaras_min) {
-    query = query.gte("bedrooms", filters.recamaras_min);
-  }
+  if (tieneSuficiente || propertyCtx) {
+    let query = db
+      .from("properties")
+      .select("id, title, description, type, operation, price, currency, zone, city, state, bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, status, development, reference")
+      .eq("status", "Disponible")
+      .eq("is_published", true)
+      .order("featured", { ascending: false });
 
-  // Si no hay filtros específicos, cargar muestra representativa
-  const hasFilters = Object.values(filters).some(v => v !== null);
-  if (!hasFilters) {
-    query = query.limit(40);
+    if (filters.operacion) query = query.ilike("operation", `%${filters.operacion}%`);
+    if (filters.tipo)      query = query.ilike("type", `%${filters.tipo}%`);
+    if (filters.zona)      query = query.or(`zone.ilike.%${filters.zona}%,city.ilike.%${filters.zona}%,state.ilike.%${filters.zona}%`);
+    if (filters.precio_min) query = query.gte("price", filters.precio_min);
+    if (filters.precio_max) query = query.lte("price", filters.precio_max);
+    if (filters.recamaras_min) query = query.gte("bedrooms", filters.recamaras_min);
+
+    const { data: props } = await query;
+    totalEncontradas = props?.length || 0;
+
+    inventario = (props || [])
+      .map(p => {
+        const amenidades = Array.isArray(p.amenities) && p.amenities.length
+          ? `Amenidades: ${p.amenities.join(", ")}` : "";
+        const desc = p.description
+          ? `Desc: ${p.description.slice(0, 120)}${p.description.length > 120 ? "…" : ""}` : "";
+        return [
+          `[${p.id}]`,
+          `${p.title}`,
+          `${p.type} en ${p.operation}`,
+          `${fmtPrice(p.price)} ${p.currency || "MXN"}`,
+          `${[p.zone, p.city].filter(Boolean).join(", ")}`,
+          `${p.bedrooms ? `${p.bedrooms} rec` : ""}${p.bathrooms ? ` · ${p.bathrooms} baños` : ""}${p.m2_construction ? ` · ${p.m2_construction}m²` : ""}${p.parking ? ` · ${p.parking} est` : ""}`,
+          p.development ? `Desarrollo: ${p.development}` : "",
+          amenidades,
+          desc,
+        ].filter(Boolean).join(" | ");
+      })
+      .join("\n\n");
   }
-
-  const { data: props } = await query;
-
-  const inventario = (props || [])
-    .map(p => {
-      const amenidades = Array.isArray(p.amenities) && p.amenities.length
-        ? `Amenidades: ${p.amenities.join(", ")}` : "";
-      const desc = p.description
-        ? `Desc: ${p.description.slice(0, 120)}${p.description.length > 120 ? "…" : ""}` : "";
-      return [
-        `[${p.id}]`,
-        `${p.title}`,
-        `${p.type} en ${p.operation}`,
-        `${fmtPrice(p.price)} ${p.currency || "MXN"}`,
-        `${[p.zone, p.city].filter(Boolean).join(", ")}`,
-        `${p.bedrooms ? `${p.bedrooms} rec` : ""}${p.bathrooms ? ` · ${p.bathrooms} baños` : ""}${p.m2_construction ? ` · ${p.m2_construction}m²` : ""}${p.parking ? ` · ${p.parking} est` : ""}`,
-        p.development ? `Desarrollo: ${p.development}` : "",
-        amenidades,
-        desc,
-      ].filter(Boolean).join(" | ");
-    })
-    .join("\n\n");
 
   const propCtxBlock = propertyCtx
     ? `\nEL VISITANTE ESTÁ VIENDO ESTA PROPIEDAD:\nID: ${propertyCtx.id} | ${propertyCtx.title} | ${propertyCtx.operation}\nResponde principalmente sobre esta propiedad. Para mostrarla usa [PROPS|${propertyCtx.id}]\n`
     : "";
 
-  const filtrosAplicados = hasFilters
-    ? `\nFILTROS APLICADOS A ESTE INVENTARIO: ${JSON.stringify(filters)}`
-    : "";
-
-  // ── Fase 3: Responder con Claude ──────────────────────────────────────────
-  const system = `Eres Sofía, asistente virtual de Duclaud — firma de consultoría inmobiliaria en Mérida, Yucatán.
+  // ── Fase 3: Responder ──────────────────────────────────────────────────────
+  const system = `Eres Sofía, asistente virtual de Duclaud — firma de consultoría inmobiliaria.
 Tono: profesional, cálido, directo. Tratamiento de usted. Sin emojis.
 
 SOBRE DUCLAUD:
 - Firma de consultoría inmobiliaria (nunca "agencia"), certificada AMPI
-- Fundada por Bertha Duclaud. 600+ propiedades gestionadas
-- Diferenciador: equipo legal y financiero interno en la misma firma
 - Presencia en Yucatán, Quintana Roo y Nuevo León
+- Diferenciador: equipo legal y financiero interno
 - Tagline: "Inversiones que trascienden."
 - Terminología: "operación" (no "venta"), "consultor Duclaud" (no "agente")
 - WhatsApp: ${process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272"}
 
-INVENTARIO DISPONIBLE (${props?.length || 0} propiedades que coinciden con la búsqueda):
-${inventario || "Sin propiedades disponibles con esos filtros."}
-${filtrosAplicados}
+CONTEXTO DETECTADO DE LA CONVERSACIÓN:
+${JSON.stringify(filters, null, 2)}
+
+${!tieneSuficiente && !propertyCtx ? `
+INSTRUCCIÓN IMPORTANTE: Aún no tienes suficiente información para buscar propiedades.
+Haz UNA SOLA pregunta concisa para obtener lo que falta: ${faltan.join(", ")}.
+NO hagas múltiples preguntas a la vez. Sé natural, no uses listas.
+NO busques ni menciones propiedades todavía.
+` : `
+INVENTARIO (${totalEncontradas} propiedades encontradas con los filtros del cliente):
+${inventario || "No se encontraron propiedades con esos criterios."}
+
+REGLAS PARA MOSTRAR PROPIEDADES:
+1. SIEMPRE di cuántas encontraste en total ANTES de mostrar las más relevantes.
+   Ejemplo: "Encontré 9 propiedades en esa zona, le muestro las más relevantes:"
+2. Muestra máximo 3 con [PROPS|id1,id2,id3] al final.
+3. NUNCA digas que solo hay las que muestras si hay más.
+4. Si el cliente pregunta si es todo, di el total exacto.
+5. NUNCA inventes datos. Si no está en el inventario, no existe.
+6. Si no hay resultados, díselo y sugiere ajustar los criterios.
+`}
+
 ${propCtxBlock}
-
-REGLAS ESTRICTAS:
-1. SOLO habla de propiedades que aparecen arriba. Si no está, no existe o no está disponible.
-2. NUNCA inventes precios, medidas ni datos. Si no tienes el dato exacto, dilo.
-3. Si no hay propiedades con esos filtros, díselo honestamente y ofrece alternativas cercanas.
-4. NUNCA prometas descuentos, disponibilidad futura ni cosas que no puedes confirmar.
-5. Si no sabes algo, di "No tengo ese dato, un consultor Duclaud puede resolverle esa duda".
-6. Si el cliente pregunta cuántas propiedades hay en una zona, da el número exacto del inventario de arriba.
-
-MOSTRAR PROPIEDADES:
-- Muestra máximo 3 propiedades del inventario que mejor coincidan.
-- Usa [PROPS|id1,id2,id3] al final de tu mensaje.
-- Ordena por relevancia.
 
 CAPTURAR LEAD:
 - Cuando tengas nombre + teléfono → incluye [LEAD|nombre=X|telefono=Y|presupuesto=Z|zona=W|operacion=V]
 - Pide teléfono de forma natural después de 2-3 intercambios si hay interés real.
 
-FORMATO:
-- Respuestas cortas: 1-3 oraciones, luego propiedades si aplica.
-- Da precios exactos del inventario.`;
+FORMATO: Respuestas cortas y directas.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -188,7 +194,7 @@ FORMATO:
     reply = reply.replace(/\[LEAD\|[^\]]+\]\s*/g, "").trim();
   }
 
-  // Extraer propiedades a mostrar
+  // Extraer propiedades
   let propertyCards: any[] = [];
   const propsMatch = reply.match(/\[PROPS\|([^\]]+)\]/);
   if (propsMatch) {

@@ -28,13 +28,13 @@ export async function DELETE(req: NextRequest) {
 
   for (const tabla of tablas) {
     const { error } = await admin.from(tabla).delete().eq("lead_id", id);
-    if (error && !error.message.includes("does not exist")) {
+    if (error && !String(error?.message || "").includes("does not exist")) {
       return NextResponse.json({ error: `Error en ${tabla}: ${error.message}` }, { status: 500 });
     }
   }
 
   const { error } = await admin.from("leads").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

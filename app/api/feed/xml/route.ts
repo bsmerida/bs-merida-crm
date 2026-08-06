@@ -20,8 +20,8 @@ export async function GET(request: Request) {
   <provider>
     <name>Inmobiliaria BS Mérida</name>
     <website>https://www.bsmerida.com</website>
-    <email>${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com"}</email>
-    <phone>${process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815"}</phone>
+    <email>${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "contacto@duclaud.com.mx"}</email>
+    <phone>${process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272"}</phone>
   </provider>
   ${props.map(p => `
   <listing>

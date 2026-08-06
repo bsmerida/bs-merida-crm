@@ -5,7 +5,7 @@ import { DUCLAUD_LOGO_WHITE } from "@/lib/duclaud-logo";
 export function PublicFooter() {
   const wa    = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
   const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE    || "999 303 4815";
-  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL    || "contacto@duclaud.mx";
+  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL    || "contacto@duclaud.com.mx";
   const addr  = process.env.NEXT_PUBLIC_BUSINESS_ADDRESS  || "Mérida, Yucatán · México";
 
   return (

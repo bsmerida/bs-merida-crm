@@ -28,6 +28,7 @@ export function PropertyForm({ property }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const [submitting, setSubmitting] = useState(false);
+  const [generando, setGenerando] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [error, setError] = useState("");
@@ -178,6 +179,26 @@ export function PropertyForm({ property }: Props) {
     else { router.push("/admin/propiedades"); router.refresh(); }
   };
 
+
+  async function generateDescription() {
+    if (!property?.id) return;
+    setGenerando(true);
+    try {
+      const res = await fetch("/api/generar-descripcion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ property_id: property.id }),
+      });
+      const json = await res.json();
+      if (json.description) set("description", json.description);
+      else alert(json.error || "No se pudo generar la descripción");
+    } catch {
+      alert("Error de conexión al generar descripción");
+    } finally {
+      setGenerando(false);
+    }
+  }
+
   const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
   const priceLabel = form.price_type === "m2" ? `Precio por m² ${form.currency} *` : form.price_type === "lineal" ? `Precio por metro lineal ${form.currency} *` : `Precio total ${form.currency} *`;
 
@@ -190,7 +211,22 @@ export function PropertyForm({ property }: Props) {
           <input required value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ej. Casa en Provincia Residencial" className={inp} />
         </Field>
         <Field label="Descripción">
-          <textarea rows={4} value={form.description} onChange={e => set("description", e.target.value)} className={`${inp} resize-none`} />
+          <div className="relative">
+            <textarea rows={4} value={form.description} onChange={e => set("description", e.target.value)} className={`${inp} resize-none pr-36`} />
+            {property?.id && (
+              <button
+                type="button"
+                onClick={generateDescription}
+                disabled={generando}
+                className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 text-xs font-medium text-brand-600 border border-brand-200 bg-white rounded-full px-3 py-1.5 hover:bg-brand-50 disabled:opacity-40 transition shadow-sm"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"/>
+                </svg>
+                {generando ? "Generando..." : "Generar con IA"}
+              </button>
+            )}
+          </div>
         </Field>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Field label="Tipo *">

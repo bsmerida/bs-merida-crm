@@ -9,15 +9,31 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY!
 );
 
+// Rate limiting interno — solo llamadas desde el mismo servidor
+function isInternalRequest(req: NextRequest): boolean {
+  const origin  = req.headers.get("origin") || "";
+  const referer = req.headers.get("referer") || "";
+  const site    = process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx";
+  // Permitir llamadas sin origin (server-to-server) o del mismo sitio
+  return !origin || origin === site || referer.startsWith(site);
+}
+
 export async function POST(req: NextRequest) {
-  const { title, body, url, user_ids } = await req.json();
+  // Solo llamadas internas o server-side
+  if (!isInternalRequest(req)) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+
+  const { title, body, url, user_ids } = await req.json().catch(() => ({}));
+  if (!title || !body) {
+    return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
+  }
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Obtener suscripciones — de usuarios específicos o de todos
   const query = supabase.from("push_subscriptions").select("*");
   if (user_ids?.length) query.in("profile_id", user_ids);
 
@@ -36,7 +52,6 @@ export async function POST(req: NextRequest) {
         );
         sent++;
       } catch (err: any) {
-        // Suscripción expirada — limpiar
         if (err.statusCode === 410) {
           await supabase.from("push_subscriptions").delete().eq("id", sub.id);
         }

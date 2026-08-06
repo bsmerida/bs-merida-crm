@@ -79,6 +79,10 @@ export default function FinanzasPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [leads, setLeads] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
+  const [bills, setBills] = useState<any[]>([]);
+  const [showBillForm, setShowBillForm] = useState(false);
+  const [billForm, setBillForm] = useState({ concepto: "", proveedor: "", monto: "", fecha_vencimiento: "", categoria: "Otro", notas: "" });
+  const [savingBill, setSavingBill] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDealForm, setShowDealForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -210,16 +214,18 @@ export default function FinanzasPage() {
       const histRes = await supabase.from("financial_history").select("*").order("year", { ascending: false }).order("month", { ascending: false }).limit(24);
       setHistorialData(histRes.data || []);
 
-      const [d, e, l, a] = await Promise.all([
+      const [d, e, l, a, b] = await Promise.all([
         supabase.from("deals").select("*, property:properties(title), lead:leads(name), agent:profiles!deals_agent_id_fkey(full_name), agent2:profiles!deals_agent2_id_fkey(full_name)"),
         supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
         supabase.from("leads").select("id, name, status, source, budget_min, budget_max, agent_id, created_at"),
         supabase.from("profiles").select("id, full_name, initials").eq("role", "asesor").eq("active", true),
+        supabase.from("cuentas_por_pagar").select("*").order("fecha_vencimiento", { ascending: true }),
       ]);
       setDeals(d.data || []);
       setExpenses(e.data || []);
       setLeads(l.data || []);
       setAgents(a.data || []);
+      setBills(b.data || []);
       setLoading(false);
     };
     load();
@@ -506,12 +512,32 @@ export default function FinanzasPage() {
     { id: "pnl",       label: "P&L" },
     { id: "flujo",     label: "Flujo de Caja" },
     { id: "cxc",       label: "Cuentas por cobrar" },
+    { id: "cxp",       label: "Cuentas por pagar" },
     { id: "comisiones",label: "Comisiones" },
     { id: "asesores",  label: "Asesores" },
     { id: "pipeline",  label: "Pipeline" },
     { id: "marketing", label: "Marketing ROI" },
     { id: "gastos",    label: "Gastos" },
   ];
+
+  // ── CXP calcs ──────────────────────────────────────────────────────────────
+  const hoyStr = new Date().toISOString().split("T")[0];
+  const billsProc = bills.map((b: any) => ({ ...b, estado: b.estado === "pendiente" && b.fecha_vencimiento < hoyStr ? "vencido" : b.estado }));
+  const cxpTotalPend = billsProc.filter((b: any) => b.estado !== "pagado").reduce((s: number, b: any) => s + Number(b.monto), 0);
+  const cxpTotalVenc = billsProc.filter((b: any) => b.estado === "vencido").reduce((s: number, b: any) => s + Number(b.monto), 0);
+  const cxpTotalMes  = billsProc.filter((b: any) => b.fecha_vencimiento?.startsWith(hoyStr.slice(0,7))).reduce((s: number, b: any) => s + Number(b.monto), 0);
+  const ESTADOS_CXP: Record<string, string> = { pendiente: "bg-amber-50 text-amber-700", pagado: "bg-emerald-50 text-emerald-700", vencido: "bg-red-50 text-red-700" };
+  const CATS_CXP = ["Renta oficina","Servicios","Marketing","Legal","Nómina","Tecnología","Mantenimiento","Otro"];
+  const cxpInp = "w-full border border-ink-line rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-300";
+  const pagarBill = async (id: string) => { await supabase.from("cuentas_por_pagar").update({ estado: "pagado" }).eq("id", id); setRefresh(r => r + 1); };
+  const borrarBill = async (id: string) => { if (!confirm("¿Eliminar?")) return; await supabase.from("cuentas_por_pagar").delete().eq("id", id); setRefresh(r => r + 1); };
+  const guardarBill = async () => {
+    if (!billForm.concepto || !billForm.monto || !billForm.fecha_vencimiento) return;
+    setSavingBill(true);
+    await supabase.from("cuentas_por_pagar").insert({ ...billForm, monto: Number(billForm.monto) });
+    setBillForm({ concepto: "", proveedor: "", monto: "", fecha_vencimiento: "", categoria: "Otro", notas: "" });
+    setShowBillForm(false); setSavingBill(false); setRefresh(r => r + 1);
+  };
 
   if (loading) return (
     <div className="p-10 flex items-center justify-center h-64">
@@ -853,6 +879,80 @@ export default function FinanzasPage() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+
+      {/* CXP */}
+      {tab === "cxp" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-3 gap-4">
+            <KPICard label="Total pendiente" value={fmtMXN(cxpTotalPend)} color="text-amber-600" />
+            <KPICard label="Vencido" value={fmtMXN(cxpTotalVenc)} color={cxpTotalVenc > 0 ? "text-red-500" : "text-ink"} />
+            <KPICard label="Vence este mes" value={fmtMXN(cxpTotalMes)} color="text-ink" />
+          </div>
+          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+            <div className="p-5 border-b border-ink-line flex items-center justify-between">
+              <h3 className="font-semibold text-ink">Cuentas por pagar</h3>
+              <button onClick={() => setShowBillForm(!showBillForm)} className="text-xs text-brand-600 border border-brand-200 rounded-full px-3 py-1.5 hover:bg-brand-50">+ Nueva cuenta</button>
+            </div>
+            {showBillForm && (
+              <div className="p-5 border-b border-ink-line bg-ink-ghost/20">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div><label className="text-xs text-ink-muted mb-1 block">Concepto *</label>
+                    <input value={billForm.concepto} onChange={e => setBillForm({...billForm, concepto: e.target.value})} placeholder="Ej. Renta de oficina" className={cxpInp} /></div>
+                  <div><label className="text-xs text-ink-muted mb-1 block">Proveedor</label>
+                    <input value={billForm.proveedor} onChange={e => setBillForm({...billForm, proveedor: e.target.value})} placeholder="Proveedor" className={cxpInp} /></div>
+                  <div><label className="text-xs text-ink-muted mb-1 block">Monto *</label>
+                    <input type="number" value={billForm.monto} onChange={e => setBillForm({...billForm, monto: e.target.value})} placeholder="0" className={cxpInp} /></div>
+                  <div><label className="text-xs text-ink-muted mb-1 block">Vencimiento *</label>
+                    <input type="date" value={billForm.fecha_vencimiento} onChange={e => setBillForm({...billForm, fecha_vencimiento: e.target.value})} className={cxpInp} /></div>
+                  <div><label className="text-xs text-ink-muted mb-1 block">Categoría</label>
+                    <select value={billForm.categoria} onChange={e => setBillForm({...billForm, categoria: e.target.value})} className={cxpInp}>
+                      {CATS_CXP.map(cat => <option key={cat}>{cat}</option>)}</select></div>
+                  <div><label className="text-xs text-ink-muted mb-1 block">Notas</label>
+                    <input value={billForm.notas} onChange={e => setBillForm({...billForm, notas: e.target.value})} placeholder="Opcional" className={cxpInp} /></div>
+                </div>
+                <div className="flex gap-2 justify-end mt-3">
+                  <button onClick={() => setShowBillForm(false)} className="px-4 py-2 text-sm text-ink-muted border border-ink-line rounded-full">Cancelar</button>
+                  <button onClick={guardarBill} disabled={savingBill} className="px-5 py-2 text-sm font-medium bg-navy text-white rounded-full disabled:opacity-50">{savingBill ? "Guardando..." : "Guardar"}</button>
+                </div>
+              </div>
+            )}
+            {billsProc.length === 0 ? (
+              <div className="p-12 text-center text-sm text-ink-muted">Sin cuentas registradas.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                    <tr>{["Concepto","Proveedor","Categoría","Monto","Vencimiento","Estado",""].map(h => (
+                      <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {billsProc.map((b: any) => (
+                      <tr key={b.id} className={"border-b border-ink-line last:border-0 hover:bg-ink-ghost/30 " + (b.estado === "vencido" ? "bg-red-50/30" : "")}>
+                        <td className="px-4 py-3"><div className="text-sm font-medium text-ink">{b.concepto}</div>{b.notas && <div className="text-xs text-ink-muted">{b.notas}</div>}</td>
+                        <td className="px-4 py-3 text-sm text-ink-muted">{b.proveedor || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-ink-muted">{b.categoria}</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-ink whitespace-nowrap">{fmtMXN(Number(b.monto))}</td>
+                        <td className="px-4 py-3 text-sm text-ink-muted whitespace-nowrap">{new Date(b.fecha_vencimiento + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}</td>
+                        <td className="px-4 py-3"><span className={"text-xs px-2 py-1 rounded-full font-medium capitalize " + (ESTADOS_CXP[b.estado] || "bg-ink-ghost text-ink-muted")}>{b.estado}</span></td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            {b.estado !== "pagado" && <button onClick={() => pagarBill(b.id)} className="text-xs text-emerald-600 hover:underline whitespace-nowrap">Marcar pagado</button>}
+                            <button onClick={() => borrarBill(b.id)} className="text-xs text-red-400 hover:text-red-600">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

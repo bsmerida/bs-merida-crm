@@ -32,16 +32,16 @@ export default function LoginPage() {
         <div className="flex justify-center mb-10"><Logo className="h-9" /></div>
         <div className="bg-white rounded-3xl border border-ink-line shadow-card p-8">
           <h1 className="text-2xl font-semibold text-ink tracking-tight">Acceso staff</h1>
-          <p className="text-sm text-ink-muted mt-1">Para administradores y asesores de BS Mérida.</p>
+          <p className="text-sm text-ink-muted mt-1">Para administradores y asesores de Duclaud.</p>
           <form onSubmit={submit} className="mt-6 space-y-3">
             <div>
               <label className="text-xs text-ink-muted">Correo</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+              <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
                 className="mt-1 w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-brand-300" />
             </div>
             <div>
               <label className="text-xs text-ink-muted">Contraseña</label>
-              <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+              <input type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
                 className="mt-1 w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-brand-300" />
             </div>
             {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>}

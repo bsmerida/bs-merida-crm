@@ -1,10 +1,10 @@
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 
-export const metadata = { title: "Aviso de Privacidad — Inmobiliaria BS Mérida" };
+export const metadata = { title: "Aviso de Privacidad — Duclaud Bienes Raíces" };
 
 export default function AvisoPrivacidadPage() {
-  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com";
+  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "Contacto@duclaud.com.mx";
 
   return (
     <>
@@ -17,7 +17,7 @@ export default function AvisoPrivacidadPage() {
 
         <div className="mt-10 space-y-6 text-ink leading-relaxed text-[17px]">
           <p>
-            <strong>BS MERIDA</strong> es responsable del uso y manejo de los datos personales que usted voluntariamente nos proporcione, de acuerdo a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.
+            <strong>Duclaud Bienes Raíces</strong> es responsable del uso y manejo de los datos personales que usted voluntariamente nos proporcione, de acuerdo a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.
           </p>
 
           <p>

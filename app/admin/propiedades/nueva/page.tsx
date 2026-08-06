@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyNotes } from "@/components/PropertyNotes";
 

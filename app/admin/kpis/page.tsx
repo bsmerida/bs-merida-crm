@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { fmtMXN } from "@/lib/utils";
 import Link from "next/link";
 

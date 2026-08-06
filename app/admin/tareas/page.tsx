@@ -1,5 +1,5 @@
 // app/admin/tareas/page.tsx
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { TareasClient } from "@/components/TareasClient";
 
 export default async function AdminTareasPage() {

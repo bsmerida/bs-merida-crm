@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { AdminPropiedadesList } from "@/components/AdminPropiedadesList";
 

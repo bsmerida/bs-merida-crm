@@ -1,5 +1,5 @@
 // app/admin/citas/page.tsx
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { CitasClient } from "@/components/CitasClient";
 
 export default async function AdminCitasPage() {

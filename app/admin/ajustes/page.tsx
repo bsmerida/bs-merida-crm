@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { EquipoClient } from "@/components/EquipoClient";
 

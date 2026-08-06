@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyImageManager } from "@/components/PropertyImageManager";
 import { PropertyNotes } from "@/components/PropertyNotes";

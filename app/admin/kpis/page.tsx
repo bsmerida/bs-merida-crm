@@ -5,7 +5,8 @@ import Link from "next/link";
 
 export default async function KPIsPage() {
   const supabase = createAdminClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authClient = createClient();
+  const { data: { user } } = await authClient.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
 
   // Solo admin puede ver KPIs

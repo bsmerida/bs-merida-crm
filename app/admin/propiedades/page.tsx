@@ -5,7 +5,8 @@ import { AdminPropiedadesList } from "@/components/AdminPropiedadesList";
 
 export default async function AdminPropiedades() {
   const supabase = createAdminClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authClient = createClient();
+  const { data: { user } } = await authClient.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
 
   const isAdmin = profile?.role === "admin";

@@ -4,7 +4,8 @@ import { PropertyNotes } from "@/components/PropertyNotes";
 
 export default async function NuevaPropiedadPage() {
   const supabase = createAdminClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authClient = createClient();
+  const { data: { user } } = await authClient.auth.getUser();
 
   return (
     <div className="p-10 max-w-4xl space-y-6">

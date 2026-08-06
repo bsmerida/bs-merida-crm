@@ -4,7 +4,8 @@ import { EquipoClient } from "@/components/EquipoClient";
 
 export default async function AjustesPage() {
   const supabase = createAdminClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authClient = createClient();
+  const { data: { user } } = await authClient.auth.getUser();
   const { data: profiles } = await supabase.from("profiles").select("*").order("created_at");
 
   return (

@@ -59,6 +59,19 @@ export function PropertyForm({ property }: Props) {
     amenities: property?.amenities?.join(", ") || "",
     is_published: property?.is_published ?? true,
     featured: property?.featured ?? false,
+    publicar_inmuebles24: (property as any)?.publicar_inmuebles24 ?? false,
+    publicar_mercadolibre: (property as any)?.publicar_mercadolibre ?? false,
+    publicar_tuportalonline: (property as any)?.publicar_tuportalonline ?? false,
+    publicar_proppit: (property as any)?.publicar_proppit ?? false,
+    publicar_inmoxperts: (property as any)?.publicar_inmoxperts ?? false,
+    publicar_properstar: (property as any)?.publicar_properstar ?? false,
+    publicar_beleta: (property as any)?.publicar_beleta ?? false,
+    publicar_clasco: (property as any)?.publicar_clasco ?? false,
+    publicar_pincali: (property as any)?.publicar_pincali ?? false,
+    publicar_portalterreno: (property as any)?.publicar_portalterreno ?? false,
+    publicar_propiedades: (property as any)?.publicar_propiedades ?? false,
+    publicar_valoresampi: (property as any)?.publicar_valoresampi ?? false,
+    publicar_casasyterrenos: (property as any)?.publicar_casasyterrenos ?? false,
     reference: property?.reference || "",
     development: (property as any)?.development || "",
   });
@@ -150,6 +163,19 @@ export function PropertyForm({ property }: Props) {
       amenities: form.amenities.split(",").map(s => s.trim()).filter(Boolean),
       is_published: form.is_published,
       featured: form.featured,
+      publicar_inmuebles24: form.publicar_inmuebles24,
+      publicar_mercadolibre: form.publicar_mercadolibre,
+      publicar_tuportalonline: form.publicar_tuportalonline,
+      publicar_proppit: form.publicar_proppit,
+      publicar_inmoxperts: form.publicar_inmoxperts,
+      publicar_properstar: form.publicar_properstar,
+      publicar_beleta: form.publicar_beleta,
+      publicar_clasco: form.publicar_clasco,
+      publicar_pincali: form.publicar_pincali,
+      publicar_portalterreno: form.publicar_portalterreno,
+      publicar_propiedades: form.publicar_propiedades,
+      publicar_valoresampi: form.publicar_valoresampi,
+      publicar_casasyterrenos: form.publicar_casasyterrenos,
       reference: form.reference || null,
       development: form.development || null,
     };
@@ -374,6 +400,61 @@ export function PropertyForm({ property }: Props) {
           <input type="checkbox" checked={form.featured} onChange={e => set("featured", e.target.checked)} className="w-4 h-4 accent-brand-500" />
           Destacada (aparece primero)
         </label>
+        <div className="border-t border-ink-line pt-3 mt-1">
+          <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Portales inmobiliarios</p>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_inmuebles24} onChange={e => set("publicar_inmuebles24", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Inmuebles24
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_mercadolibre} onChange={e => set("publicar_mercadolibre", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Mercado Libre
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_tuportalonline} onChange={e => set("publicar_tuportalonline", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            TuPortalOnline
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_proppit} onChange={e => set("publicar_proppit", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Proppit
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_inmoxperts} onChange={e => set("publicar_inmoxperts", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Inmoxperts
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_properstar} onChange={e => set("publicar_properstar", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Properstar
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_beleta} onChange={e => set("publicar_beleta", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Beleta
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_clasco} onChange={e => set("publicar_clasco", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Clasco
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_pincali} onChange={e => set("publicar_pincali", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Pincali
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_portalterreno} onChange={e => set("publicar_portalterreno", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Portal Terreno
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_propiedades} onChange={e => set("publicar_propiedades", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Propiedades.com
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_valoresampi} onChange={e => set("publicar_valoresampi", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Valores AMPI
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
+            <input type="checkbox" checked={form.publicar_casasyterrenos} onChange={e => set("publicar_casasyterrenos", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+            Casas y Terrenos
+          </label>
+        </div>
       </div>
 
       {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>}

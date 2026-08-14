@@ -18,10 +18,11 @@ export async function GET(request: Request) {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <listings>
   <provider>
-    <name>Inmobiliaria BS Mérida</name>
-    <website>https://www.bsmerida.com</website>
+    <name>Duclaud Bienes Raíces</name>
+    <website>https://www.duclaud.com.mx</website>
     <email>${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "contacto@duclaud.com.mx"}</email>
     <phone>${process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272"}</phone>
+    <phone2>8140101300</phone2>
   </provider>
   ${props.map(p => `
   <listing>

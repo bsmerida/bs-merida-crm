@@ -389,58 +389,97 @@ export function PropertyForm({ property }: Props) {
         </label>
         <div className="border-t border-ink-line pt-3 mt-1">
           <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Portales inmobiliarios</p>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_inmuebles24} onChange={e => set("publicar_inmuebles24", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Inmuebles24
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_mercadolibre} onChange={e => set("publicar_mercadolibre", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Mercado Libre
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_tuportalonline} onChange={e => set("publicar_tuportalonline", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            TuPortalOnline
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_proppit} onChange={e => set("publicar_proppit", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Proppit
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_inmoxperts} onChange={e => set("publicar_inmoxperts", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Inmoxperts
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_properstar} onChange={e => set("publicar_properstar", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Properstar
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_beleta} onChange={e => set("publicar_beleta", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Beleta
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_clasco} onChange={e => set("publicar_clasco", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Clasco
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_pincali} onChange={e => set("publicar_pincali", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Pincali
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_portalterreno} onChange={e => set("publicar_portalterreno", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Portal Terreno
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_propiedades} onChange={e => set("publicar_propiedades", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Propiedades.com
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_valoresampi} onChange={e => set("publicar_valoresampi", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Valores AMPI
-          </label>
-          <label className="flex items-center gap-3 text-sm text-ink cursor-pointer mb-2">
-            <input type="checkbox" checked={form.publicar_casasyterrenos} onChange={e => set("publicar_casasyterrenos", e.target.checked)} className="w-4 h-4 accent-brand-500" />
-            Casas y Terrenos
-          </label>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Inmuebles24</span>
+            <button type="button" onClick={() => set("publicar_inmuebles24", !form.publicar_inmuebles24)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmuebles24 ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmuebles24 ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Mercado Libre</span>
+            <button type="button" onClick={() => set("publicar_mercadolibre", !form.publicar_mercadolibre)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_mercadolibre ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_mercadolibre ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">TuPortalOnline</span>
+            <button type="button" onClick={() => set("publicar_tuportalonline", !form.publicar_tuportalonline)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_tuportalonline ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_tuportalonline ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Proppit</span>
+            <button type="button" onClick={() => set("publicar_proppit", !form.publicar_proppit)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_proppit ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_proppit ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Inmoxperts</span>
+            <button type="button" onClick={() => set("publicar_inmoxperts", !form.publicar_inmoxperts)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmoxperts ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmoxperts ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Properstar</span>
+            <button type="button" onClick={() => set("publicar_properstar", !form.publicar_properstar)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_properstar ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_properstar ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Beleta</span>
+            <button type="button" onClick={() => set("publicar_beleta", !form.publicar_beleta)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_beleta ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_beleta ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Clasco</span>
+            <button type="button" onClick={() => set("publicar_clasco", !form.publicar_clasco)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_clasco ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_clasco ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Pincali</span>
+            <button type="button" onClick={() => set("publicar_pincali", !form.publicar_pincali)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_pincali ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_pincali ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Portal Terreno</span>
+            <button type="button" onClick={() => set("publicar_portalterreno", !form.publicar_portalterreno)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_portalterreno ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_portalterreno ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Propiedades.com</span>
+            <button type="button" onClick={() => set("publicar_propiedades", !form.publicar_propiedades)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_propiedades ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_propiedades ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Valores AMPI</span>
+            <button type="button" onClick={() => set("publicar_valoresampi", !form.publicar_valoresampi)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_valoresampi ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_valoresampi ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
+            <span className="text-sm text-ink">Casas y Terrenos</span>
+            <button type="button" onClick={() => set("publicar_casasyterrenos", !form.publicar_casasyterrenos)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_casasyterrenos ? "bg-brand-500" : "bg-ink-ghost"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_casasyterrenos ? "translate-x-4.5" : "translate-x-0.5"}`} />
+            </button>
+          </div>
         </div>
       </div>
 

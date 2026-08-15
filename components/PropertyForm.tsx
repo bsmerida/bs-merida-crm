@@ -392,92 +392,92 @@ export function PropertyForm({ property }: Props) {
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Inmuebles24</span>
             <button type="button" onClick={() => set("publicar_inmuebles24", !form.publicar_inmuebles24)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmuebles24 ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmuebles24 ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmuebles24 ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmuebles24 ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Mercado Libre</span>
             <button type="button" onClick={() => set("publicar_mercadolibre", !form.publicar_mercadolibre)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_mercadolibre ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_mercadolibre ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_mercadolibre ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_mercadolibre ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">TuPortalOnline</span>
             <button type="button" onClick={() => set("publicar_tuportalonline", !form.publicar_tuportalonline)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_tuportalonline ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_tuportalonline ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_tuportalonline ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_tuportalonline ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Proppit</span>
             <button type="button" onClick={() => set("publicar_proppit", !form.publicar_proppit)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_proppit ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_proppit ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_proppit ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_proppit ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Inmoxperts</span>
             <button type="button" onClick={() => set("publicar_inmoxperts", !form.publicar_inmoxperts)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmoxperts ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmoxperts ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmoxperts ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmoxperts ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Properstar</span>
             <button type="button" onClick={() => set("publicar_properstar", !form.publicar_properstar)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_properstar ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_properstar ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_properstar ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_properstar ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Beleta</span>
             <button type="button" onClick={() => set("publicar_beleta", !form.publicar_beleta)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_beleta ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_beleta ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_beleta ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_beleta ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Clasco</span>
             <button type="button" onClick={() => set("publicar_clasco", !form.publicar_clasco)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_clasco ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_clasco ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_clasco ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_clasco ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Pincali</span>
             <button type="button" onClick={() => set("publicar_pincali", !form.publicar_pincali)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_pincali ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_pincali ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_pincali ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_pincali ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Portal Terreno</span>
             <button type="button" onClick={() => set("publicar_portalterreno", !form.publicar_portalterreno)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_portalterreno ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_portalterreno ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_portalterreno ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_portalterreno ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Propiedades.com</span>
             <button type="button" onClick={() => set("publicar_propiedades", !form.publicar_propiedades)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_propiedades ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_propiedades ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_propiedades ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_propiedades ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Valores AMPI</span>
             <button type="button" onClick={() => set("publicar_valoresampi", !form.publicar_valoresampi)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_valoresampi ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_valoresampi ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_valoresampi ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_valoresampi ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
             <span className="text-sm text-ink">Casas y Terrenos</span>
             <button type="button" onClick={() => set("publicar_casasyterrenos", !form.publicar_casasyterrenos)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_casasyterrenos ? "bg-brand-500" : "bg-ink-ghost"}`}>
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_casasyterrenos ? "translate-x-4.5" : "translate-x-0.5"}`} />
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_casasyterrenos ? "bg-emerald-500" : "bg-stone-200"}`}>
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_casasyterrenos ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
         </div>

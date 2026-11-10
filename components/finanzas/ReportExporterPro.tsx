@@ -205,8 +205,9 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
 
       // ── HOJA 4: MARKETING ────────────────────────────────
       const mktHeaders = ["Canal", "Leads generados", "% del total", "Leads cerrados", "Tasa conversión", "Ingresos atribuidos", "Ingreso por lead"];
-      const totalLeads = data.bySource.reduce((s: number, b: any) => s + b.leads, 0) || 1;
-      const mktRows = data.bySource.map((s: any) => [
+      const bySource = data.bySource ?? [];
+      const totalLeads = bySource.reduce((s: number, b: any) => s + b.leads, 0) || 1;
+      const mktRows = bySource.map((s: any) => [
         s.source,
         s.leads,
         s.leads / totalLeads,

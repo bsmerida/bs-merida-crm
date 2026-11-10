@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { countByProperty } from "@/lib/stats";
 import { Icon } from "@/components/Icon";
 import { AdminPropiedadesList } from "@/components/AdminPropiedadesList";
 
@@ -23,15 +24,9 @@ export default async function AdminPropiedades() {
   const { data: properties } = await query;
 
   // Conteos de vistas y solicitudes (solo admin)
-  let viewsMap: Record<string, number> = {};
-  let inquiriesMap: Record<string, number> = {};
-
-  if (isAdmin) {
-    const { data: viewCounts } = await supabase.from("property_views").select("property_id");
-    const { data: inquiryCounts } = await supabase.from("property_inquiries").select("property_id");
-    (viewCounts || []).forEach((v: any) => { viewsMap[v.property_id] = (viewsMap[v.property_id] || 0) + 1; });
-    (inquiryCounts || []).forEach((v: any) => { inquiriesMap[v.property_id] = (inquiriesMap[v.property_id] || 0) + 1; });
-  }
+  const [viewsMap, inquiriesMap] = isAdmin
+    ? await Promise.all([countByProperty(supabase, "views"), countByProperty(supabase, "inquiries")])
+    : [new Map<string, number>(), new Map<string, number>()];
 
   const props = (properties || []).map((p: any) => {
     const imgs = (p.property_images || []) as { url: string; is_cover: boolean; position: number }[];
@@ -40,8 +35,8 @@ export default async function AdminPropiedades() {
       id: p.id, title: p.title, type: p.type, operation: p.operation,
       status: p.status, price: p.price, zone: p.zone, city: p.city,
       reference: p.reference, development: p.development, agent: p.agent, cover,
-      views_count: viewsMap[p.id] || 0,
-      inquiries_count: inquiriesMap[p.id] || 0,
+      views_count: viewsMap.get(p.id) || 0,
+      inquiries_count: inquiriesMap.get(p.id) || 0,
     };
   });
 

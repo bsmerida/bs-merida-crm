@@ -1,63 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
+import { buildListingsXml } from "@/lib/feed";
 
 export const revalidate = 3600; // cache 1 hora
 
+// Solo columnas públicas: nunca owner_name/owner_email/owner_phone
+const FEED_COLUMNS = "id, title, description, type, operation, price, currency, address, zone, city, state, bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, updated_at, images:property_images(url, is_cover, position)";
+
 export async function GET(request: Request) {
-  const supabase = createClient();
-  const { data: properties } = await supabase
+  const { data: properties } = await createClient()
     .from("properties")
-    .select("*, images:property_images(url, is_cover, position)")
+    .select(FEED_COLUMNS)
     .eq("is_published", true)
-    .neq("status", "Vendida")
-    .neq("status", "Rentada")
-    .neq("status", "Pausada");
+    .not("status", "in", '("Vendida","Rentada","Pausada")');
 
-  const baseUrl = new URL(request.url).origin;
-  const props = (properties || []) as any[];
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<listings>
-  <provider>
-    <name>Inmobiliaria BS Mérida</name>
-    <website>https://www.bsmerida.com</website>
-    <email>${process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "contacto@duclaud.com.mx"}</email>
-    <phone>${process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272"}</phone>
-  </provider>
-  ${props.map(p => `
-  <listing>
-    <id>${p.id}</id>
-    <title><![CDATA[${p.title}]]></title>
-    <description><![CDATA[${p.description || ""}]]></description>
-    <type>${p.type}</type>
-    <operation>${p.operation === "Venta" ? "for-sale" : "for-rent"}</operation>
-    <price>
-      <amount>${p.price}</amount>
-      <currency>MXN</currency>
-      ${p.operation === "Renta" ? "<period>monthly</period>" : ""}
-    </price>
-    <address><![CDATA[${p.address || ""}]]></address>
-    <city>${p.city || "Mérida"}</city>
-    <state>${p.state || "Yucatán"}</state>
-    <country>MX</country>
-    <zone><![CDATA[${p.zone || ""}]]></zone>
-    <details>
-      <bedrooms>${p.bedrooms || 0}</bedrooms>
-      <bathrooms>${p.bathrooms || 0}</bathrooms>
-      <m2-construction>${p.m2_construction || 0}</m2-construction>
-      <m2-land>${p.m2_land || 0}</m2-land>
-      <parking>${p.parking || 0}</parking>
-    </details>
-    <amenities>
-      ${(p.amenities || []).map((a: string) => `<amenity><![CDATA[${a}]]></amenity>`).join("")}
-    </amenities>
-    <images>
-      ${(p.images || []).sort((a: any, b: any) => (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.position - b.position)
-        .map((img: any) => `<image><url>${img.url}</url></image>`).join("")}
-    </images>
-    <listing-url>${baseUrl}/propiedad/${p.id}</listing-url>
-    <updated-at>${p.updated_at}</updated-at>
-  </listing>`).join("")}
-</listings>`.trim();
+  const xml = buildListingsXml(properties || [], new URL(request.url).origin, {
+    email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "contacto@duclaud.com.mx",
+    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272",
+  });
 
   return new Response(xml, {
     headers: {

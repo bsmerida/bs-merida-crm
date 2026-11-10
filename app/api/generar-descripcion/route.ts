@@ -54,13 +54,18 @@ export async function POST(req: NextRequest) {
 
     const contentParts: any[] = [];
 
+    const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     for (const img of (images || [])) {
       try {
+        // Solo URLs https: evita que el servidor pida recursos internos (SSRF)
+        if (!String(img.url).startsWith("https://")) continue;
         const res = await fetch(img.url, { signal: AbortSignal.timeout(8000) });
+        const mediaType = (res.headers.get("content-type") || "").split(";")[0].trim();
+        if (!res.ok || !IMAGE_TYPES.includes(mediaType)) continue;
         const buffer = await res.arrayBuffer();
+        if (buffer.byteLength > 5 * 1024 * 1024) continue; // límite de la API por imagen
         const base64 = Buffer.from(buffer).toString("base64");
-        const mediaType = (res.headers.get("content-type") || "image/jpeg").split(";")[0] as any;
-        contentParts.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
+        contentParts.push({ type: "image", source: { type: "base64", media_type: mediaType as any, data: base64 } });
       } catch { /* imagen no disponible */ }
     }
 
@@ -93,11 +98,11 @@ export async function POST(req: NextRequest) {
       messages: [{ role: "user", content: contentParts }],
     });
 
-    const description = (message.content[0] as any).text.trim();
+    const description = message.content.flatMap(b => (b.type === "text" ? [b.text] : [])).join("\n").trim();
     return NextResponse.json({ description });
 
   } catch (err: any) {
     console.error("generar-descripcion error:", err?.message);
-    return NextResponse.json({ error: err.message || "Error generando descripción" }, { status: 500 });
+    return NextResponse.json({ error: "Error generando descripción" }, { status: 500 });
   }
 }

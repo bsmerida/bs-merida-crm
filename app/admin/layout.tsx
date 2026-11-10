@@ -8,9 +8,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  const { count: leadsNuevos } = await supabase
-    .from("leads").select("*", { count: "exact", head: true }).eq("status", "Nuevo");
+  const [{ data: profile }, { count: leadsNuevos }] = await Promise.all([
+    supabase.from("profiles").select("full_name, email, role, initials, active").eq("id", user.id).single(),
+    supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "Nuevo"),
+  ]);
+  // Usuario desactivado desde Ajustes → Equipo: ya no entra al CRM
+  if (profile && profile.active === false) redirect("/api/auth/signout?disabled=1");
 
   return (
     <div className="bg-cream min-h-screen md:flex">

@@ -444,7 +444,7 @@ export function LeadEditor({
             <div className="text-xs text-brand-700 space-y-1">
               <div>• Solo el nombre es obligatorio</div>
               <div>• Al crear, podrás agregar actividades y cambiar el estado</div>
-              <div>• El origen quedará registrado como "Manual"</div>
+              <div>• El origen quedará registrado como “Manual”</div>
             </div>
           </div>
         )}

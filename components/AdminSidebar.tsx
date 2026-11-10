@@ -2,7 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { DUCLAUD_LOGO_WHITE } from "@/lib/duclaud-logo";
+// Archivo estático (antes 145 KB de base64 dentro del JS de cada página)
+const DUCLAUD_LOGO_WHITE = "/logo-white.jpg";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -80,6 +81,7 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
 
       <nav className="flex-1 py-4 px-3 overflow-y-auto">
         {mainNav.map(n => item(n.href, n.label, n.icon, n.badge))}
+        {!isAdmin && item("/admin/ajustes", "Ajustes", "settings")}
         {isAdmin && (
           <>
             <div className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.16em] px-3 pt-5 pb-2">Análisis</div>

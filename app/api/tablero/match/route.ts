@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createClient as authClient } from "@/lib/supabase/server";
+import Anthropic from "@anthropic-ai/sdk";
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
 
 function distKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371;
@@ -12,11 +13,11 @@ function distKm(lat1: number, lng1: number, lat2: number, lng2: number) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = authClient();
-  const { data: { user } } = await auth.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const { error: authError } = await requireAuth();
+  if (authError) return authError;
 
-  const { lead } = await req.json();
+  const { lead } = await req.json().catch(() => ({}));
+  if (!lead || typeof lead !== "object") return NextResponse.json({ error: "Falta el cliente" }, { status: 400 });
 
   // Leer preferencias de AMBOS lugares: columnas directas + JSONB
   const prefs = lead.preferences || {};
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
-  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const db = createAdminClient();
   const { data: allProps } = await db
     .from("properties")
     .select("id,title,type,operation,price,currency,zone,city,state,lat,lng,bedrooms,bathrooms,m2_construction,m2_land,amenities,status")
@@ -158,29 +159,24 @@ Notas: ${prefs.search_notes || lead.interest || "Ninguna"}
 PROPIEDADES CANDIDATAS (${candidates.length}, ya filtradas):
 ${propList}`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
+  let text = "{}";
+  try {
+    const response = await new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }).messages.create({
       model: process.env.ANTHROPIC_MODEL_HAIKU || "claude-haiku-4-5-20251001",
       max_tokens: 1000,
       system,
       messages: [{ role: "user", content: userMsg }],
-    }),
-  });
-
-  const data = await res.json();
-  if (data.error) return NextResponse.json({ error: data.error.message }, { status: 500 });
+    });
+    text = response.content.flatMap(b => (b.type === "text" ? [b.text] : [])).join("").trim() || "{}";
+  } catch (e) {
+    console.error("[tablero/match]", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : e);
+    return NextResponse.json({ error: "La IA no está disponible en este momento." }, { status: 502 });
+  }
 
   try {
-    const text = data.content?.[0]?.text || "{}";
     const clean = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
     return NextResponse.json(JSON.parse(clean));
   } catch {
-    return NextResponse.json({ error: `JSON inválido: ${data.content?.[0]?.text?.slice(0, 200)}` }, { status: 500 });
+    return NextResponse.json({ error: "La IA devolvió una respuesta inválida, intenta de nuevo." }, { status: 500 });
   }
 }

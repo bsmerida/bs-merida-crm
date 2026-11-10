@@ -43,7 +43,7 @@ export default function ImportarPropiedadesPage() {
             <strong className="text-ink">Valores válidos:</strong><br/>
             • <strong>type</strong>: Casa, Departamento, Oficina, Local, Terreno, Bodega<br/>
             • <strong>operation</strong>: Venta, Renta<br/>
-            • <strong>amenities</strong>: separadas por pipe (|), ej. "Alberca|Jardín|Seguridad"<br/>
+            • <strong>amenities</strong>: separadas por pipe (|), ej. “Alberca|Jardín|Seguridad”<br/>
             • <strong>is_published</strong>: TRUE o FALSE (default TRUE)
           </div>
         </details>

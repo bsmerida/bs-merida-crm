@@ -10,6 +10,7 @@ export function PropertyImageManager({ propertyId }: { propertyId: string }) {
 
   useEffect(() => {
     loadImages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: solo al montar
   }, []);
 
   const loadImages = async () => {

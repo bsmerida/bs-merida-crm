@@ -155,7 +155,7 @@ export function ReportExporter({ data }: { data: ReportData }) {
         headStyles: { fillColor: brandColor, textColor: 255, fontStyle: "bold" },
         bodyStyles: { fontSize: 10 },
         didParseCell: (data) => {
-          if (["Ingresos totales", "Utilidad bruta", "UTILIDAD OPERATIVA", "MARGEN NETO"].includes(data.row.raw[0] as string)) {
+          if (["Ingresos totales", "Utilidad bruta", "UTILIDAD OPERATIVA", "MARGEN NETO"].includes((data.row.raw as any[])[0] as string)) {
             data.cell.styles.fontStyle = "bold";
             data.cell.styles.fillColor = [245, 243, 255];
           }

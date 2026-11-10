@@ -153,7 +153,7 @@ export default async function AdminDashboard() {
               {ranking.map(a => (
                 <div key={a.id} className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
-                    {a.initials || a.full_name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "?"}
+                    {a.initials || a.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2) || "?"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-ink truncate">{a.full_name}</div>

@@ -257,7 +257,7 @@ export function LeadTablero({ lead }: { lead: any }) {
       {/* Propiedades en el tablero */}
       {boardProps.length === 0 ? (
         <div className="bg-white rounded-2xl border border-dashed border-ink-line p-10 text-center text-sm text-ink-muted">
-          Aún no hay propiedades. Usa "Sugerir con IA" o agrega manualmente.
+          Aún no hay propiedades. Usa “Sugerir con IA” o agrega manualmente.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

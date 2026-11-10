@@ -26,6 +26,7 @@ export default function AsistentePage() {
   const [error, setError]       = useState<string | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: solo al montar
   useEffect(() => { buildContext(); }, []);
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;

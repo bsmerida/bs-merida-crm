@@ -195,6 +195,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
       markers.current.forEach(m => m.setMap(null));
       markers.current = [];
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: solo al montar
   }, []);
 
   return (

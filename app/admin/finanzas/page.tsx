@@ -165,6 +165,7 @@ export default function FinanzasPage() {
       });
     };
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase (createBrowserClient) es una instancia única y estable
   }, [monthsInPeriod, numMonths]);
 
   // Guardar metas — siempre guarda por mes, distribuye uniformemente en el período
@@ -229,6 +230,7 @@ export default function FinanzasPage() {
       setLoading(false);
     };
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase (createBrowserClient) es una instancia única y estable
   }, [refresh]);
 
   const { start, end } = useMemo(() => getPeriodRange(period), [period]);

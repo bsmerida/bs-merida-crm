@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import Anthropic from "@anthropic-ai/sdk";
+import { createAdminClient } from "@/lib/supabase/server";
+import { clientIp, isUuid, rateLimit } from "@/lib/security";
+import { sanitizeChatMessages } from "@/lib/validation";
  
 export const dynamic = "force-dynamic";
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
  
 export async function POST(req: NextRequest) {
-  const { messages, propertyCtx, sessionId } = await req.json();
+  // Endpoint público: limitar por IP para que nadie use la API key de Anthropic a costa nuestra
+  if (!await rateLimit(`sofia:${clientIp(req.headers)}`, 40, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Demasiados mensajes, intente más tarde." }, { status: 429 });
+  }
+
+  const body = await req.json().catch(() => null);
+  const messages = sanitizeChatMessages(body?.messages, { maxMessages: 16, maxChars: 1000 });
+  if (!messages) return NextResponse.json({ error: "Mensajes inválidos" }, { status: 400 });
+  const sessionId = isUuid(body.sessionId) ? body.sessionId : null;
  
-  const db = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const db = createAdminClient();
  
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bs-merida-crm.vercel.app";
  
@@ -42,12 +52,17 @@ export async function POST(req: NextRequest) {
     })
     .join("\n\n");
  
-  const propCtxBlock = propertyCtx
+  // El contexto de la propiedad se lee de la BD por id; antes se insertaba en el
+  // system prompt el título/operación que mandaba el navegador (prompt injection).
+  const ctxId = isUuid(body.propertyCtx?.id) ? body.propertyCtx.id : null;
+  const ctxProp = !ctxId ? null : (props || []).find(p => p.id === ctxId) ||
+    (await db.from("properties").select("id, title, operation").eq("id", ctxId).eq("is_published", true).maybeSingle()).data;
+  const propCtxBlock = ctxProp
     ? `\nEL VISITANTE ESTÁ VIENDO ESTA PROPIEDAD ESPECÍFICA:
-ID: ${propertyCtx.id}
-Nombre: ${propertyCtx.title}
-Operación: ${propertyCtx.operation}
-Responde principalmente sobre esta propiedad. Para mostrarla usa [PROPS|${propertyCtx.id}]\n`
+ID: ${ctxProp.id}
+Nombre: ${ctxProp.title}
+Operación: ${ctxProp.operation}
+Responde principalmente sobre esta propiedad. Para mostrarla usa [PROPS|${ctxProp.id}]\n`
     : "";
  
   const system = `Eres Sofía, asistente virtual de Duclaud — firma de consultoría inmobiliaria en Mérida, Yucatán.
@@ -86,25 +101,19 @@ FORMATO DE RESPUESTAS:
 - Si el cliente pregunta por precio, da el precio exacto del inventario.
 - Si el cliente pide comparación, compara solo propiedades del inventario.`;
  
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
+  let reply = "Lo siento, hubo un error. ¿Puede intentar de nuevo?";
+  try {
+    const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 800,
       system,
       messages,
-    }),
-  });
- 
-  const data = await res.json();
-  if (data.error) return NextResponse.json({ error: data.error.message }, { status: 500 });
- 
-  let reply: string = data.content?.[0]?.text || "Lo siento, hubo un error. ¿Puede intentar de nuevo?";
+    });
+    reply = response.content.flatMap(b => (b.type === "text" ? [b.text] : [])).join("\n").trim() || reply;
+  } catch (e) {
+    console.error("[sofia]", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : e);
+    return NextResponse.json({ error: "Asistente no disponible" }, { status: 502 });
+  }
  
   // Extraer lead data
   let leadData: Record<string, string> | null = null;
@@ -122,14 +131,15 @@ FORMATO DE RESPUESTAS:
   let propertyCards: any[] = [];
   const propsMatch = reply.match(/\[PROPS\|([^\]]+)\]/);
   if (propsMatch) {
-    const ids = propsMatch[1].split(",").map(id => id.trim()).filter(Boolean);
+    const ids = propsMatch[1].split(",").map(id => id.trim()).filter(isUuid).slice(0, 3);
     reply = reply.replace(/\[PROPS\|[^\]]+\]\s*/g, "").trim();
  
     if (ids.length) {
       const { data: propData } = await db
         .from("properties")
         .select("id, title, type, operation, price, currency, zone, city, bedrooms, bathrooms, m2_construction")
-        .in("id", ids);
+        .in("id", ids)
+        .eq("is_published", true);
  
       const { data: covers } = await db
         .from("property_images")
@@ -158,13 +168,13 @@ FORMATO DE RESPUESTAS:
     }
   }
  
-  // Guardar mensaje de Sofía
+  // Guardar la pregunta del visitante y la respuesta de Sofía (antes la pregunta
+  // la insertaba el navegador con la llave anónima)
   if (sessionId) {
-    await db.from("chatbot_messages").insert({
-      session_id: sessionId,
-      from_bot: true,
-      message: reply,
-    });
+    await db.from("chatbot_messages").insert([
+      { session_id: sessionId, from_bot: false, message: messages[messages.length - 1].content },
+      { session_id: sessionId, from_bot: true,  message: reply },
+    ]);
   }
  
   return NextResponse.json({ reply, leadData, propertyCards });

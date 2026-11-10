@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { renderToStream } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
+import { PUBLIC_PROPERTY_DETAIL_COLUMNS } from "@/lib/public-property";
 import { PropertyPDF } from "@/components/PropertyPDF";
 import React from "react";
 
@@ -29,11 +30,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const isAsesor = mode === "asesor";
 
   const [{ data: prop }, { data: imgs }] = await Promise.all([
-    supabase.from("properties").select("*").eq("id", params.id).single(),
+    supabase.from("properties").select(PUBLIC_PROPERTY_DETAIL_COLUMNS).eq("id", params.id).single() as any,
     supabase.from("property_images").select("url, position, is_cover").eq("property_id", params.id).order("position"),
   ]);
 
   if (!prop) return new Response("Not found", { status: 404 });
+  // Sin sesión solo se pueden descargar fichas de propiedades publicadas
+  if (!prop.is_published) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return new Response("Not found", { status: 404 });
+  }
 
   const { data: agent } = prop.agent_id
     ? await supabase.from("profiles").select("full_name, phone, email").eq("id", prop.agent_id).single()

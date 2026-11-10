@@ -1,49 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createClient as authClient } from "@/lib/supabase/server";
-
-function adminDb() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
+import { isUuid } from "@/lib/security";
 
 // POST /api/tablero/[id] — agregar propiedad al tablero
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = authClient();
-  const { data: { user } } = await auth.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const { error: authError } = await requireAuth();
+  if (authError) return authError;
 
-  const { property_id, ai_reason, ai_score, added_by } = await req.json();
-  const db = adminDb();
+  const { property_id, ai_reason, ai_score, added_by } = await req.json().catch(() => ({}));
+  if (!isUuid(params.id) || !isUuid(property_id)) {
+    return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+  }
 
-  const { error } = await db.from("board_properties").upsert({
-    board_id: params.id,
+  const { error } = await createAdminClient().from("board_properties").upsert({
+    board_id:  params.id,
     property_id,
-    ai_reason: ai_reason || null,
-    ai_score: ai_score || null,
-    added_by: added_by || "agent",
+    ai_reason: typeof ai_reason === "string" ? ai_reason.slice(0, 500) : null,
+    ai_score:  Number.isFinite(ai_score) ? ai_score : null,
+    added_by:  added_by === "ai" ? "ai" : "agent",
   }, { onConflict: "board_id,property_id" });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 
 // DELETE /api/tablero/[id] — quitar propiedad del tablero
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const auth = authClient();
-  const { data: { user } } = await auth.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const { error: authError } = await requireAuth();
+  if (authError) return authError;
 
-  const { property_id } = await req.json();
-  const db = adminDb();
+  const { property_id } = await req.json().catch(() => ({}));
+  if (!isUuid(property_id)) return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
 
-  const { error } = await db.from("board_properties")
+  const { error } = await createAdminClient().from("board_properties")
     .delete()
     .eq("board_id", params.id)
     .eq("property_id", property_id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

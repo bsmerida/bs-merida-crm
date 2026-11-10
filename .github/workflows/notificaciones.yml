@@ -2,9 +2,10 @@ name: Notificaciones Duclaud
 
 on:
   schedule:
-    - cron: '0 * * * *'      # Cada hora (para visitas en 1h)
-    - cron: '0 13 * * *'     # 7am Mérida (UTC-6) → tareas hoy/mañana + seguimiento
-    - cron: '0 14 * * *'     # 8am Mérida (UTC-6) → visitas mañana
+    # Un solo cron cada hora. La ruta decide qué enviar según la hora de Mérida
+    # (7am → tareas y seguimiento, 8am → visitas de mañana, siempre → visitas en 1h).
+    # Antes había 3 crons que se traslapaban a las 13 y 14 UTC y duplicaban avisos.
+    - cron: '5 * * * *'
   workflow_dispatch:          # Permite correrlo manualmente para probar
 
 jobs:
@@ -13,7 +14,7 @@ jobs:
     steps:
       - name: Enviar notificaciones
         run: |
-          curl -s -X GET \
+          curl -sf -X GET \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
             "${{ secrets.SITE_URL }}/api/cron/notificaciones" \
             | jq '.'

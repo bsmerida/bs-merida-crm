@@ -33,6 +33,7 @@ export default function HistoricosPage() {
     setRecords(data || []);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: solo al montar
   useEffect(() => { load(); }, []);
 
   const ingTotal = () => (Number(form.ingreso_venta) || 0) + (Number(form.ingreso_renta) || 0) + (Number(form.ingreso_otro) || 0);

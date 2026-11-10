@@ -80,6 +80,7 @@ export function DealForm({
       setLeads(l.data || []);
       setProperties(p.data || []);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase (createBrowserClient) es una instancia única y estable
   }, []);
 
   const set = (field: keyof FormState, value: string) => setForm(f => ({ ...f, [field]: value }));

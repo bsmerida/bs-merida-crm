@@ -1,0 +1,12 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@next/next/no-img-element": "off"
+  },
+  "overrides": [
+    {
+      "files": ["components/PropertyPDF.tsx"],
+      "rules": { "jsx-a11y/alt-text": "off" }
+    }
+  ]
+}

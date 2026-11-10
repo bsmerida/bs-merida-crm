@@ -1,182 +1,133 @@
 // app/api/citas/solicitar/route.ts
+// Formulario público "Agendar visita".
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/server";
 import { emailAsesorNuevaSolicitud, sendEmail } from "@/lib/emails";
+import { sendPush } from "@/lib/push";
+import { FALLBACK_AGENT_ID } from "@/lib/citas";
+import { clientIp, isUuid, rateLimit } from "@/lib/security";
+import { validateEmail, validateName, validateOptions, validatePhone } from "@/lib/validation";
 
-const FALLBACK_EMAIL = "bertha@duclaud.com.mx";
-
-// ── Rate limiting simple en memoria (por IP) ──────────────────────────────
-const rateMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now    = Date.now();
-  const window = 60 * 60 * 1000; // 1 hora
-  const limit  = 5; // máx 5 solicitudes por hora por IP
-
-  const entry = rateMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateMap.set(ip, { count: 1, resetAt: now + window });
-    return true;
-  }
-  if (entry.count >= limit) return false;
-  entry.count++;
-  return true;
-}
-
-// ── Validaciones server-side ──────────────────────────────────────────────
-function validatePhone(phone: string): boolean {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 10 || digits.length > 13) return false;
-  if (/^(\d)\1{9,}$/.test(digits)) return false;
-  return true;
-}
-
-function validateEmail(email: string): boolean {
-  if (!email) return true; // opcional
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if (!re.test(email)) return false;
-  const fakeDomains = ["test.com","example.com","fake.com","asdf.com"];
-  const domain = email.split("@")[1]?.toLowerCase();
-  if (fakeDomains.includes(domain)) return false;
-  return true;
-}
-
-function validateName(name: string): boolean {
-  return name.trim().length >= 3 && /\s/.test(name.trim());
-}
-
-function validateOptions(options: any[]): boolean {
-  if (!Array.isArray(options) || options.length === 0 || options.length > 3) return false;
-  return options.every(o =>
-    typeof o.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.date) &&
-    typeof o.time === "string" && /^\d{2}:\d{2}$/.test(o.time)
-  );
-}
+const FALLBACK_EMAIL = process.env.FALLBACK_AGENT_EMAIL || "bertha@duclaud.com.mx";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx";
 
 export async function POST(req: NextRequest) {
-  // Rate limiting por IP
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json(
-      { error: "Demasiadas solicitudes. Intenta de nuevo en una hora." },
-      { status: 429 }
-    );
+  // Máx 5 solicitudes por hora por IP
+  if (!await rateLimit(`solicitar:${clientIp(req.headers)}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Demasiadas solicitudes. Intenta de nuevo en una hora." }, { status: 429 });
   }
 
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Request inválido" }, { status: 400 });
 
-  const { property_id, property_title, agent_id, client_name, client_phone, client_email, options } = body;
+  const { property_id, agent_id, client_name, client_phone, client_email, options } = body;
 
-  // Validaciones server-side
-  if (!property_id || typeof property_id !== "string") {
+  if (!isUuid(property_id)) {
     return NextResponse.json({ error: "Propiedad inválida" }, { status: 400 });
   }
-  if (!client_name || !validateName(client_name)) {
+  if (typeof client_name !== "string" || !validateName(client_name)) {
     return NextResponse.json({ error: "Nombre inválido — ingresa nombre y apellido" }, { status: 400 });
   }
-  if (!client_phone || !validatePhone(client_phone)) {
+  if (typeof client_phone !== "string" || !validatePhone(client_phone)) {
     return NextResponse.json({ error: "Teléfono inválido" }, { status: 400 });
   }
-  if (client_email && !validateEmail(client_email)) {
+  if (client_email && (typeof client_email !== "string" || !validateEmail(client_email))) {
     return NextResponse.json({ error: "Correo inválido" }, { status: 400 });
   }
   if (!validateOptions(options)) {
     return NextResponse.json({ error: "Opciones de horario inválidas" }, { status: 400 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const db = createAdminClient();
+
+  // El título y el asesor se toman de la BD, no del navegador: así nadie puede
+  // mandar la notificación a otro asesor ni meter texto arbitrario en el email.
+  const { data: property } = await db
+    .from("properties").select("id, title, agent_id, is_published").eq("id", property_id).maybeSingle();
+  if (!property || !property.is_published) {
+    return NextResponse.json({ error: "Propiedad inválida" }, { status: 400 });
+  }
+  const agentId: string | null = property.agent_id || (isUuid(agent_id) ? agent_id : null);
+  const propertyTitle: string = property.title || "Propiedad";
+
+  const name  = client_name.trim();
+  const phone = client_phone.trim();
+  const email = client_email?.trim() || null;
+  const now   = new Date().toISOString();
 
   // Auto-crear o actualizar lead
   let leadId: string | null = null;
-  const { data: existingByPhone } = client_phone
-    ? await supabase.from("leads").select("id").eq("phone", client_phone).maybeSingle()
+  const { data: byPhone } = await db.from("leads").select("id").eq("phone", phone).limit(1).maybeSingle();
+  const { data: byEmail } = !byPhone && email
+    ? await db.from("leads").select("id").eq("email", email).limit(1).maybeSingle()
     : { data: null };
-  const { data: existingByEmail } = (!existingByPhone && client_email)
-    ? await supabase.from("leads").select("id").eq("email", client_email).maybeSingle()
-    : { data: null };
-  const existing = existingByPhone || existingByEmail;
+  const existing = byPhone || byEmail;
 
   if (existing) {
-    await supabase.from("leads").update({
-      last_contact_at: new Date().toISOString(),
-      updated_at:      new Date().toISOString(),
-    }).eq("id", existing.id);
+    await db.from("leads").update({ last_contact_at: now, updated_at: now }).eq("id", existing.id);
     leadId = existing.id;
   } else {
-    const { data: newLead } = await supabase.from("leads").insert({
-      name:            client_name.trim(),
-      phone:           client_phone.trim(),
-      email:           client_email?.trim() || null,
+    const { data: newLead } = await db.from("leads").insert({
+      name,
+      phone,
+      email,
       source:          "Sitio web — Cita",
       status:          "Nuevo",
-      agent_id:        agent_id || null,
-      interest:        property_title ? `Interesado en: ${property_title}` : null,
-      notes:           `Solicitó visita: ${options.map((o: any) => `${o.date} ${o.time}`).join(", ")}`,
+      agent_id:        agentId,
+      interest:        `Interesado en: ${propertyTitle}`,
+      notes:           `Solicitó visita: ${options.map(o => `${o.date} ${o.time}`).join(", ")}`,
       consent_privacy: true,
-      consent_at:      new Date().toISOString(),
-      last_contact_at: new Date().toISOString(),
+      consent_at:      now,
+      last_contact_at: now,
     }).select("id").single();
     leadId = newLead?.id || null;
   }
 
-  // Guardar solicitud
-  const { data: request, error } = await supabase
+  const { data: request, error } = await db
     .from("appointment_requests")
     .insert({
       property_id,
-      property_title:  property_title?.substring(0, 200) || null,
-      agent_id:        agent_id || null,
-      lead_id:         leadId,
-      client_name:     client_name.trim(),
-      client_phone:    client_phone.trim(),
-      client_email:    client_email?.trim() || null,
-      client_options:  options,
-      status:          "pending",
+      property_title: propertyTitle.substring(0, 200),
+      agent_id:       agentId,
+      lead_id:        leadId,
+      client_name:    name,
+      client_phone:   phone,
+      client_email:   email,
+      client_options: options,
+      status:         "pending",
     })
-    .select()
+    .select("id")
     .single();
 
-  if (error) {
+  if (error || !request) {
     return NextResponse.json({ error: "Error al guardar la solicitud" }, { status: 500 });
   }
 
   // Email al asesor
-  let agentEmail: string = FALLBACK_EMAIL;
-  let agentName          = "Bertha";
-  if (agent_id) {
-    const { data: agent } = await supabase
-      .from("profiles").select("email, full_name").eq("id", agent_id).single();
+  let agentEmail = FALLBACK_EMAIL;
+  let agentName  = "Bertha";
+  if (agentId) {
+    const { data: agent } = await db.from("profiles").select("email, full_name").eq("id", agentId).single();
     agentEmail = agent?.email || FALLBACK_EMAIL;
-    agentName  = agent?.full_name || "Bertha";
+    agentName  = agent?.full_name || agentName;
   }
 
-  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx"}/admin/citas/${request.id}`;
   const { html, subject } = emailAsesorNuevaSolicitud({
-    requestId:     request.id,
+    requestId:   request.id,
     agentName,
-    clientName:    client_name.trim(),
-    clientPhone:   client_phone.trim(),
-    clientEmail:   client_email,
-    propertyTitle: property_title || "Propiedad",
+    clientName:  name,
+    clientPhone: phone,
+    clientEmail: email,
+    propertyTitle,
     options,
-    adminUrl,
+    adminUrl:    `${SITE}/admin/citas`, // antes apuntaba a /admin/citas/{id}, que no existe
   });
   await sendEmail({ to: agentEmail, subject, html }).catch(() => {});
 
-  // Push notification
-  await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx"}/api/push/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      title:    "Nueva solicitud de visita",
-      body:     `${client_name.trim()} quiere visitar ${property_title || "una propiedad"}`,
-      url:      "/admin/citas",
-      user_ids: agent_id ? [agent_id] : ["15f01899-4206-4613-bb01-e26ea4ba003f"],
-    }),
+  await sendPush([agentId || FALLBACK_AGENT_ID], {
+    title: "Nueva solicitud de visita",
+    body:  `${name} quiere visitar ${propertyTitle}`,
+    url:   "/admin/citas",
   }).catch(() => {});
 
   return NextResponse.json({ ok: true, request_id: request.id });

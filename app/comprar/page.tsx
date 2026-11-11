@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { PUBLIC_PROPERTY_COLUMNS } from "@/lib/public-property";
+import { PUBLIC_PROPERTY_COLUMNS, conPortada } from "@/lib/public-property";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
@@ -16,11 +16,7 @@ export default async function ComprarPage({ searchParams }: { searchParams: { ty
   if (searchParams.max) query = (query as any).lte("price", Number(searchParams.max));
   const { data } = await query;
 
-  const props = (data || []).map((p: any) => ({
-    ...p,
-    cover: p.property_images?.find((i: any) => i.is_cover)?.url ||
-      p.property_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url || null,
-  }));
+  const props = (data || []).map((p: any) => conPortada(p));
 
   return (
     <>

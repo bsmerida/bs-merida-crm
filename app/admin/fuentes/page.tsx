@@ -29,6 +29,20 @@ export default async function FuentesPage() {
   const lista = fuentes || [];
   const pendientes = borradores || [];
   const ultima = corridas?.[0] || null;
+  // Fotos que ya tiene en el CRM la propiedad a actualizar (y las parecidas),
+  // para reconocer de un vistazo de cuál se trata.
+  const idsPropiedades = [...new Set(pendientes.flatMap((b: any) =>
+    [b.property_id, ...(b.coincidencia?.candidatos || []).map((c: any) => c.id)]).filter(Boolean))] as string[];
+  const fotosActuales: Record<string, string[]> = {};
+  if (idsPropiedades.length) {
+    const { data: imagenes } = await supabase.from("property_images")
+      .select("property_id, url, position, is_cover").in("property_id", idsPropiedades)
+      .order("position", { ascending: true });
+    for (const img of imagenes || []) {
+      const l = (fotosActuales[img.property_id] ||= []);
+      if (img.is_cover) l.unshift(img.url); else l.push(img.url);
+    }
+  }
   const proveedores = Object.fromEntries(lista.map(f => [f.id, `${f.proveedor}${f.alcance ? ` · ${f.alcance}` : ""}`]));
 
   return (
@@ -52,6 +66,7 @@ export default async function FuentesPage() {
             <li>• <strong>GOOGLE_API_KEY</strong> = API key de Google restringida a Drive API</li>
             <li>• <strong>DROPBOX_REFRESH_TOKEN</strong>, <strong>DROPBOX_APP_KEY</strong>, <strong>DROPBOX_APP_SECRET</strong></li>
             <li>• <strong>ANTHROPIC_API_KEY</strong></li>
+            <li>• <strong>FUENTES_EXCEL_URL</strong> (opcional) = enlace del Excel de fuentes en Drive</li>
           </ul>
           <p className="text-xs text-ink-muted mt-3">
             Después ve a Actions → “Agente de fuentes” → Run workflow para la primera corrida.
@@ -59,7 +74,7 @@ export default async function FuentesPage() {
         </div>
       )}
 
-      <FuentesRevision borradores={pendientes} proveedores={proveedores} />
+      <FuentesRevision borradores={pendientes} proveedores={proveedores} fotosActuales={fotosActuales} />
 
       <FuentesPanel
         fuentes={lista}
@@ -72,7 +87,7 @@ export default async function FuentesPage() {
       <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6">
         <h3 className="font-semibold text-ink">¿Qué hace esto exactamente?</h3>
         <ol className="mt-3 space-y-2 text-sm text-ink-muted leading-relaxed">
-          <li><strong>1.</strong> Cada día a las 6:00 am revisamos las carpetas de tus proveedores en Drive y Dropbox. Solo leemos: nunca movemos, editamos ni borramos nada en ellas.</li>
+          <li><strong>1.</strong> Cada día a las 6:00 am leemos el Excel de fuentes (si agregaron una liga nueva, aparece aquí <strong>apagada</strong>) y revisamos las carpetas de tus proveedores en Drive y Dropbox. Solo leemos: nunca movemos, editamos ni borramos nada en ellas.</li>
           <li><strong>2.</strong> En las fuentes con el agente activo, leemos los brochures, listas de precios y fichas técnicas de los desarrollos que cambiaron.</li>
           <li><strong>3.</strong> Comparamos cada modelo con tu inventario: si ya existe te proponemos solo lo que cambió (por ejemplo, el precio); si no existe, te armamos la propiedad completa con fotos, características, desarrollador y descripción.</li>
           <li><strong>4.</strong> Tú decides en el carrusel. Al aprobar una nueva, se crea <strong>sin publicar</strong>: la publicas desde Propiedades cuando quieras, igual que siempre.</li>

@@ -1,17 +1,19 @@
-// Orquestador del paso 2: por cada desarrollo con cambios corre los
-// especialistas en orden fijo y guarda los borradores. Es código, no un agente:
-// el orden siempre es el mismo y cada paso entrega datos con estructura fija.
+// Orquestador del paso 2. Es código, no un agente: el orden siempre es el
+// mismo y cada especialista entrega datos con estructura fija al siguiente.
+//
+// Trabaja por fases sobre TODOS los desarrollos con cambios de la corrida, y
+// cada fase va en un solo lote de la Batch API (50% más barato):
+//   0 segmentar fuentes → 1 clasificar → 2 extraer → 3 comparar → 4 fotos y textos → 5 guardar
 import { createHash } from "node:crypto";
-import { segmentar } from "../agentes/segmentador.mjs";
-import { clasificar } from "../agentes/clasificador.mjs";
-import { extraer } from "../agentes/extractor.mjs";
-import { comparar } from "../agentes/comparador.mjs";
-import { elegirFotos } from "../agentes/fotografo.mjs";
-import { redactar } from "../agentes/redactor.mjs";
-import { prepararDocumentos } from "./documentos.mjs";
+import { leerSegmentar, pedidoSegmentar } from "../agentes/segmentador.mjs";
+import { leerClasificar, prepararClasificar } from "../agentes/clasificador.mjs";
+import { pedidoExtraer } from "../agentes/extractor.mjs";
+import { leerComparar, prepararComparar } from "../agentes/comparador.mjs";
+import { leerFotos, prepararFotos } from "../agentes/fotografo.mjs";
+import { leerRedactar, pedidoRedactar } from "../agentes/redactor.mjs";
+import { esImagen, prepararDocumentos } from "./documentos.mjs";
 import { dentroDe, firmaArchivos } from "./inventario.mjs";
 import { cambiosPropuestos, claveModelo, datosPropiedad, faltantes, TIPOS } from "./borrador.mjs";
-import { PresupuestoAgotado } from "./ia.mjs";
 
 const BUCKET = "property-images";
 const MIN_FOTOS_EXISTENTES = 5; // si la propiedad ya tiene 5+ fotos, no se le proponen más
@@ -107,164 +109,238 @@ async function subirFoto(db, conector, fuente, archivo, cache) {
   return foto;
 }
 
-// ── Un desarrollo ───────────────────────────────────────────────────────────
-async function procesarDesarrollo(db, ia, { fuente, desarrollo, archivos, conector, ctx, vinculos, cacheFotos, log }) {
-  const costoInicial = ia.cuenta.costoUsd;
+// Solo los documentos cuentan para decidir si se reprocesa un desarrollo:
+// si el proveedor solo sube fotos o videos, no se vuelve a pagar la lectura.
+export const firmaDocumentos = (archivos) =>
+  firmaArchivos(archivos.filter(a => !esImagen(a) && !/^video\//.test(a.mime || "")));
 
-  const clas = await clasificar(ia, desarrollo, archivos);
-  const docs = clas.documentos.map(d => ({ i: d.i, archivo: clas.lista[d.i] }));
-  if (!docs.length) return { nota: "Sin documentos con datos de venta", borradores: 0, clasificacion: { documentos: [], fotos: clas.fotos.length } };
+const mensaje = (e) => (e instanceof Error ? e.message : String(e));
 
-  const { bloques, omitidos } = await prepararDocumentos(docs, conector);
-  if (!bloques.length) return { nota: `No se pudo leer ningún documento (${omitidos.join("; ")})`, borradores: 0 };
+// ── Todas las fuentes activas de la corrida ────────────────────────────────
+// revisadas: [{ fuente, archivos, cambios, conector }] (salida del paso 1).
+export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, log = console.log }) {
+  const resumen = { desarrollos: 0, borradores: 0, errores: [] };
 
-  const ext = await extraer(ia, {
-    fuente, desarrollo, bloques, lecciones: ctx.porPaso("extractor"), correcciones: ctx.correccionesDatos,
-  });
-  const dev = { ...ext.desarrollo, nombre: ext.desarrollo?.nombre || desarrollo.nombre };
-  const modelos = (ext.modelos || []).filter(m => TIPOS.includes(m.type));
-  if (!modelos.length) return { nota: "Los documentos no tienen modelos con datos suficientes", borradores: 0 };
-
-  const claves = modelos.map(m => claveModelo(dev, m));
-  const coincidencias = await comparar(ia, {
-    desarrollo: dev, modelos, claves, inventario: ctx.inventario, vinculos, lecciones: ctx.porPaso("comparador"),
-  });
-
-  // Qué necesita cada modelo: las nuevas todo; las existentes solo lo que les falta.
-  const plan = modelos.map((m, i) => {
-    const prop = coincidencias[i].property;
-    return {
-      prop,
-      necesitaFotos: !prop || (ctx.fotosPorPropiedad.get(prop.id) || 0) < MIN_FOTOS_EXISTENTES,
-      necesitaTexto: !prop || !prop.description?.trim(),
-    };
-  });
-
-  const idxFotos = plan.map((p, i) => (p.necesitaFotos ? i : -1)).filter(i => i >= 0);
-  let fotosModelo = modelos.map(() => []);
-  let descartadas = [];
-  const candidatas = clas.fotos.map(i => clas.lista[i]);
-  if (idxFotos.length && candidatas.length) {
-    const r = await elegirFotos(ia, {
-      desarrollo: dev, modelos: idxFotos.map(i => modelos[i]), candidatas, conector,
-      referencias: ctx.referencias, lecciones: ctx.porPaso("fotos"),
-    });
-    idxFotos.forEach((i, k) => { fotosModelo[i] = r.porModelo[k] || []; });
-    descartadas = r.descartadas;
+  // Fase 0 · segmentar las fuentes nuevas o con cambios
+  const porSegmentar = [];
+  for (const r of revisadas) {
+    const { count } = await db.from("fuente_desarrollos").select("id", { count: "exact", head: true }).eq("fuente_id", r.fuente.id);
+    if (!count || r.cambios.length) porSegmentar.push(r);
+  }
+  if (porSegmentar.length) {
+    log("Fase 0 · segmentar carpetas");
+    const res = await ia.lote(porSegmentar.map(r => () => pedidoSegmentar(r.fuente, r.archivos, ctx.porPaso("general"))));
+    for (let k = 0; k < porSegmentar.length; k++) {
+      const { fuente, archivos } = porSegmentar[k];
+      if (res[k].error) { resumen.errores.push(`${fuente.id} (segmentar): ${mensaje(res[k].error)}`); continue; }
+      const seg = leerSegmentar(res[k].data, fuente, archivos);
+      if (seg.desarrollos.length) {
+        const { error } = await db.from("fuente_desarrollos")
+          .upsert(seg.desarrollos.map(d => ({ fuente_id: fuente.id, ruta: d.ruta, nombre: d.nombre })), { onConflict: "fuente_id,ruta" });
+        if (error) resumen.errores.push(`${fuente.id}: no se guardaron los desarrollos (${error.message})`);
+      }
+      log(`  ${fuente.id}: ${seg.desarrollos.length} desarrollos, ${seg.omitidas.length} carpetas omitidas`);
+    }
   }
 
-  const idxTexto = plan.map((p, i) => (p.necesitaTexto ? i : -1)).filter(i => i >= 0);
-  const textos = modelos.map(() => ({}));
-  if (idxTexto.length) {
-    const r = await redactar(ia, {
-      desarrollo: dev, modelos: idxTexto.map(i => modelos[i]),
-      ejemplosTitulos: ctx.ejemplosTitulos, ejemplosDescripciones: ctx.ejemplosDescripciones,
-      lecciones: ctx.porPaso("redactor"), correcciones: ctx.correccionesTexto,
+  // Desarrollos con documentos nuevos o modificados (o que fallaron la vez pasada)
+  const trabajos = [];
+  for (const r of revisadas) {
+    const { data: desarrollos } = await db.from("fuente_desarrollos").select("*")
+      .eq("fuente_id", r.fuente.id).neq("estado", "Omitido").order("ruta");
+    for (const desarrollo of desarrollos || []) {
+      const archivos = dentroDe(r.archivos, desarrollo.ruta);
+      if (!archivos.length) continue;                    // la carpeta ya no existe: se conserva el historial
+      const firma = firmaDocumentos(archivos);
+      if (desarrollo.firma === firma && desarrollo.estado !== "Error") continue;
+      if (trabajos.length >= maxDesarrollos) { log(`  · tope de ${maxDesarrollos} desarrollos por corrida; el resto sigue en la próxima`); break; }
+      trabajos.push({ ...r, desarrollo, archivos, firma, vinculos: ctx.vinculos(r.fuente.id) });
+    }
+  }
+  if (!trabajos.length) { log("Sin desarrollos con documentos nuevos."); return resumen; }
+  resumen.desarrollos = trabajos.length;
+  const vivos = () => trabajos.filter(t => !t.error && !t.nota);
+
+  // Fase 1 · clasificar archivos
+  log(`Fase 1 · clasificar (${trabajos.length} desarrollos)`);
+  for (const t of trabajos) t.clas = prepararClasificar(t.desarrollo, t.archivos);
+  let res = await ia.lote(trabajos.map(t => () => t.clas.pedido));
+  trabajos.forEach((t, k) => {
+    if (res[k].error) { t.error = res[k].error; return; }
+    t.clas = leerClasificar(res[k].data, t.clas.lista);
+    t.docs = t.clas.documentos.map(d => ({ i: d.i, archivo: t.clas.lista[d.i] }));
+    if (!t.docs.length) t.nota = "Sin documentos con datos de venta";
+  });
+
+  // Fase 2 · leer documentos (se descargan justo antes de enviarlos)
+  let activos = vivos();
+  if (activos.length) {
+    log(`Fase 2 · extraer datos (${activos.length} desarrollos)`);
+    res = await ia.lote(activos.map(t => async () => {
+      const { bloques, omitidos } = await prepararDocumentos(t.docs, t.conector);
+      t.omitidos = omitidos;
+      if (!bloques.length) { t.nota = `No se pudo leer ningún documento (${omitidos.join("; ")})`; return null; }
+      return pedidoExtraer({
+        fuente: t.fuente, desarrollo: t.desarrollo, bloques,
+        lecciones: ctx.porPaso("extractor"), correcciones: ctx.correccionesDatos,
+      });
+    }));
+    activos.forEach((t, k) => {
+      if (res[k].error) { t.error = res[k].error; return; }
+      if (!res[k].data) return;
+      const ext = res[k].data;
+      t.dudas = [...(ext.dudas || []), ...(t.omitidos || []).map(o => `No se leyó: ${o}`)];
+      t.dev = { ...ext.desarrollo, nombre: ext.desarrollo?.nombre || t.desarrollo.nombre };
+      t.modelos = (ext.modelos || []).filter(m => TIPOS.includes(m.type));
+      if (!t.modelos.length) t.nota = "Los documentos no tienen modelos con datos suficientes";
     });
-    idxTexto.forEach((i, k) => { textos[i] = r[k] || {}; });
   }
 
-  const costoPorModelo = (ia.cuenta.costoUsd - costoInicial) / modelos.length;
+  // Fase 3 · comparar con el inventario (barata: no se corta por el tope)
+  activos = vivos();
+  if (activos.length) {
+    log(`Fase 3 · comparar con el inventario`);
+    for (const t of activos) {
+      t.claves = t.modelos.map(m => claveModelo(t.dev, m));
+      t.comp = prepararComparar({
+        desarrollo: t.dev, modelos: t.modelos, claves: t.claves, inventario: ctx.inventario,
+        vinculos: t.vinculos, lecciones: ctx.porPaso("comparador"),
+      });
+    }
+    res = await ia.lote(activos.map(t => () => t.comp.pedido), { ignorarTope: true });
+    activos.forEach((t, k) => {
+      // Si falla, queda el resultado preliminar: "Nueva" con aviso de posible duplicado.
+      t.coincidencias = leerComparar(res[k].error ? null : res[k].data, t.comp);
+      t.plan = t.modelos.map((_, i) => {
+        const prop = t.coincidencias[i].property;
+        return {
+          prop,
+          necesitaFotos: !prop || (ctx.fotosPorPropiedad.get(prop.id) || 0) < MIN_FOTOS_EXISTENTES,
+          necesitaTexto: !prop || !prop.description?.trim(),
+        };
+      });
+    });
+
+    // Fase 4 · fotos y textos, en el mismo lote
+    log(`Fase 4 · elegir fotos y redactar`);
+    const fabricas = [];
+    const destinos = [];
+    for (const t of activos) {
+      t.idxFotos = t.plan.map((p, i) => (p.necesitaFotos ? i : -1)).filter(i => i >= 0);
+      t.idxTexto = t.plan.map((p, i) => (p.necesitaTexto ? i : -1)).filter(i => i >= 0);
+      const candidatas = t.clas.fotos.map(i => t.clas.lista[i]);
+      t.fotosModelo = t.modelos.map(() => []);
+      t.descartadas = [];
+      t.textos = t.modelos.map(() => ({}));
+      if (t.idxFotos.length && candidatas.length) {
+        destinos.push({ t, tipo: "fotos" });
+        fabricas.push(async () => {
+          t.prepFotos = await prepararFotos({
+            desarrollo: t.dev, modelos: t.idxFotos.map(i => t.modelos[i]), candidatas, conector: t.conector,
+            referencias: ctx.referencias, lecciones: ctx.porPaso("fotos"),
+          });
+          return t.prepFotos.pedido;
+        });
+      }
+      if (t.idxTexto.length) {
+        destinos.push({ t, tipo: "texto" });
+        fabricas.push(() => pedidoRedactar({
+          desarrollo: t.dev, modelos: t.idxTexto.map(i => t.modelos[i]),
+          ejemplosTitulos: ctx.ejemplosTitulos, ejemplosDescripciones: ctx.ejemplosDescripciones,
+          lecciones: ctx.porPaso("redactor"), correcciones: ctx.correccionesTexto,
+        }));
+      }
+    }
+    res = await ia.lote(fabricas, { ignorarTope: true });
+    destinos.forEach(({ t, tipo }, k) => {
+      // Un fallo aquí no tira el borrador: llega sin fotos o sin texto y se avisa en dudas.
+      if (tipo === "fotos") {
+        if (res[k].error || !t.prepFotos) { t.dudas.push(`No se pudieron elegir fotos: ${mensaje(res[k].error || "sin imágenes")}`); return; }
+        const r = leerFotos(res[k].data, t.prepFotos, t.idxFotos.map(i => t.modelos[i]));
+        t.idxFotos.forEach((i, j) => { t.fotosModelo[i] = r.porModelo[j] || []; });
+        t.descartadas = r.descartadas;
+      } else {
+        if (res[k].error) { t.dudas.push(`No se pudo redactar: ${mensaje(res[k].error)}`); return; }
+        const r = leerRedactar(res[k].data, t.idxTexto.map(i => t.modelos[i]));
+        t.idxTexto.forEach((i, j) => { t.textos[i] = r[j] || {}; });
+      }
+    });
+  }
+
+  // Fase 5 · guardar borradores y el estado de cada desarrollo
+  const costoTotal = ia.cuenta.costoUsd;
+  const costoPorTrabajo = trabajos.length ? costoTotal / trabajos.length : 0;
+  const cacheFotos = new Map();
+  for (const t of trabajos) {
+    const etiqueta = `${t.fuente.id} · ${t.desarrollo.nombre}`;
+    try {
+      if (t.error) throw t.error;
+      let creados = 0;
+      if (!t.nota) creados = await guardarBorradores(db, t, ctx, cacheFotos, costoPorTrabajo, log);
+      resumen.borradores += creados;
+      await db.from("fuente_desarrollos").update({
+        estado: "Procesado", firma: t.firma, error: t.nota || null, procesado_en: new Date().toISOString(),
+        ...(t.clas?.documentos && { clasificacion: { documentos: (t.docs || []).map(d => d.archivo.nombre), fotos: t.clas.fotos.length } }),
+      }).eq("id", t.desarrollo.id);
+      log(`  ✓ ${etiqueta}: ${t.nota || `${t.modelos.length} modelos → ${creados} borradores`}`);
+    } catch (e) {
+      resumen.errores.push(`${etiqueta}: ${mensaje(e)}`);
+      await db.from("fuente_desarrollos").update({ estado: "Error", error: mensaje(e).slice(0, 500), procesado_en: new Date().toISOString() })
+        .eq("id", t.desarrollo.id);
+      log(`  ✗ ${etiqueta}: ${mensaje(e)}`);
+    }
+  }
+  return resumen;
+}
+
+async function guardarBorradores(db, t, ctx, cacheFotos, costoTrabajo, log) {
   const evidenciaDe = (m) => (m.evidencia || []).map(e => {
-    const a = clas.lista[e.documento];
+    const a = t.clas.lista[e.documento];
     return { campo: e.campo, cita: e.cita, pagina: e.pagina || null, archivo: a?.nombre || null, url: a?.url || null };
   });
-  const dudasComunes = [...(ext.dudas || []), ...omitidos.map(o => `No se leyó: ${o}`)];
-
   let creados = 0;
-  for (let i = 0; i < modelos.length; i++) {
-    const m = modelos[i];
-    const { prop } = plan[i];
-    const datos = datosPropiedad(dev, m, textos[i]);
+  for (let i = 0; i < t.modelos.length; i++) {
+    const m = t.modelos[i];
+    const { prop } = t.plan[i];
+    const datos = datosPropiedad(t.dev, m, t.textos[i]);
     const cambios = prop ? cambiosPropuestos(prop, datos) : null;
 
     const fotos = [];
-    for (const a of fotosModelo[i]) {
-      try { fotos.push(await subirFoto(db, conector, fuente, a, cacheFotos)); } catch (e) { log(`  · foto omitida (${a.nombre}): ${e.message}`); }
+    for (const a of t.fotosModelo[i]) {
+      try { fotos.push(await subirFoto(db, t.conector, t.fuente, a, cacheFotos)); } catch (e) { log(`  · foto omitida (${a.nombre}): ${mensaje(e)}`); }
     }
     if (prop && !Object.keys(cambios).length && !fotos.length) continue; // la propiedad ya está al día
 
-    const coincidencia = coincidencias[i];
+    const coincidencia = t.coincidencias[i];
     const dudas = [
-      ...dudasComunes,
+      ...t.dudas,
       ...(prop ? [] : faltantes(datos)),
-      ...(coincidencia.confianza === "media" ? [`Coincidencia con confianza media: ${coincidencia.razon}`] : []),
+      ...(coincidencia.confianza === "media" ? [`Revisa la coincidencia: ${coincidencia.razon}`] : []),
       ...(m.unidades_disponibles === 0 ? ["La lista de precios no muestra unidades disponibles de este modelo."] : []),
     ];
 
     const fila = {
-      fuente_id: fuente.id, desarrollo_id: desarrollo.id, clave_modelo: claves[i],
+      fuente_id: t.fuente.id, desarrollo_id: t.desarrollo.id, clave_modelo: t.claves[i],
       accion: prop ? "Actualizar" : "Nueva", property_id: prop?.id || null,
       datos, cambios, fotos, dudas,
       extra: {
-        desarrollo: dev.nombre, desarrolladora: dev.desarrolladora || null, modelo: m.modelo,
-        entrega: dev.entrega || null, precio_hasta: m.price_hasta || null,
+        desarrollo: t.dev.nombre, desarrolladora: t.dev.desarrolladora || null, modelo: m.modelo,
+        entrega: t.dev.entrega || null, precio_hasta: m.price_hasta || null,
         unidades_disponibles: m.unidades_disponibles >= 0 ? m.unidades_disponibles : null,
-        fotos_descartadas: descartadas.slice(0, 20), proveedor: fuente.proveedor,
+        fotos_descartadas: t.descartadas.slice(0, 20), proveedor: t.fuente.proveedor,
         propiedad_actual: prop ? { title: prop.title, fotos: ctx.fotosPorPropiedad.get(prop.id) || 0 } : null,
       },
       evidencia: evidenciaDe(m),
       coincidencia: { metodo: coincidencia.metodo, razon: coincidencia.razon, confianza: coincidencia.confianza, candidatos: coincidencia.candidatos || [] },
-      costo_usd: Number(costoPorModelo.toFixed(4)),
+      costo_usd: Number((costoTrabajo / t.modelos.length).toFixed(4)),
     };
 
     // Un borrador nuevo del mismo modelo reemplaza al pendiente anterior.
     await db.from("propiedad_borradores").update({ estado: "Reemplazado" })
-      .eq("fuente_id", fuente.id).eq("clave_modelo", claves[i]).eq("estado", "Pendiente");
+      .eq("fuente_id", t.fuente.id).eq("clave_modelo", t.claves[i]).eq("estado", "Pendiente");
     const { error } = await db.from("propiedad_borradores").insert(fila);
     if (error) throw new Error(`No se guardó el borrador: ${error.message}`);
     creados++;
   }
-
-  return {
-    borradores: creados, modelos: modelos.length,
-    clasificacion: { documentos: docs.map(d => d.archivo.nombre), fotos: candidatas.length },
-  };
-}
-
-// ── Una fuente ──────────────────────────────────────────────────────────────
-export async function procesarFuente(db, ia, { fuente, archivos, cambios, conector, ctx, maxDesarrollos, log = console.log }) {
-  const resumen = { desarrollos: 0, borradores: 0, errores: [] };
-
-  const { data: existentes } = await db.from("fuente_desarrollos").select("*").eq("fuente_id", fuente.id);
-  if (!existentes?.length || cambios.length) {
-    const seg = await segmentar(ia, fuente, archivos, ctx.porPaso("general"));
-    if (seg.desarrollos.length) {
-      const { error } = await db.from("fuente_desarrollos")
-        .upsert(seg.desarrollos.map(d => ({ fuente_id: fuente.id, ruta: d.ruta, nombre: d.nombre })), { onConflict: "fuente_id,ruta" });
-      if (error) throw new Error(`No se guardaron los desarrollos: ${error.message}`);
-    }
-    log(`  ${seg.desarrollos.length} desarrollos, ${seg.omitidas.length} carpetas omitidas`);
-  }
-
-  const { data: desarrollos } = await db.from("fuente_desarrollos").select("*")
-    .eq("fuente_id", fuente.id).neq("estado", "Omitido").order("ruta");
-  const vinculos = ctx.vinculos(fuente.id);
-  const cacheFotos = new Map();
-
-  for (const desarrollo of desarrollos || []) {
-    const suyos = dentroDe(archivos, desarrollo.ruta);
-    if (!suyos.length) continue;                         // la carpeta ya no existe: se conserva el historial
-    const firma = firmaArchivos(suyos);
-    if (desarrollo.firma === firma && desarrollo.estado !== "Error") continue; // sin cambios
-    if (resumen.desarrollos >= maxDesarrollos) { log(`  · tope de ${maxDesarrollos} desarrollos por corrida; el resto sigue mañana`); break; }
-    resumen.desarrollos++;
-
-    try {
-      const r = await procesarDesarrollo(db, ia, { fuente, desarrollo, archivos: suyos, conector, ctx, vinculos, cacheFotos, log });
-      resumen.borradores += r.borradores;
-      await db.from("fuente_desarrollos").update({
-        estado: "Procesado", firma, error: r.nota || null, procesado_en: new Date().toISOString(),
-        ...(r.clasificacion && { clasificacion: r.clasificacion }),
-      }).eq("id", desarrollo.id);
-      log(`  ✓ ${desarrollo.nombre}: ${r.nota || `${r.modelos} modelos → ${r.borradores} borradores`}`);
-    } catch (e) {
-      if (e instanceof PresupuestoAgotado) throw e; // se detiene la corrida; este desarrollo se reintenta mañana
-      resumen.errores.push(`${fuente.id} · ${desarrollo.nombre}: ${e.message}`);
-      await db.from("fuente_desarrollos").update({ estado: "Error", error: String(e.message).slice(0, 500), procesado_en: new Date().toISOString() })
-        .eq("id", desarrollo.id);
-      log(`  ✗ ${desarrollo.nombre}: ${e.message}`);
-    }
-  }
-  return resumen;
+  return creados;
 }

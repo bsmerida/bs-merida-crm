@@ -234,3 +234,65 @@ describe("ia", () => {
     await expect(niega.json({ paso: "redactor", system: "", contenido: [], schema: {} })).rejects.toThrow(/se negó/);
   });
 });
+
+describe("ia.lote (Batch API)", () => {
+  const msg = (texto: string) => ({ stop_reason: "end_turn", content: [{ type: "text", text: texto }], usage: { input_tokens: 1_000_000, output_tokens: 0 } });
+  const pedido = (paso: string) => ({ paso, modelo: "claude-sonnet-5-5", system: "", contenido: [], schema: {} });
+
+  function clienteLote({ resultados, terminaEn = 1 }: { resultados: Record<string, any>; terminaEn?: number }) {
+    let consultas = 0;
+    const llamadas = { creados: 0, directas: 0, cancelados: 0 };
+    return {
+      llamadas,
+      messages: {
+        stream: () => ({ finalMessage: async () => { llamadas.directas++; return msg('{"directo":true}'); } }),
+        batches: {
+          create: async ({ requests }: any) => { llamadas.creados++; return { id: "b1", requests }; },
+          retrieve: async () => ({ processing_status: ++consultas >= terminaEn ? "ended" : "in_progress" }),
+          cancel: async () => { llamadas.cancelados++; consultas = Infinity; },
+          results: async () => (async function* () {
+            for (const [custom_id, result] of Object.entries(resultados)) yield { custom_id, result };
+          })(),
+        },
+      },
+    };
+  }
+
+  it("cobra la mitad en lote y repite normal solo lo que falló", async () => {
+    const cliente = clienteLote({ resultados: {
+      r0: { type: "succeeded", message: msg('{"ok":0}') },
+      r1: { type: "errored", error: { type: "server_error" } },
+    } });
+    const ia = crearIA({ cliente: cliente as any, intervaloMs: 1 });
+    const r = await ia.lote([() => pedido("extractor"), () => pedido("extractor"), () => null]);
+    expect(r[0].data).toEqual({ ok: 0 });
+    expect(r[1].data).toEqual({ directo: true });
+    expect(r[2]).toEqual({});
+    expect(cliente.llamadas).toMatchObject({ creados: 1, directas: 1 });
+    expect(ia.cuenta.costoUsd).toBeCloseTo(1 + 2); // 2 USD con 50% + 2 USD normal
+    expect(ia.cuenta.porPaso.extractor).toBeCloseTo(3);
+  });
+
+  it("si el lote tarda demasiado lo cancela y pide lo pendiente normal", async () => {
+    const cliente = clienteLote({ resultados: {}, terminaEn: 1e9 });
+    const ia = crearIA({ cliente: cliente as any, intervaloMs: 1, esperaLoteMin: 0 });
+    const r = await ia.lote([() => pedido("fotos")]);
+    expect(cliente.llamadas.cancelados).toBe(1);
+    expect(r[0].data).toEqual({ directo: true });
+  });
+
+  it("una fábrica que falla no tumba a las demás", async () => {
+    const cliente = clienteLote({ resultados: { r1: { type: "succeeded", message: msg('{"ok":1}') } } });
+    const ia = crearIA({ cliente: cliente as any, intervaloMs: 1 });
+    const r = await ia.lote([() => { throw new Error("sin acceso"); }, () => pedido("redactor")]);
+    expect(r[0].error?.message).toBe("sin acceso");
+    expect(r[1].data).toEqual({ ok: 1 });
+  });
+
+  it("sin lotes (FUENTES_SIN_LOTES) hace llamadas normales", async () => {
+    const cliente = clienteLote({ resultados: {} });
+    const ia = crearIA({ cliente: cliente as any, usarLotes: false });
+    await ia.lote([() => pedido("x")]);
+    expect(cliente.llamadas).toMatchObject({ creados: 0, directas: 1 });
+  });
+});

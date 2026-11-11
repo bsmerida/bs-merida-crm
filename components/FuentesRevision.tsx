@@ -48,7 +48,9 @@ const inicial = (b: Borrador): Edicion => ({
   aceptados: Object.keys(b.cambios || {}),
 });
 
-export function FuentesRevision({ borradores, proveedores }: { borradores: Borrador[]; proveedores: Record<string, string> }) {
+export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }: {
+  borradores: Borrador[]; proveedores: Record<string, string>; fotosActuales?: Record<string, string[]>;
+}) {
   const router = useRouter();
   const [lista, setLista] = useState(borradores);
   const [i, setI] = useState(0);
@@ -97,6 +99,8 @@ export function FuentesRevision({ borradores, proveedores }: { borradores: Borra
   const moneda = ed.datos.currency || "MXN";
   const fotosSel = ed.fotos.map(u => b.fotos.find(f => f.url === u)).filter(Boolean) as Foto[];
   const portada = fotosSel[0];
+  // Fotos que la propiedad ya tiene en el CRM (solo para reconocerla, no se modifican).
+  const actuales = (b.property_id && fotosActuales[b.property_id]) || [];
 
   const quitarActual = (texto: string, href?: string) => {
     setLista(l => l.filter(x => x.id !== b.id));
@@ -175,6 +179,8 @@ export function FuentesRevision({ borradores, proveedores }: { borradores: Borra
           <div className="aspect-[4/3] rounded-xl overflow-hidden bg-brand-50 flex items-center justify-center">
             {portada
               ? <img src={portada.url} alt={portada.nombre || ""} className="w-full h-full object-cover" />
+              : actuales.length && !b.fotos.length
+              ? <img src={actuales[0]} alt="Portada actual" className="w-full h-full object-cover" />
               : <span className="text-sm text-ink-muted">{b.fotos.length ? "Elige al menos una foto" : nueva ? "El agente no encontró fotos aptas" : "No se proponen fotos (la propiedad ya tiene)"}</span>}
           </div>
           {b.fotos.length > 0 && (
@@ -202,6 +208,18 @@ export function FuentesRevision({ borradores, proveedores }: { borradores: Borra
                 })}
               </div>
             </>
+          )}
+          {actuales.length > 0 && (
+            <div className="mt-4">
+              <div className="text-xs text-ink-muted mb-2">
+                {b.fotos.length ? "Fotos que ya tiene en el CRM" : "Así está hoy en el CRM"} · {actuales.length} fotos (no se modifican)
+              </div>
+              <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
+                {actuales.slice(0, 12).map(url => (
+                  <img key={url} src={url} alt="" loading="lazy" className="w-full aspect-square object-cover rounded-md" />
+                ))}
+              </div>
+            </div>
           )}
           {extra.fotos_descartadas?.length > 0 && (
             <details className="mt-4">
@@ -312,7 +330,9 @@ export function FuentesRevision({ borradores, proveedores }: { borradores: Borra
           {b.coincidencia?.razon && (
             <p className="text-xs text-ink-muted"><strong>Inventario:</strong> {b.coincidencia.razon}
               {!!b.coincidencia.candidatos?.length && <> Parecidas: {b.coincidencia.candidatos.map((c, k) => (
-                <span key={c.id}>{k > 0 && ", "}<Link href={`/admin/propiedades/${c.id}`} target="_blank" className="text-brand-600 hover:underline">{c.title}</Link></span>
+                <span key={c.id}>{k > 0 && ", "}
+                  {fotosActuales[c.id]?.[0] && <img src={fotosActuales[c.id][0]} alt="" loading="lazy" className="inline-block w-8 h-8 rounded object-cover align-middle mr-1" />}
+                  <Link href={`/admin/propiedades/${c.id}`} target="_blank" className="text-brand-600 hover:underline">{c.title}</Link></span>
               ))}.</>}
             </p>
           )}

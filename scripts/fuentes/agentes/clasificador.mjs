@@ -39,9 +39,10 @@ export function listarParaClasificar(archivos) {
   return lista;
 }
 
-export async function clasificar(ia, desarrollo, archivos) {
+// Devuelve la lista numerada y el pedido (null si no hay nada que clasificar).
+export function prepararClasificar(desarrollo, archivos) {
   const lista = listarParaClasificar(archivos);
-  if (!lista.length) return { documentos: [], fotos: [], operacion: "Venta", lista };
+  if (!lista.length) return { lista, pedido: null };
   const base = desarrollo.ruta ? `${desarrollo.ruta}/` : "";
   const texto = lista.map((a, i) => {
     const ruta = a.ruta.startsWith(base) ? a.ruta.slice(base.length) : a.ruta;
@@ -49,10 +50,17 @@ export async function clasificar(ia, desarrollo, archivos) {
     const fecha = a.modificado ? ` · ${String(a.modificado).slice(0, 10)}` : "";
     return `[${i}] ${ruta ? `${ruta}/` : ""}${a.nombre}${mb}${fecha}`;
   }).join("\n");
-  const { data } = await ia.json({
-    paso: "clasificador", modelo: MODELO_RAPIDO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "low",
-    contenido: [{ type: "text", text: `Desarrollo: ${desarrollo.nombre}\n\nArchivos:\n${texto}` }],
-  });
+  return {
+    lista,
+    pedido: {
+      paso: "clasificador", modelo: MODELO_RAPIDO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "low",
+      contenido: [{ type: "text", text: `Desarrollo: ${desarrollo.nombre}\n\nArchivos:\n${texto}` }],
+    },
+  };
+}
+
+export function leerClasificar(data, lista) {
+  if (!data) return { documentos: [], fotos: [], operacion: "Venta", lista };
   const valido = (i) => Number.isInteger(i) && i >= 0 && i < lista.length;
   return {
     // Una imagen solo cuenta como documento si es la lista de precios (algunos la mandan en JPG).
@@ -62,4 +70,9 @@ export async function clasificar(ia, desarrollo, archivos) {
     operacion: data.operacion,
     lista,
   };
+}
+
+export async function clasificar(ia, desarrollo, archivos) {
+  const { lista, pedido } = prepararClasificar(desarrollo, archivos);
+  return leerClasificar(pedido ? (await ia.json(pedido)).data : null, lista);
 }

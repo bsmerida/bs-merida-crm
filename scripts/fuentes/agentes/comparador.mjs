@@ -26,8 +26,8 @@ const resumenProp = (p) => [
 ].filter(Boolean).join(" · ");
 
 // vinculos: Map clave_modelo → property_id (aprobaciones anteriores).
-// Devuelve, por cada modelo: { property, metodo, razon, confianza }.
-export async function comparar(ia, { desarrollo, modelos, claves, inventario, vinculos, lecciones = [] }) {
+// Devuelve el resultado preliminar y el pedido para la IA (null si no hace falta).
+export function prepararComparar({ desarrollo, modelos, claves, inventario, vinculos, lecciones = [] }) {
   const porId = new Map(inventario.map(p => [p.id, p]));
   const resultado = modelos.map(() => ({ property: null, metodo: "sin candidatos", razon: "No hay propiedades de este desarrollo en el inventario.", confianza: "alta" }));
   const preguntas = [];
@@ -39,9 +39,14 @@ export async function comparar(ia, { desarrollo, modelos, claves, inventario, vi
       return;
     }
     const c = candidatos(inventario, desarrollo, m);
-    if (c.length) preguntas.push({ i, m, c });
+    if (!c.length) return;
+    preguntas.push({ i, m, c });
+    // Si la IA no llega a responder, queda como nueva PERO con aviso de posible duplicado.
+    resultado[i] = { property: null, metodo: "pendiente", confianza: "media",
+      razon: "Hay propiedades parecidas en el inventario; revisa que no sea un duplicado.",
+      candidatos: c.map(p => ({ id: p.id, title: p.title })) };
   });
-  if (!preguntas.length) return resultado;
+  if (!preguntas.length) return { resultado, preguntas, pedido: null };
 
   const texto = preguntas.map(({ i, m, c }) => [
     `## Modelo [${i}]: ${desarrollo.nombre} · ${m.modelo} · ${m.type} en ${m.operation}` +
@@ -50,12 +55,18 @@ export async function comparar(ia, { desarrollo, modelos, claves, inventario, vi
     ...c.map(p => `- ${resumenProp(p)}`),
   ].join("\n")).join("\n\n");
 
-  const { data } = await ia.json({
-    paso: "comparador", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "low",
-    contenido: [{ type: "text", text: `${lecciones.length ? `Indicaciones del equipo:\n- ${lecciones.join("\n- ")}\n\n` : ""}${texto}` }],
-  });
+  return {
+    resultado, preguntas,
+    pedido: {
+      paso: "comparador", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "low",
+      contenido: [{ type: "text", text: `${lecciones.length ? `Indicaciones del equipo:\n- ${lecciones.join("\n- ")}\n\n` : ""}${texto}` }],
+    },
+  };
+}
 
-  for (const d of data.decisiones || []) {
+export function leerComparar(data, { resultado: preliminar, preguntas }) {
+  const resultado = [...preliminar];
+  for (const d of data?.decisiones || []) {
     const pregunta = preguntas.find(p => p.i === d.modelo);
     if (!pregunta) continue;
     // Solo se acepta un id que estaba entre los candidatos, y no con confianza baja.
@@ -79,4 +90,9 @@ export async function comparar(ia, { desarrollo, modelos, claves, inventario, vi
       razon: `"${r.property.title}" ya se asignó a otro modelo; se propone como nueva para que lo revises.` };
   });
   return resultado;
+}
+
+export async function comparar(ia, entrada) {
+  const preparado = prepararComparar(entrada);
+  return leerComparar(preparado.pedido ? (await ia.json(preparado.pedido)).data : null, preparado);
 }

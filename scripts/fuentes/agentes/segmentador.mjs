@@ -25,7 +25,7 @@ Reglas:
 - El nombre va limpio: sin numeración ("01."), sin zona ni datos de recámaras, con mayúscula inicial (ej. "ROSAMORA / CASAS / CONKAL" → "Rosamora").
 - Usa exactamente las rutas que aparecen después de ⟶.`;
 
-export async function segmentar(ia, fuente, archivos, lecciones = []) {
+export function pedidoSegmentar(fuente, archivos, lecciones = []) {
   const arbol = arbolCarpetas(archivos);
   const contenido = [{
     type: "text",
@@ -36,8 +36,10 @@ export async function segmentar(ia, fuente, archivos, lecciones = []) {
       arbol || "(sin carpetas: los archivos están en la raíz)",
     ].join("\n"),
   }];
-  const { data } = await ia.json({ paso: "segmentador", modelo: MODELO_RAPIDO, system: SYSTEM, contenido, schema: SCHEMA, maxTokens: 8000, effort: "low" });
+  return { paso: "segmentador", modelo: MODELO_RAPIDO, system: SYSTEM, contenido, schema: SCHEMA, maxTokens: 8000, effort: "low" };
+}
 
+export function leerSegmentar(data, fuente, archivos) {
   // Validación: solo rutas que existen y sin carpetas anidadas.
   const rutas = new Set(archivos.flatMap(a => {
     const partes = a.ruta ? a.ruta.split("/") : [];
@@ -53,4 +55,9 @@ export async function segmentar(ia, fuente, archivos, lecciones = []) {
   // Fuente sin subcarpetas (una sola propiedad en la raíz): se trata como un desarrollo.
   if (!elegidas.length && !rutas.size && archivos.length) elegidas.push({ ruta: "", nombre: fuente.alcance || fuente.proveedor });
   return { desarrollos: elegidas, omitidas: data.omitidas || [] };
+}
+
+export async function segmentar(ia, fuente, archivos, lecciones = []) {
+  const { data } = await ia.json(pedidoSegmentar(fuente, archivos, lecciones));
+  return leerSegmentar(data, fuente, archivos);
 }

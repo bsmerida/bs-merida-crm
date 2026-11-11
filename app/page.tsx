@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PUBLIC_PROPERTY_COLUMNS } from "@/lib/public-property";
+import { PUBLIC_PROPERTY_COLUMNS, conPortada } from "@/lib/public-property";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
@@ -75,11 +75,9 @@ export default async function HomePage() {
         </div>
         {properties && properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(properties as any[]).map(p => {
-              const cover = p.property_images?.find((i: any) => i.is_cover)?.url
-                || p.property_images?.sort((a: any, b: any) => a.position - b.position)[0]?.url || null;
-              return <PropertyCard key={p.id} p={p} coverUrl={cover} />;
-            })}
+            {(properties as any[]).map(conPortada).map((p: any) => (
+              <PropertyCard key={p.id} p={p} coverUrl={p.cover} />
+            ))}
           </div>
         ) : (
           <div className="py-24 text-center bg-white rounded-2xl border border-stone text-sm text-ink-muted">

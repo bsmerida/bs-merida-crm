@@ -10,3 +10,12 @@ export const PUBLIC_PROPERTY_DETAIL_COLUMNS =
   "id, title, description, type, operation, status, price, price_type, currency, address, zone, city, state, " +
   "bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, development, " +
   "reference, agent_id, is_published, lat, lng, featured, created_at, updated_at";
+
+// Deja solo la portada: mandar todas las fotos de cada propiedad al navegador
+// hacía pesar /comprar 2.4 MB por visita (y consumía la transferencia de Vercel).
+export function conPortada<T extends { property_images?: { url: string; position: number; is_cover: boolean }[] | null }>(p: T) {
+  const { property_images: imgs, ...resto } = p;
+  const cover = imgs?.find(i => i.is_cover)?.url
+    || [...(imgs || [])].sort((a, b) => a.position - b.position)[0]?.url || null;
+  return { ...resto, cover };
+}

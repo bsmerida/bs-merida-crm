@@ -1,0 +1,57 @@
+name: Agente de fuentes
+
+on:
+  schedule:
+    - cron: '0 12 * * *'        # 6:00 en Mérida (UTC-6, sin horario de verano)
+  workflow_dispatch:            # Botón "Run workflow" para correrlo a mano
+    inputs:
+      fuente:
+        description: 'Solo esta fuente (ej. F-0008). Vacío = todas'
+        required: false
+        default: ''
+      solo_revisar:
+        description: 'Solo revisar carpetas, sin IA'
+        type: boolean
+        default: false
+      max_costo:
+        description: 'Tope de costo de IA en USD para esta corrida'
+        required: false
+        default: '15'
+
+# Nunca dos corridas a la vez (evita borradores duplicados).
+concurrency:
+  group: agente-fuentes
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Revisar fuentes
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          DROPBOX_ACCESS_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FUENTE: ${{ inputs.fuente }}
+          SOLO_REVISAR: ${{ inputs.solo_revisar }}
+          FUENTES_MAX_COSTO_USD: ${{ inputs.max_costo || '15' }}
+        run: |
+          ARGS=()
+          if [ -n "$FUENTE" ]; then ARGS+=(--fuente "$FUENTE"); fi
+          if [ "$SOLO_REVISAR" = "true" ]; then ARGS+=(--solo-revisar); fi
+          node scripts/revisar-fuentes.mjs "${ARGS[@]}"

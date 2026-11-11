@@ -3,6 +3,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { PropertyCard } from "@/components/PropertyCard";
 
 type Prop = any;
+const POR_PAGINA = 24;
 
 function ZoneAutocomplete({ zones, value, onChange }: { zones: string[]; value: string; onChange: (v: string) => void }) {
   const [query, setQuery] = useState(value === "Todas" ? "" : value);
@@ -83,6 +84,9 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const [priceMin, setPriceMin]   = useState("");
   const [priceMax, setPriceMax]   = useState("");
   const [sortBy, setSortBy]       = useState("recent");
+  // Se dibujan de POR_PAGINA en POR_PAGINA: con las 400+ tarjetas de golpe la
+  // página pesaba ~1 MB por visita (transferencia de Vercel).
+  const [visibles, setVisibles]   = useState(POR_PAGINA);
 
   const types = ["Todos", ...Array.from(new Set(props.map((p: Prop) => p.type)))];
   const zones = Array.from(new Set(props.map((p: Prop) => p.zone || p.city).filter(Boolean))) as string[];
@@ -101,6 +105,8 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     if (sortBy === "price_desc") result = [...result].sort((a,b) => b.price - a.price);
     return result;
   }, [props, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
+
+  useEffect(() => { setVisibles(POR_PAGINA); }, [filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
 
   const hasFilters = filterType !== "Todos" || filterZone !== "Todas" || filterBeds !== "0" || filterBaths !== "0" || priceMin || priceMax;
   const clear = () => { setFilterType("Todos"); setFilterZone("Todas"); setFilterBeds("0"); setFilterBaths("0"); setPriceMin(""); setPriceMax(""); };
@@ -165,13 +171,23 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
           <button onClick={clear} className="text-xs text-gold hover:underline mt-2 block mx-auto">Limpiar filtros</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-stone">
-          {filtered.map((p: Prop) => (
-            <div key={p.id} className="bg-cream">
-              <PropertyCard p={p} coverUrl={p.cover} />
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-stone">
+            {filtered.slice(0, visibles).map((p: Prop) => (
+              <div key={p.id} className="bg-cream">
+                <PropertyCard p={p} coverUrl={p.cover} />
+              </div>
+            ))}
+          </div>
+          {filtered.length > visibles && (
+            <div className="text-center">
+              <button onClick={() => setVisibles(v => v + POR_PAGINA)}
+                className="text-[11px] uppercase tracking-[0.08em] px-8 py-3 border border-navy text-navy hover:bg-navy hover:text-white transition-colors">
+                Ver más propiedades ({filtered.length - visibles})
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

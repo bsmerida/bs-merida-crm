@@ -18,7 +18,7 @@ export function PropertyCard({ p, coverUrl }: { p: Property & { currency?: strin
       className="group block bg-white rounded-2xl overflow-hidden border border-stone hover:border-gold/50 hover:shadow-float transition-all duration-300">
       <div className="relative aspect-[4/3] overflow-hidden bg-stone">
         {coverUrl ? (
-          <img src={coverUrl} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={coverUrl} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-navy/5">
             <svg className="w-12 h-12 text-stone-dk" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">

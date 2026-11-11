@@ -27,7 +27,7 @@ Descripción:
 - NO incluyas el precio.
 - Adopta el tono y vocabulario de los ejemplos reales.`;
 
-export async function redactar(ia, { desarrollo, modelos, ejemplosTitulos = [], ejemplosDescripciones = [], lecciones = [], correcciones = [] }) {
+export function pedidoRedactar({ desarrollo, modelos, ejemplosTitulos = [], ejemplosDescripciones = [], lecciones = [], correcciones = [] }) {
   const datos = modelos.map((m, i) => [
     `## Modelo [${i}]: ${m.modelo}`,
     `Tipo: ${m.type} · Operación: ${m.operation}`,
@@ -50,14 +50,21 @@ export async function redactar(ia, { desarrollo, modelos, ejemplosTitulos = [], 
     "\nEscribe título y descripción para cada modelo.",
   ].filter(Boolean).join("\n");
 
-  const { data } = await ia.json({
+  return {
     paso: "redactor", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 8000, effort: "medium",
     contenido: [{ type: "text", text: texto }],
-  });
+  };
+}
+
+export function leerRedactar(data, modelos) {
   const textos = modelos.map(() => ({}));
-  for (const t of data.textos || []) {
+  for (const t of data?.textos || []) {
     if (!textos[t.modelo]) continue;
     textos[t.modelo] = { title: String(t.title || "").trim().slice(0, 120), description: String(t.description || "").trim() };
   }
   return textos;
+}
+
+export async function redactar(ia, entrada) {
+  return leerRedactar((await ia.json(pedidoRedactar(entrada))).data, entrada.modelos);
 }

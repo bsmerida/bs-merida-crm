@@ -23,8 +23,8 @@ Criterios:
 - Entre 6 y 16 fotos por modelo, salvo que haya menos fotos buenas: es mejor pocas buenas que rellenar con malas.
 - Las imágenes de referencia (si las hay) muestran el estilo de portada que ya usa la inmobiliaria.`;
 
-// candidatas: archivos de imagen. Devuelve { porModelo: [[archivo…]…], descartadas }.
-export async function elegirFotos(ia, { desarrollo, modelos, candidatas, conector, referencias = [], lecciones = [] }) {
+// Descarga las miniaturas y arma el pedido (null si no hay imágenes que ver).
+export async function prepararFotos({ desarrollo, modelos, candidatas, conector, referencias = [], lecciones = [] }) {
   const vistas = [];
   for (const a of candidatas) {
     try {
@@ -33,7 +33,7 @@ export async function elegirFotos(ia, { desarrollo, modelos, candidatas, conecto
       vistas.push({ archivo: a, img });
     } catch { /* la imagen no se pudo previsualizar: se omite */ }
   }
-  if (!vistas.length) return { porModelo: modelos.map(() => []), descartadas: [] };
+  if (!vistas.length) return { vistas, pedido: null };
 
   const contenido = [{
     type: "text",
@@ -52,17 +52,23 @@ export async function elegirFotos(ia, { desarrollo, modelos, candidatas, conecto
     { type: "image", source: { type: "base64", media_type: v.img.mime, data: v.img.buffer.toString("base64") } },
   ));
 
-  const { data } = await ia.json({
-    paso: "fotos", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "medium", contenido,
-  });
+  return { vistas, pedido: { paso: "fotos", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "medium", contenido } };
+}
 
+// candidatas: archivos de imagen. Devuelve { porModelo: [[archivo…]…], descartadas }.
+export function leerFotos(data, { vistas }, modelos) {
   const porModelo = modelos.map(() => []);
-  for (const pm of data.por_modelo || []) {
+  for (const pm of data?.por_modelo || []) {
     if (!porModelo[pm.modelo]) continue;
     const vistasModelo = [...new Set(pm.fotos || [])].filter(n => vistas[n]).slice(0, 16);
     porModelo[pm.modelo] = vistasModelo.map(n => vistas[n].archivo);
   }
-  const descartadas = (data.descartadas || []).filter(d => vistas[d.foto])
+  const descartadas = (data?.descartadas || []).filter(d => vistas[d.foto])
     .map(d => ({ nombre: vistas[d.foto].archivo.nombre, motivo: d.motivo }));
   return { porModelo, descartadas };
+}
+
+export async function elegirFotos(ia, entrada) {
+  const preparado = await prepararFotos(entrada);
+  return leerFotos(preparado.pedido ? (await ia.json(preparado.pedido)).data : null, preparado, entrada.modelos);
 }

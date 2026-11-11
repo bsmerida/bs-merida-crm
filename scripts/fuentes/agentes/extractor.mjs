@@ -53,16 +53,19 @@ Reglas:
 - Usa mayúscula inicial en nombres y amenidades (no todo en mayúsculas).
 - Si los documentos dicen que el desarrollo está agotado, devuelve los modelos con todas_vendidas = "si".`;
 
-export async function extraer(ia, { fuente, desarrollo, bloques, lecciones = [], correcciones = [] }) {
+export function pedidoExtraer({ fuente, desarrollo, bloques, lecciones = [], correcciones = [] }) {
   const contexto = [
     `Fuente: ${fuente.proveedor}${fuente.alcance ? ` · ${fuente.alcance}` : ""}. Carpeta del desarrollo: "${desarrollo.nombre}".`,
     lecciones.length ? `\nIndicaciones del equipo aprendidas de revisiones anteriores (síguelas):\n- ${lecciones.join("\n- ")}` : "",
     correcciones.length ? `\nCorrecciones recientes que hizo el equipo a datos extraídos (evita repetir el error):\n- ${correcciones.join("\n- ")}` : "",
     "\nExtrae los datos de los siguientes documentos:",
   ].join("\n");
-  const { data, costo } = await ia.json({
+  return {
     paso: "extractor", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 16000, effort: "medium",
     contenido: [{ type: "text", text: contexto }, ...bloques],
-  });
-  return { ...data, costo };
+  };
+}
+
+export async function extraer(ia, entrada) {
+  return (await ia.json(pedidoExtraer(entrada))).data;
 }

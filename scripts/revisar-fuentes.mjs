@@ -18,7 +18,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { conectarFuente } from "./fuentes/lib/plataformas.mjs";
 import { revisarFuente, marcarError } from "./fuentes/lib/revisar.mjs";
-import { cargarContexto, procesarFuente } from "./fuentes/lib/agente.mjs";
+import { cargarContexto, procesarFuentes } from "./fuentes/lib/agente.mjs";
 import { crearIA, PresupuestoAgotado } from "./fuentes/lib/ia.mjs";
 
 const args = process.argv.slice(2);
@@ -70,27 +70,19 @@ async function main() {
   if (!bandera("solo-revisar") && activas.length) {
     console.log(`\nPaso 2 · Agente (${activas.map(a => a.fuente.id).join(", ")}) · tope ${MAX_COSTO_USD} USD`);
     try {
-      ia = crearIA({ maxCostoUsd: MAX_COSTO_USD });
+      ia = crearIA({ maxCostoUsd: MAX_COSTO_USD, log: (m) => console.log(m) });
       const ctx = await cargarContexto(db);
-      let restantes = MAX_DESARROLLOS;
-      for (const r of activas) {
-        if (restantes <= 0) break;
-        console.log(`${r.fuente.id} ${r.fuente.proveedor}`);
-        try {
-          const res = await procesarFuente(db, ia, { ...r, ctx, maxDesarrollos: restantes });
-          restantes -= res.desarrollos;
-          resumen.desarrollos += res.desarrollos;
-          resumen.borradores += res.borradores;
-          errores.push(...res.errores);
-        } catch (e) {
-          if (e instanceof PresupuestoAgotado) throw e;
-          errores.push(`${r.fuente.id} (agente): ${e.message}`);
-          console.log(`  ✗ ${e.message}`);
-        }
-      }
+      const res = await procesarFuentes(db, ia, { revisadas: activas, ctx, maxDesarrollos: MAX_DESARROLLOS });
+      resumen.desarrollos = res.desarrollos;
+      resumen.borradores = res.borradores;
+      errores.push(...res.errores);
     } catch (e) {
-      if (!(e instanceof PresupuestoAgotado)) throw e;
-      console.log(`  · ${e.message}. Lo pendiente sigue en la próxima corrida.`);
+      if (!(e instanceof PresupuestoAgotado)) {
+        errores.push(`Agente: ${e.message}`);
+        console.log(`  ✗ ${e.message}`);
+      } else {
+        console.log(`  · ${e.message}. Lo pendiente sigue en la próxima corrida.`);
+      }
     }
   }
 
@@ -98,7 +90,7 @@ async function main() {
   if (corrida) {
     await db.from("agente_corridas").update({
       fin: new Date().toISOString(), costo_usd: Number(costo.toFixed(4)), errores,
-      resumen: { ...resumen, costo_por_paso: ia?.cuenta.porPaso || {}, llamadas: ia?.cuenta.llamadas || 0 },
+      resumen: { ...resumen, costo_por_paso: ia?.cuenta.porPaso || {}, llamadas: ia?.cuenta.llamadas || 0, en_lote: ia?.cuenta.enLote || 0 },
     }).eq("id", corrida.id);
   }
   console.log(`\nListo: ${revisadas.length} fuentes al día, ${fuentes.length - revisadas.length} con error · ` +

@@ -1,7 +1,9 @@
 // lib/emails.ts
-// Templates de email para el flujo de citas Duclaud
+// Templates de email para el flujo de citas Duclaud.
+// Todo dato que viene del cliente o del asesor se escapa con esc(): sin esto,
+// un nombre como "<a href=...>" se convertía en un link real dentro del correo.
+import { escapeHtml as esc } from "@/lib/security";
 
-const FROM = process.env.RESEND_FROM_EMAIL || "citas@duclaud.mx";
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://duclaud.mx";
 
 const NAVY  = "#0D1B2A";
@@ -61,13 +63,13 @@ function optionCard(opt: { date: string; time: string }, idx: number, actionUrl?
 
   if (actionUrl) {
     return `
-    <a href="${actionUrl}" style="display:block;text-decoration:none;margin-bottom:12px;">
+    <a href="${esc(actionUrl)}" style="display:block;text-decoration:none;margin-bottom:12px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="border:2px solid ${GOLD};border-radius:12px;overflow:hidden;cursor:pointer;">
         <tr>
           <td style="padding:16px 20px;">
             <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};font-family:sans-serif;">Opción ${idx + 1}</p>
             <p style="margin:6px 0 0;font-size:17px;color:${NAVY};font-family:'Georgia',serif;">${label}</p>
-            <p style="margin:4px 0 0;font-size:13px;color:#666;font-family:sans-serif;">a las ${opt.time} hrs</p>
+            <p style="margin:4px 0 0;font-size:13px;color:#666;font-family:sans-serif;">a las ${esc(opt.time)} hrs</p>
           </td>
           <td style="padding:16px 20px;text-align:right;">
             <span style="background:${GOLD};color:#fff;font-family:sans-serif;font-size:12px;font-weight:600;padding:8px 16px;border-radius:20px;">
@@ -85,7 +87,7 @@ function optionCard(opt: { date: string; time: string }, idx: number, actionUrl?
       <td style="padding:16px 20px;">
         <p style="margin:0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};font-family:sans-serif;">Opción ${idx + 1}</p>
         <p style="margin:6px 0 0;font-size:17px;color:${NAVY};font-family:'Georgia',serif;">${label}</p>
-        <p style="margin:4px 0 0;font-size:13px;color:#666;font-family:sans-serif;">a las ${opt.time} hrs</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#666;font-family:sans-serif;">a las ${esc(opt.time)} hrs</p>
       </td>
     </tr>
   </table>`;
@@ -112,11 +114,11 @@ export function emailAsesorNuevaSolicitud({
       Nueva solicitud de visita
     </p>
     <h2 style="margin:0 0 24px;font-size:24px;color:${NAVY};font-family:'Georgia',serif;font-weight:normal;">
-      Hola, ${agentName}
+      Hola, ${esc(agentName)}
     </h2>
     <p style="margin:0 0 24px;font-size:15px;color:#444;line-height:1.6;font-family:sans-serif;">
-      <strong style="color:${NAVY};">${clientName}</strong> quiere visitar
-      <strong style="color:${NAVY};">${propertyTitle}</strong> y propone los siguientes horarios:
+      <strong style="color:${NAVY};">${esc(clientName)}</strong> quiere visitar
+      <strong style="color:${NAVY};">${esc(propertyTitle)}</strong> y propone los siguientes horarios:
     </p>
 
     ${optionsHtml}
@@ -124,8 +126,8 @@ export function emailAsesorNuevaSolicitud({
     <div style="background:${CREAM};border-radius:12px;padding:20px;margin:24px 0;">
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#999;font-family:sans-serif;">Contacto del cliente</p>
       <p style="margin:0;font-size:15px;color:${NAVY};font-family:sans-serif;">
-        📱 <a href="tel:${clientPhone}" style="color:${NAVY};text-decoration:none;">${clientPhone}</a><br/>
-        ${clientEmail ? `✉️ <a href="mailto:${clientEmail}" style="color:${NAVY};text-decoration:none;">${clientEmail}</a>` : ""}
+        📱 <a href="tel:${esc(clientPhone)}" style="color:${NAVY};text-decoration:none;">${esc(clientPhone)}</a><br/>
+        ${clientEmail ? `✉️ <a href="mailto:${esc(clientEmail)}" style="color:${NAVY};text-decoration:none;">${esc(clientEmail)}</a>` : ""}
       </p>
     </div>
 
@@ -133,7 +135,7 @@ export function emailAsesorNuevaSolicitud({
       Haz clic en la opción que mejor te funcione para confirmarla, o gestiona la solicitud desde el CRM:
     </p>
 
-    <a href="${adminUrl}" style="display:inline-block;background:${NAVY};color:#fff;font-family:sans-serif;font-size:13px;font-weight:600;padding:14px 28px;border-radius:50px;text-decoration:none;letter-spacing:1px;">
+    <a href="${esc(adminUrl)}" style="display:inline-block;background:${NAVY};color:#fff;font-family:sans-serif;font-size:13px;font-weight:600;padding:14px 28px;border-radius:50px;text-decoration:none;letter-spacing:1px;">
       Ver en el CRM →
     </a>
   `);
@@ -162,7 +164,7 @@ export function emailClienteConfirmado({
         Visita confirmada
       </p>
       <h2 style="margin:0;font-size:24px;color:${NAVY};font-family:'Georgia',serif;font-weight:normal;">
-        ¡Nos vemos, ${clientName.split(" ")[0]}!
+        ¡Nos vemos, ${esc(clientName.split(" ")[0])}!
       </h2>
     </div>
 
@@ -171,16 +173,16 @@ export function emailClienteConfirmado({
         <td style="padding:20px 24px;">
           <p style="margin:0 0 4px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};font-family:sans-serif;">Tu visita</p>
           <p style="margin:0;font-size:20px;color:${NAVY};font-family:'Georgia',serif;">${dateLabel}</p>
-          <p style="margin:4px 0 0;font-size:14px;color:#666;font-family:sans-serif;">a las ${confirmed.time} hrs</p>
-          <p style="margin:12px 0 0;font-size:14px;color:#444;font-family:sans-serif;">📍 ${propertyTitle}</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#666;font-family:sans-serif;">a las ${esc(confirmed.time)} hrs</p>
+          <p style="margin:12px 0 0;font-size:14px;color:#444;font-family:sans-serif;">📍 ${esc(propertyTitle)}</p>
         </td>
       </tr>
     </table>
 
     <div style="background:${CREAM};border-radius:12px;padding:20px;margin-bottom:24px;">
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#999;font-family:sans-serif;">Tu asesor</p>
-      <p style="margin:0;font-size:15px;color:${NAVY};font-family:'Georgia',serif;">${agentName}</p>
-      ${agentPhone ? `<p style="margin:6px 0 0;font-size:13px;font-family:sans-serif;"><a href="tel:${agentPhone}" style="color:${GOLD};text-decoration:none;">📱 ${agentPhone}</a></p>` : ""}
+      <p style="margin:0;font-size:15px;color:${NAVY};font-family:'Georgia',serif;">${esc(agentName)}</p>
+      ${agentPhone ? `<p style="margin:6px 0 0;font-size:13px;font-family:sans-serif;"><a href="tel:${esc(agentPhone)}" style="color:${GOLD};text-decoration:none;">📱 ${esc(agentPhone)}</a></p>` : ""}
     </div>
 
     <p style="margin:0;font-size:13px;color:#888;font-family:sans-serif;line-height:1.6;text-align:center;">
@@ -200,7 +202,7 @@ export function emailClienteNuevasOpciones({
   clientToken: string; agentMessage?: string | null;
 }) {
   const optionsHtml = agentOptions.map((o, i) => {
-    const url = `${BASE}/api/citas/confirmar-cliente?token=${clientToken}&option=${i}`;
+    const url = `${BASE}/api/citas/confirmar-cliente?token=${encodeURIComponent(clientToken)}&option=${i}`;
     return optionCard(o, i, url);
   }).join("");
 
@@ -209,16 +211,16 @@ export function emailClienteNuevasOpciones({
       Nuevas opciones de horario
     </p>
     <h2 style="margin:0 0 16px;font-size:24px;color:${NAVY};font-family:'Georgia',serif;font-weight:normal;">
-      Hola, ${clientName.split(" ")[0]}
+      Hola, ${esc(clientName.split(" ")[0])}
     </h2>
     <p style="margin:0 0 24px;font-size:15px;color:#444;line-height:1.6;font-family:sans-serif;">
-      <strong style="color:${NAVY};">${agentName}</strong> no tiene disponibilidad en los horarios que solicitaste para visitar
-      <strong style="color:${NAVY};">${propertyTitle}</strong>, pero te propone estas alternativas:
+      <strong style="color:${NAVY};">${esc(agentName)}</strong> no tiene disponibilidad en los horarios que solicitaste para visitar
+      <strong style="color:${NAVY};">${esc(propertyTitle)}</strong>, pero te propone estas alternativas:
     </p>
 
     ${agentMessage ? `
     <div style="background:${CREAM};border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-      <p style="margin:0;font-size:14px;color:#555;font-family:sans-serif;font-style:italic;">"${agentMessage}"</p>
+      <p style="margin:0;font-size:14px;color:#555;font-family:sans-serif;font-style:italic;">"${esc(agentMessage)}"</p>
     </div>` : ""}
 
     ${optionsHtml}

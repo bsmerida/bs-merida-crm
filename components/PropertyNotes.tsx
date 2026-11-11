@@ -19,6 +19,7 @@ export function PropertyNotes({ propertyId, userId }: { propertyId: string; user
     if (data) setNotes(data);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: solo al montar
   useEffect(() => { load(); }, []);
 
   const save = async () => {

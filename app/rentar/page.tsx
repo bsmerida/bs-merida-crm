@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { PUBLIC_PROPERTY_COLUMNS } from "@/lib/public-property";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
@@ -9,7 +10,7 @@ export const metadata = { title: "Propiedades en Renta — Duclaud" };
 export default async function RentarPage({ searchParams }: { searchParams: { type?: string; zone?: string; max?: string } }) {
   const supabase = createClient();
   let query = supabase.from("properties")
-    .select("*, property_images(url, position, is_cover)")
+    .select(PUBLIC_PROPERTY_COLUMNS)
     .eq("is_published", true).eq("operation", "Renta").neq("status", "Rentada")
     .order("featured", { ascending: false }).order("created_at", { ascending: false });
   if (searchParams.max) query = (query as any).lte("price", Number(searchParams.max));

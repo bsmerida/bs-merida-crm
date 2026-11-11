@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { PUBLIC_PROPERTY_COLUMNS } from "@/lib/public-property";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
@@ -9,7 +10,7 @@ import { SearchBox } from "@/components/SearchBox";
 export default async function HomePage() {
   const supabase = createClient();
   const [{ data: properties }, { data: zonesData }] = await Promise.all([
-    supabase.from("properties").select("*, property_images(url, position, is_cover)")
+    supabase.from("properties").select(PUBLIC_PROPERTY_COLUMNS)
       .eq("is_published", true).eq("status", "Disponible")
       .order("featured", { ascending: false }).limit(6),
     supabase.from("properties").select("zone, city")

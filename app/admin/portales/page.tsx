@@ -114,7 +114,7 @@ export default async function PortalesAdminPage() {
           Cómo funciona realmente la sincronización
         </h3>
         <p className="text-sm text-ink-muted mt-3 leading-relaxed">
-          <strong>Tú publicas tu inventario aquí, en este CRM.</strong> Cada portal de la lista de abajo "consume" tu feed y publica las propiedades en su sitio. Cuando agregas, editas o pausas una propiedad, los portales lo detectan en su próxima sincronización (cada 12-24 horas dependiendo del portal).
+          <strong>Tú publicas tu inventario aquí, en este CRM.</strong> Cada portal de la lista de abajo “consume” tu feed y publica las propiedades en su sitio. Cuando agregas, editas o pausas una propiedad, los portales lo detectan en su próxima sincronización (cada 12-24 horas dependiendo del portal).
         </p>
         <p className="text-sm text-ink-muted mt-3 leading-relaxed">
           <strong>Lo que SÍ tienes que hacer en cada portal (una sola vez):</strong> crear cuenta de agente, contratar el plan adecuado, y darles tu URL de feed. Después olvídate, todo es automático.

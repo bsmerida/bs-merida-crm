@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Icon } from "./Icon";
-import { createClient } from "@/lib/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type PropCard = {
@@ -59,19 +58,22 @@ export function PublicChatbot() {
   const [sessionId, setSessionId]   = useState<string | null>(null);
   const [leadSaved, setLeadSaved]   = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
   const businessWa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
 
   const scrollBottom = () =>
     setTimeout(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, 80);
 
   const initSession = useCallback(async (greeting: string) => {
-    const { data } = await supabase.from("chatbot_sessions").insert({ visitor_id: crypto.randomUUID() }).select().single();
-    if (data) {
-      setSessionId(data.id);
-      await supabase.from("chatbot_messages").insert({ session_id: data.id, from_bot: true, message: greeting });
-    }
-  }, [supabase]);
+    try {
+      const res = await fetch("/api/sofia/sesion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ greeting }),
+      });
+      const data = await res.json();
+      if (data.id) setSessionId(data.id);
+    } catch { /* el chat funciona aunque no se guarde la sesión */ }
+  }, []);
 
   const initConv = useCallback((ctx: PropertyContext) => {
     const greeting = ctx ? GREETING_PROP(ctx.title) : GREETING;
@@ -105,21 +107,12 @@ export function PublicChatbot() {
 
   const saveLead = async (leadData: Record<string, string>, sid: string | null) => {
     if (leadSaved || !leadData.nombre || !leadData.telefono) return;
-    const interest = propertyCtx
-      ? `Propiedad: ${propertyCtx.title} | ${propertyCtx.operation}`
-      : `${leadData.operacion || ""} ${leadData.zona || ""}`.trim();
-    const { data: lead } = await supabase.from("leads").insert({
-      name: leadData.nombre, phone: leadData.telefono,
-      source: propertyCtx ? "Sofía IA – propiedad" : "Sofía IA",
-      interest: interest || null, budget_text: leadData.presupuesto || null,
-      consent_privacy: true, consent_at: new Date().toISOString(),
-    }).select().single();
-    if (lead && sid) {
-      await supabase.from("chatbot_sessions").update({
-        visitor_name: leadData.nombre, visitor_phone: leadData.telefono,
-        visitor_data: leadData, qualified: true, lead_id: lead.id,
-      }).eq("id", sid);
-    }
+    const res = await fetch("/api/sofia/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lead: leadData, sessionId: sid, propertyId: propertyCtx?.id }),
+    }).catch(() => null);
+    if (!res?.ok) return; // se reintenta si Sofía vuelve a capturar los datos
     setLeadSaved(true);
   };
 
@@ -130,7 +123,6 @@ export function PublicChatbot() {
     const newMessages = [...messages, { role: "user" as const, content: userText }];
     setMessages(newMessages);
     setDisplayMsgs(prev => [...prev, { from_bot: false, text: userText }]);
-    if (sessionId) supabase.from("chatbot_messages").insert({ session_id: sessionId, from_bot: false, message: userText });
     setTyping(true);
     scrollBottom();
 

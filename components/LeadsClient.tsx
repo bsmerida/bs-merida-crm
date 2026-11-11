@@ -588,7 +588,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
                 <h3 className="font-semibold text-ink mb-5">Distribución por presupuesto</h3>
                 {byBudget.every(b => b.value === 0)
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de presupuesto numérico. Llena los campos "Presupuesto mínimo/máximo" en cada cliente.</div>
+                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
                   : <VBarChart data={byBudget} color="#5E4B8E" height={140} />}
               </div>
 
@@ -605,7 +605,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
                 <h3 className="font-semibold text-ink mb-5">Zonas de interés</h3>
                 {byZona.length === 0
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Llena el campo "Zonas de interés" en el perfil de cada cliente.</div>
+                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Llena el campo “Zonas de interés” en el perfil de cada cliente.</div>
                   : <HBarChart data={byZona} max={maxZona} colorFn={() => "#5E4B8E"} />}
               </div>
 

@@ -1,19 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getAuth } from "@/lib/auth";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx";
+
+function redirectAjustes(query: string) {
+  const res = NextResponse.redirect(new URL(`/admin/ajustes?${query}`, SITE));
+  res.cookies.delete({ name: "gcal_oauth_state", path: "/api/citas/google-callback" });
+  return res;
+}
+
+function sameState(a: string, b: string) {
+  const ba = Buffer.from(a), bb = Buffer.from(b);
+  return ba.length === bb.length && timingSafeEqual(ba, bb);
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const code      = searchParams.get("code");
-  const profileId = searchParams.get("state");
+  const code   = searchParams.get("code");
+  const state  = searchParams.get("state");
+  const cookie = req.cookies.get("gcal_oauth_state")?.value;
 
-  if (!code || !profileId) {
-    console.error("[GCal callback] Faltan code o profileId");
-    return NextResponse.redirect(new URL("/admin/ajustes?calendar=error&reason=missing_params", req.url));
+  // El token se guarda para el usuario con sesión, nunca para un id que venga
+  // en la URL. Y el state debe coincidir con el nonce que pusimos en cookie
+  // (/api/citas/google-connect), para que nadie pueda forzar esta conexión.
+  const auth = await getAuth();
+  if (!auth) return NextResponse.redirect(new URL("/login", SITE));
+  if (!code || !state || !cookie || !sameState(state, cookie)) {
+    return redirectAjustes("calendar=error&reason=invalid_state");
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://duclaud.mx";
-
-  // Intercambiar code por tokens
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -21,35 +38,21 @@ export async function GET(req: NextRequest) {
       code,
       client_id:     process.env.GOOGLE_CLIENT_ID!,
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      redirect_uri:  `${baseUrl}/api/citas/google-callback`,
+      redirect_uri:  `${SITE}/api/citas/google-callback`,
       grant_type:    "authorization_code",
     }),
   });
-
   const tokens = await tokenRes.json();
-  console.log("[GCal callback] Token response:", {
-    has_access_token:  !!tokens.access_token,
-    has_refresh_token: !!tokens.refresh_token,
-    error:             tokens.error,
-    error_description: tokens.error_description,
-  });
 
   if (!tokens.access_token || !tokens.refresh_token) {
-    return NextResponse.redirect(
-      new URL(`/admin/ajustes?calendar=error&reason=${tokens.error || "no_tokens"}`, req.url)
-    );
+    console.error("[GCal callback] Sin tokens:", tokens.error, tokens.error_description);
+    return redirectAjustes(`calendar=error&reason=${encodeURIComponent(tokens.error || "no_tokens")}`);
   }
 
-  // Service role — saltarse RLS (el callback llega sin sesión activa)
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { error: upsertError } = await supabase
+  const { error } = await createAdminClient()
     .from("google_calendar_tokens")
     .upsert({
-      profile_id:    profileId,
+      profile_id:    auth.userId,
       access_token:  tokens.access_token,
       refresh_token: tokens.refresh_token,
       expiry:        Date.now() + (tokens.expires_in || 3600) * 1000,
@@ -57,11 +60,9 @@ export async function GET(req: NextRequest) {
       updated_at:    new Date().toISOString(),
     }, { onConflict: "profile_id" });
 
-  if (upsertError) {
-    console.error("[GCal callback] Supabase upsert error:", upsertError);
-    return NextResponse.redirect(new URL("/admin/ajustes?calendar=error&reason=db_error", req.url));
+  if (error) {
+    console.error("[GCal callback] Error al guardar token:", error.message);
+    return redirectAjustes("calendar=error&reason=db_error");
   }
-
-  console.log("[GCal callback] Token guardado para profile:", profileId);
-  return NextResponse.redirect(new URL("/admin/ajustes?calendar=ok", req.url));
+  return redirectAjustes("calendar=ok");
 }

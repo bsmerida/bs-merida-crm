@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PUBLIC_PROPERTY_DETAIL_COLUMNS } from "@/lib/public-property";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
@@ -34,13 +35,13 @@ const IChk  = <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" str
 
 export default async function PropiedadDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const { data: p } = await supabase.from("properties").select("*").eq("id", params.id).single();
+  const { data: p }: { data: any } = await supabase.from("properties").select(PUBLIC_PROPERTY_DETAIL_COLUMNS).eq("id", params.id).single();
   if (!p || !p.is_published) notFound();
 
   const { data: imgs } = await supabase
     .from("property_images").select("*").eq("property_id", params.id).order("position");
   const { data: agent } = p.agent_id
-    ? await supabase.from("profiles").select("*").eq("id", p.agent_id).single()
+    ? await supabase.from("profiles").select("id, full_name, phone, email").eq("id", p.agent_id).single()
     : { data: null };
 
   const property = p as Property;

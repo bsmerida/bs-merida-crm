@@ -1,168 +1,110 @@
 // app/api/cron/notificaciones/route.ts
+// Llamado cada hora por GitHub Actions (.github/workflows/notificaciones.yml).
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
+import { createAdminClient } from "@/lib/supabase/server";
+import { sendPush } from "@/lib/push";
+import { addDaysYmd, isVisitInNextHourWindow, meridaParts, meridaSlotToDate } from "@/lib/time";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.duclaud.com.mx";
+export const dynamic = "force-dynamic";
 
-async function sendPush(user_ids: string[], title: string, body: string, url: string) {
-  await fetch(`${SITE}/api/push/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, body, url, user_ids }),
-  }).catch(() => {});
+function validSecret(given: string | null): boolean {
+  const expected = process.env.CRON_SECRET;
+  if (!expected || !given) return false;
+  const a = Buffer.from(given), b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
+function groupBy<T>(rows: T[], key: (r: T) => string): Record<string, T[]> {
+  const out: Record<string, T[]> = {};
+  for (const r of rows) (out[key(r)] ||= []).push(r);
+  return out;
+}
+
+const plural = (n: number, s: string, p = `${s}s`) => (n === 1 ? s : p);
+
 export async function GET(req: NextRequest) {
-  // Verificar secret para que solo GitHub Actions pueda llamar esto
-  const secret = req.headers.get("x-cron-secret");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!validSecret(req.headers.get("x-cron-secret"))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const now     = new Date();
+  const db = createAdminClient();
+  const now = new Date();
+  const { ymd: today, hour } = meridaParts(now);
+  const tomorrow = addDaysYmd(today, 1);
   const results: string[] = [];
 
-  // ── 1. Visita en 1 hora ───────────────────────────────────────────────────
-  const in1h    = new Date(now.getTime() + 60 * 60_000);
-  const in1hMin = new Date(in1h.getTime() - 5 * 60_000).toISOString();
-  const in1hMax = new Date(in1h.getTime() + 5 * 60_000).toISOString();
-
-  const { data: visits1h } = await supabase
+  // Una sola consulta de visitas confirmadas de hoy en adelante
+  const { data: visits } = await db
     .from("appointment_requests")
-    .select("*, agent:profiles!agent_id(id, full_name)")
+    .select("agent_id, client_name, property_title, confirmed_option")
     .eq("status", "confirmed")
-    .gte("confirmed_option->>date", now.toISOString().split("T")[0])
+    .gte("confirmed_option->>date", today)
     .not("agent_id", "is", null);
 
-  for (const v of visits1h || []) {
+  // ── 1. Visita en ~1 hora (cada corrida) ──────────────────────────────────
+  for (const v of visits || []) {
     if (!v.confirmed_option) continue;
-    const visitTime = new Date(`${v.confirmed_option.date}T${v.confirmed_option.time}:00-06:00`);
-    if (visitTime >= new Date(in1hMin) && visitTime <= new Date(in1hMax)) {
-      await sendPush(
-        [v.agent_id],
-        "🏠 Visita en 1 hora",
-        `${v.client_name} visita ${v.property_title || "una propiedad"} a las ${v.confirmed_option.time} hrs`,
-        "/admin/citas"
-      );
-      results.push(`visita-1h: ${v.client_name}`);
+    if (isVisitInNextHourWindow(meridaSlotToDate(v.confirmed_option), now)) {
+      await sendPush([v.agent_id], {
+        title: "🏠 Visita en 1 hora",
+        body:  `${v.client_name} visita ${v.property_title || "una propiedad"} a las ${v.confirmed_option.time} hrs`,
+        url:   "/admin/citas",
+      });
+      results.push(`visita-1h: ${v.agent_id}`);
     }
   }
 
-  // ── 2. Visita mañana ──────────────────────────────────────────────────────
-  const isEightAM = now.getHours() === 8 && now.getMinutes() < 10;
-  if (isEightAM) {
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+  // ── 2. Visitas de mañana (8am Mérida) ─────────────────────────────────────
+  if (hour === 8) {
+    for (const v of (visits || []).filter(v => v.confirmed_option?.date === tomorrow)) {
+      await sendPush([v.agent_id], {
+        title: "📅 Visita mañana",
+        body:  `${v.client_name} visita ${v.property_title || "una propiedad"} a las ${v.confirmed_option.time} hrs`,
+        url:   "/admin/citas",
+      });
+      results.push(`visita-mañana: ${v.agent_id}`);
+    }
+  }
 
-    const { data: visitsTomorrow } = await supabase
-      .from("appointment_requests")
-      .select("*")
-      .eq("status", "confirmed")
-      .not("agent_id", "is", null);
+  // ── 3-5. Tareas y seguimiento (7am Mérida) ────────────────────────────────
+  if (hour === 7) {
+    const { data: tasks } = await db
+      .from("tasks")
+      .select("title, assigned_to, due_at")
+      .in("due_at", [today, tomorrow])
+      .neq("status", "done")
+      .not("assigned_to", "is", null);
 
-    for (const v of visitsTomorrow || []) {
-      if (v.confirmed_option?.date === tomorrowStr) {
-        await sendPush(
-          [v.agent_id],
-          "📅 Visita mañana",
-          `${v.client_name} visita ${v.property_title || "una propiedad"} a las ${v.confirmed_option.time} hrs`,
-          "/admin/citas"
-        );
-        results.push(`visita-mañana: ${v.client_name}`);
+    for (const [when, label, emoji] of [[today, "hoy", "⚠️"], [tomorrow, "mañana", "📋"]] as const) {
+      const byUser = groupBy((tasks || []).filter(t => t.due_at === when), t => t.assigned_to);
+      for (const [userId, list] of Object.entries(byUser)) {
+        await sendPush([userId], {
+          title: `${emoji} ${list.length} ${plural(list.length, "tarea")} ${plural(list.length, "vence", "vencen")} ${label}`,
+          body:  list.map(t => t.title).join(", "),
+          url:   "/admin/tareas",
+        });
+        results.push(`tareas-${label}: ${userId} (${list.length})`);
       }
     }
-  }
 
-  // ── 3. Tareas que vencen hoy ──────────────────────────────────────────────
-  const isSevenAM = now.getHours() === 7 && now.getMinutes() < 10;
-  if (isSevenAM) {
-    const todayStr = now.toISOString().split("T")[0];
-
-    const { data: tasksToday } = await supabase
-      .from("tasks")
-      .select("*, assignee:profiles!assigned_to(id)")
-      .eq("due_at", todayStr)
-      .neq("status", "done")
-      .not("assigned_to", "is", null);
-
-    const byUser: Record<string, any[]> = {};
-    for (const t of tasksToday || []) {
-      if (!byUser[t.assigned_to]) byUser[t.assigned_to] = [];
-      byUser[t.assigned_to].push(t);
-    }
-
-    for (const [userId, tasks] of Object.entries(byUser)) {
-      await sendPush(
-        [userId],
-        `⚠️ ${tasks.length} tarea${tasks.length > 1 ? "s" : ""} vence${tasks.length > 1 ? "n" : ""} hoy`,
-        tasks.map(t => t.title).join(", "),
-        "/admin/tareas"
-      );
-      results.push(`tareas-hoy: ${userId} (${tasks.length})`);
-    }
-
-    // ── 4. Tareas que vencen mañana ─────────────────────────────────────────
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-    const { data: tasksTomorrow } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("due_at", tomorrowStr)
-      .neq("status", "done")
-      .not("assigned_to", "is", null);
-
-    const byUserTomorrow: Record<string, any[]> = {};
-    for (const t of tasksTomorrow || []) {
-      if (!byUserTomorrow[t.assigned_to]) byUserTomorrow[t.assigned_to] = [];
-      byUserTomorrow[t.assigned_to].push(t);
-    }
-
-    for (const [userId, tasks] of Object.entries(byUserTomorrow)) {
-      await sendPush(
-        [userId],
-        `📋 ${tasks.length} tarea${tasks.length > 1 ? "s" : ""} vence${tasks.length > 1 ? "n" : ""} mañana`,
-        tasks.map(t => t.title).join(", "),
-        "/admin/tareas"
-      );
-      results.push(`tareas-mañana: ${userId} (${tasks.length})`);
-    }
-
-    // ── 5. Clientes sin seguimiento +7 días ────────────────────────────────
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const { data: staleLeads } = await supabase
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60_000).toISOString();
+    const { data: staleLeads } = await db
       .from("leads")
-      .select("*, agent:profiles!agent_id(id)")
-      .neq("status", "Cerrado")
-      .neq("status", "Perdido")
+      .select("name, agent_id")
+      .not("status", "in", '("Cerrado ganado","Cerrado perdido","Cerrado","Perdido")')
       .not("agent_id", "is", null)
-      .lt("last_contact_at", sevenDaysAgo.toISOString());
+      .lt("last_contact_at", sevenDaysAgo);
 
-    const byUserLeads: Record<string, any[]> = {};
-    for (const l of staleLeads || []) {
-      if (!byUserLeads[l.agent_id]) byUserLeads[l.agent_id] = [];
-      byUserLeads[l.agent_id].push(l);
-    }
-
-    for (const [userId, leads] of Object.entries(byUserLeads)) {
-      await sendPush(
-        [userId],
-        `👥 ${leads.length} cliente${leads.length > 1 ? "s" : ""} sin seguimiento`,
-        `${leads.slice(0, 3).map((l: any) => l.name).join(", ")}${leads.length > 3 ? ` y ${leads.length - 3} más` : ""} llevan +7 días sin contacto`,
-        "/admin/leads"
-      );
+    for (const [userId, leads] of Object.entries(groupBy(staleLeads || [], l => l.agent_id))) {
+      await sendPush([userId], {
+        title: `👥 ${leads.length} ${plural(leads.length, "cliente")} sin seguimiento`,
+        body:  `${leads.slice(0, 3).map(l => l.name).join(", ")}${leads.length > 3 ? ` y ${leads.length - 3} más` : ""} llevan +7 días sin contacto`,
+        url:   "/admin/leads",
+      });
       results.push(`seguimiento: ${userId} (${leads.length})`);
     }
   }
 
-  return NextResponse.json({ ok: true, ran: results, time: now.toISOString() });
+  return NextResponse.json({ ok: true, ran: results, merida: { today, hour } });
 }

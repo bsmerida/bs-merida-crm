@@ -37,6 +37,7 @@ export function PropertyStats({ propertyId }: { propertyId: string }) {
       });
     };
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- supabase (createBrowserClient) es una instancia única y estable
   }, [propertyId]);
 
   if (!stats) return (

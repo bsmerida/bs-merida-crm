@@ -12,3 +12,6 @@ skills-lock.json
 # Secrets
 *.pem
 *.key
+
+# Caché de TypeScript
+*.tsbuildinfo

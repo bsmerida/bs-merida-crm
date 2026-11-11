@@ -1,127 +1,92 @@
 // app/api/finanzas-ai/route.ts
-// Asistente con memoria persistente
+// Asistente con memoria persistente (solo personal autenticado).
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdmin } from "@supabase/supabase-js";
+import Anthropic from "@anthropic-ai/sdk";
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
+import { rateLimit } from "@/lib/security";
+import { sanitizeChatMessages, type ChatMessage } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
-const MAX_HISTORY = 20; // mensajes a recordar por sesión
+const MODEL = "claude-haiku-4-5";
+const MAX_HISTORY = 20;          // mensajes a recordar
+const MAX_SYSTEM_CHARS = 30_000; // el contexto lo arma el navegador con datos del CRM
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+function textOf(msg: Anthropic.Message): string {
+  return msg.content.flatMap(b => (b.type === "text" ? [b.text] : [])).join("\n").trim();
+}
 
 export async function POST(req: NextRequest) {
-  const supabase  = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const { messages, system } = await req.json();
-
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  // ── Cargar memoria del usuario ─────────────────────────────────────────────
-  let memoryContext = "";
-  let historyMessages: { role: string; content: string }[] = [];
-
-  if (user) {
-    // Resumen de conversaciones anteriores
-    const { data: memory } = await admin
-      .from("ai_memory")
-      .select("summary")
-      .eq("profile_id", user.id)
-      .single();
-
-    if (memory?.summary) {
-      memoryContext = `\n\nMEMORIA DE CONVERSACIONES ANTERIORES:\n${memory.summary}`;
-    }
-
-    // Historial reciente de esta sesión
-    const { data: history } = await admin
-      .from("ai_conversations")
-      .select("role, content")
-      .eq("profile_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(MAX_HISTORY);
-
-    historyMessages = (history || []).reverse();
+  const { auth, error: authError } = await requireAuth();
+  if (authError) return authError;
+  if (!await rateLimit(`finanzas-ai:${auth.userId}`, 30, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Demasiadas consultas, espera unos minutos." }, { status: 429 });
   }
 
-  // ── Llamar a Claude ────────────────────────────────────────────────────────
-  const systemPrompt = (system || "") + memoryContext;
+  const body = await req.json().catch(() => null);
+  const incoming = sanitizeChatMessages(body?.messages, { maxMessages: MAX_HISTORY, maxChars: 4000 });
+  if (!incoming) return NextResponse.json({ error: "Mensajes inválidos" }, { status: 400 });
+  const system = typeof body.system === "string" ? body.system.slice(0, MAX_SYSTEM_CHARS) : "";
+  const lastUserMsg = incoming[incoming.length - 1];
 
-  // Combinar historial con mensajes actuales (evitar duplicados)
-  const lastUserMsg = messages[messages.length - 1];
-  const combinedMessages = [
-    ...historyMessages.slice(0, -messages.length + 1),
-    ...messages,
-  ].slice(-MAX_HISTORY);
+  const db = createAdminClient();
+  const [{ data: memory }, { data: history }] = await Promise.all([
+    db.from("ai_memory").select("summary").eq("profile_id", auth.userId).maybeSingle(),
+    db.from("ai_conversations").select("role, content").eq("profile_id", auth.userId)
+      .order("created_at", { ascending: false }).limit(MAX_HISTORY),
+  ]);
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key":         process.env.ANTHROPIC_API_KEY!,
-      "anthropic-version": "2023-06-01",
-      "Content-Type":      "application/json",
-    },
-    body: JSON.stringify({
-      model:      "claude-haiku-4-5",
+  // El historial guardado ya incluye los turnos anteriores de esta sesión, así
+  // que se combina con el último mensaje del usuario (antes se descartaba por un
+  // slice(0, 0) y la memoria nunca llegaba al modelo).
+  const stored = sanitizeChatMessages([...(history || []).reverse(), lastUserMsg], { maxMessages: MAX_HISTORY, maxChars: 4000 });
+  const messages: ChatMessage[] = stored && stored.length > incoming.length ? stored : incoming;
+
+  const memoryContext = memory?.summary ? `\n\nMEMORIA DE CONVERSACIONES ANTERIORES:\n${memory.summary}` : "";
+
+  let reply: string;
+  try {
+    const response = await anthropic.messages.create({
+      model: MODEL,
       max_tokens: 1024,
-      system:     systemPrompt,
-      messages:   combinedMessages.map(m => ({ role: m.role, content: m.content })),
-    }),
-  });
+      system: system + memoryContext,
+      messages,
+    });
+    reply = textOf(response) || "No pude generar una respuesta.";
+  } catch (e) {
+    console.error("[finanzas-ai]", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : e);
+    return NextResponse.json({ error: "El asistente no está disponible en este momento." }, { status: 502 });
+  }
 
-  const data = await response.json();
-  const reply = data.content?.[0]?.text || "No pude generar una respuesta.";
+  await db.from("ai_conversations").insert([
+    { profile_id: auth.userId, role: "user",      content: lastUserMsg.content },
+    { profile_id: auth.userId, role: "assistant", content: reply },
+  ]);
 
-  // ── Guardar en memoria ─────────────────────────────────────────────────────
-  if (user) {
-    // Guardar mensaje del usuario y respuesta
-    await admin.from("ai_conversations").insert([
-      { profile_id: user.id, role: "user",      content: lastUserMsg.content },
-      { profile_id: user.id, role: "assistant", content: reply               },
-    ]);
+  // Cada 10 mensajes, actualizar el resumen de memoria
+  const { count } = await db.from("ai_conversations")
+    .select("*", { count: "exact", head: true }).eq("profile_id", auth.userId);
 
-    // Cada 10 mensajes, actualizar el resumen de memoria
-    const { count } = await admin
-      .from("ai_conversations")
-      .select("*", { count: "exact", head: true })
-      .eq("profile_id", user.id);
-
-    if (count && count % 10 === 0) {
-      // Generar resumen de las últimas conversaciones
-      const { data: recentConvs } = await admin
-        .from("ai_conversations")
-        .select("role, content")
-        .eq("profile_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      const summaryResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key":         process.env.ANTHROPIC_API_KEY!,
-          "anthropic-version": "2023-06-01",
-          "Content-Type":      "application/json",
-        },
-        body: JSON.stringify({
-          model:      "claude-haiku-4-5",
-          max_tokens: 500,
-          messages: [{
-            role: "user",
-            content: `Resume en 3-5 puntos clave las preferencias, patrones y contexto importante de este usuario basado en sus conversaciones con el asistente:\n\n${(recentConvs || []).reverse().map(m => `${m.role}: ${m.content}`).join("\n")}`,
-          }],
-        }),
+  if (count && count % 10 === 0) {
+    const { data: recent } = await db.from("ai_conversations").select("role, content")
+      .eq("profile_id", auth.userId).order("created_at", { ascending: false }).limit(20);
+    try {
+      const summary = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 500,
+        messages: [{
+          role: "user",
+          content: `Resume en 3-5 puntos clave las preferencias, patrones y contexto importante de este usuario basado en sus conversaciones con el asistente:\n\n${(recent || []).reverse().map(m => `${m.role}: ${m.content}`).join("\n")}`,
+        }],
       });
-
-      const summaryData = await summaryResponse.json();
-      const summary     = summaryData.content?.[0]?.text || "";
-
-      await admin.from("ai_memory").upsert({
-        profile_id: user.id,
-        summary,
-        updated_at: new Date().toISOString(),
+      await db.from("ai_memory").upsert({
+        profile_id: auth.userId, summary: textOf(summary), updated_at: new Date().toISOString(),
       }, { onConflict: "profile_id" });
+    } catch (e) {
+      console.error("[finanzas-ai] resumen:", e instanceof Error ? e.message : e);
     }
   }
 

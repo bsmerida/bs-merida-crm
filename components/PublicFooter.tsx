@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { DUCLAUD_LOGO_WHITE } from "@/lib/duclaud-logo";
+// Archivo estático (antes 145 KB de base64 dentro del JS de cada página)
+const DUCLAUD_LOGO_WHITE = "/logo-white.jpg";
 
 export function PublicFooter() {
   const wa    = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";

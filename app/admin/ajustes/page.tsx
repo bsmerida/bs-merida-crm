@@ -1,12 +1,15 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getAuth } from "@/lib/auth";
 import { Icon } from "@/components/Icon";
 import { EquipoClient } from "@/components/EquipoClient";
 
 export default async function AjustesPage() {
   const supabase = createAdminClient();
-  const authClient = createClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  const { data: profiles } = await supabase.from("profiles").select("*").order("created_at");
+  const auth = await getAuth();
+  // La gestión de equipo es solo para admins; los asesores entran aquí para conectar su calendario
+  const { data: profiles } = auth?.isAdmin
+    ? await supabase.from("profiles").select("*").order("created_at")
+    : { data: [] };
 
   return (
     <div className="p-10 space-y-6">
@@ -39,7 +42,18 @@ export default async function AjustesPage() {
         <p className="text-xs text-ink-soft mt-6">Para cambiar estos datos, edita las variables de entorno en Vercel.</p>
       </div>
 
-      <EquipoClient profiles={profiles || []} currentUserId={user?.id || ""} />
+      {auth?.isAdmin && <EquipoClient profiles={profiles || []} currentUserId={auth.userId} />}
+
+      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h3 className="font-semibold text-ink">Google Calendar</h3>
+          <p className="text-xs text-ink-muted mt-1">Conecta tu calendario para que las visitas confirmadas se agenden solas.</p>
+        </div>
+        <a href="/api/citas/google-connect"
+          className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium">
+          Conectar mi calendario
+        </a>
+      </div>
 
       <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
         <h3 className="font-semibold text-ink mb-1">Cumplimiento legal · México</h3>

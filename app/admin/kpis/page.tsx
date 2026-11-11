@@ -22,22 +22,23 @@ export default async function KPIsPage() {
     { data: propsAll },
     { data: opsAll },
     { data: agentes },
-    { data: viewsAll },
-    { data: inquiriesAll },
+    { count: totalViewsCount },
+    { count: totalInquiriesCount },
+    { count: viewsMesCount },
   ] = await Promise.all([
     supabase.from("leads").select("id, status, source, agent_id, created_at, last_contact_at, budget_min, budget_max"),
     supabase.from("properties").select("id, price, status, operation, type, agent_id, created_at"),
     supabase.from("operations").select("id, value, commission, agent_id, stage, closed_at, created_at"),
     supabase.from("profiles").select("id, full_name, initials, role").eq("active", true),
-    supabase.from("property_views").select("property_id, viewed_at"),
-    supabase.from("property_inquiries").select("property_id, created_at"),
+    // Solo conteos: antes se descargaban todas las filas de vistas y solicitudes
+    supabase.from("property_views").select("property_id", { count: "exact", head: true }),
+    supabase.from("property_inquiries").select("property_id", { count: "exact", head: true }),
+    supabase.from("property_views").select("property_id", { count: "exact", head: true }).gte("viewed_at", inicioMes.toISOString()),
   ]);
 
   const leads = leadsAll || [];
   const props = propsAll || [];
   const ops = opsAll || [];
-  const views = viewsAll || [];
-  const inquiries = inquiriesAll || [];
   const agentList = (agentes || []).filter((a: any) => a.role === "asesor");
 
   // ── LEADS ──────────────────────────────────────────────────────
@@ -67,10 +68,10 @@ export default async function KPIsPage() {
   const valorInventario = props.filter((p: any) => p.status === "Disponible").reduce((s: number, p: any) => s + Number(p.price), 0);
 
   // ── TRÁFICO ────────────────────────────────────────────────────
-  const totalViews = views.length;
-  const totalInquiries = inquiries.length;
+  const totalViews = totalViewsCount || 0;
+  const totalInquiries = totalInquiriesCount || 0;
   const convTrafico = totalViews > 0 ? ((totalInquiries / totalViews) * 100).toFixed(1) : "0";
-  const viewsMes = views.filter((v: any) => new Date(v.viewed_at) >= inicioMes).length;
+  const viewsMes = viewsMesCount || 0;
 
   // ── RANKING ASESORES ───────────────────────────────────────────
   const ranking = agentList.map((a: any) => {

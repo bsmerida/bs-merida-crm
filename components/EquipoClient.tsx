@@ -34,7 +34,7 @@ function NuevoUsuarioModal({ onSave, onClose }: { onSave: (p: Profile) => void; 
 
   async function handleSave() {
     if (!name || !email || !password) { setErr("Completa todos los campos."); return; }
-    if (password.length < 8) { setErr("La contraseña debe tener al menos 8 caracteres."); return; }
+    if (password.length < 10) { setErr("La contraseña debe tener al menos 10 caracteres."); return; }
     setSaving(true); setErr("");
     const res  = await fetch("/api/admin/usuarios", {
       method: "POST",
@@ -76,7 +76,7 @@ function NuevoUsuarioModal({ onSave, onClose }: { onSave: (p: Profile) => void; 
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Contraseña temporal *</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres"
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 10 caracteres"
               autoComplete="new-password"
               className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
           </div>

@@ -3,14 +3,13 @@ import { useState } from "react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicChatbot } from "@/components/PublicChatbot";
-import { createClient } from "@/lib/supabase/client";
 
 
 export default function ContactoPage() {
   const [form, setForm]   = useState({ name: "", email: "", phone: "", message: "" });
   const [sent, setSent]   = useState(false);
   const [busy, setBusy]   = useState(false);
-  const supabase = createClient();
+  const [error, setError] = useState("");
   const wa    = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
   const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE    || "999 303 4815";
   const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL    || "contacto@duclaud.mx";
@@ -18,13 +17,20 @@ export default function ContactoPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.phone) return;
-    setBusy(true);
-    await supabase.from("leads").insert({
-      name: form.name, email: form.email, phone: form.phone,
-      source: "Sitio web", interest: form.message,
-      consent_privacy: true, consent_at: new Date().toISOString(),
-    });
-    setBusy(false); setSent(true);
+    setBusy(true); setError("");
+    try {
+      const res = await fetch("/api/contacto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.ok) setSent(true);
+      else setError(data.error || "No pudimos enviar su mensaje. Intente por WhatsApp.");
+    } catch {
+      setError("Problema de conexión. Intente de nuevo o escríbanos por WhatsApp.");
+    }
+    setBusy(false);
   };
 
   const inp = "w-full border border-stone bg-white px-4 py-3 rounded-xl text-sm text-navy placeholder:text-ink-soft focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/10 transition-all";
@@ -104,6 +110,7 @@ export default function ContactoPage() {
                   placeholder="Cuéntenos qué busca..." rows={5} className={`${inp} resize-none`} />
               </div>
               <p className="text-[11px] text-ink-soft">Al enviar autoriza que un consultor Duclaud le contacte.</p>
+              {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
               <button type="submit" disabled={busy}
                 className="w-full bg-navy hover:bg-navy-mid disabled:opacity-50 text-white text-[11px] uppercase tracking-[0.1em] font-semibold py-4 rounded-full transition-colors">
                 {busy ? "Enviando..." : "Enviar mensaje"}

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 const fmt = (n: number, cur = "MXN") =>
   new Intl.NumberFormat(cur === "USD" ? "en-US" : "es-MX", {
@@ -8,34 +10,38 @@ const fmt = (n: number, cur = "MXN") =>
   }).format(n);
 
 export default async function TableroPage({ params }: { params: { slug: string } }) {
-  const supabase = createClient();
+  // Página pública: se lee con service role, pero SOLO lo que el cliente debe ver
+  // (nombre del cliente, asesor y propiedades del tablero). Así las tablas leads
+  // y boards no necesitan ser legibles con la llave anónima.
+  const db = createAdminClient();
 
-  const { data: board } = await supabase
+  const { data: board }: { data: any } = await db
     .from("boards")
-    .select("*, lead:leads(name, phone), agent:profiles(full_name, phone)")
+    .select("id, title, lead:leads(name), agent:profiles(full_name, phone)")
     .eq("slug", params.slug)
-    .single();
+    .maybeSingle();
 
   if (!board) notFound();
 
-  const { data: boardProps } = await supabase
+  const { data: boardProps } = await db
     .from("board_properties")
-    .select("ai_reason, ai_score, added_by, property:properties(id,title,type,operation,price,currency,zone,city,state,bedrooms,bathrooms,m2_construction,m2_land,parking,status)")
+    .select("ai_reason, ai_score, added_by, property:properties(id,title,type,operation,price,currency,zone,city,state,bedrooms,bathrooms,m2_construction,m2_land,parking,status,is_published)")
     .eq("board_id", board.id)
     .order("ai_score", { ascending: false });
 
-  // Cargar imagen de portada de cada propiedad
-  const propsWithCovers = await Promise.all(
-    (boardProps || []).map(async (row: any) => {
-      const { data: imgs } = await supabase
-        .from("property_images")
-        .select("url")
-        .eq("property_id", row.property.id)
-        .eq("is_cover", true)
-        .limit(1);
-      return { ...row.property, ai_reason: row.ai_reason, ai_score: row.ai_score, added_by: row.added_by, cover: imgs?.[0]?.url };
-    })
-  );
+  const rows = (boardProps || []).filter((r: any) => r.property?.is_published);
+  const ids = rows.map((r: any) => r.property.id);
+
+  // Portadas en una sola consulta (antes: una consulta por propiedad)
+  const { data: covers } = ids.length
+    ? await db.from("property_images").select("property_id, url").in("property_id", ids).eq("is_cover", true)
+    : { data: [] };
+  const coverMap = new Map((covers || []).map((c: any) => [c.property_id, c.url]));
+
+  const propsWithCovers = rows.map((row: any) => ({
+    ...row.property, ai_reason: row.ai_reason, ai_score: row.ai_score, added_by: row.added_by,
+    cover: coverMap.get(row.property.id),
+  }));
 
   const biz = {
     name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "BS Mérida Inmobiliaria",

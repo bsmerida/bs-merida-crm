@@ -5,10 +5,13 @@ import { compararInventario } from "./inventario.mjs";
 
 const LOTE = 500;
 
-async function leerTodo(db, tabla, columnas, filtro) {
+// Lee de 1000 en 1000. "orden" debe ser único: sin un orden fijo, Postgres
+// puede repetir y saltarse filas entre páginas (archivos que ya existían
+// aparecían como "Nuevo").
+async function leerTodo(db, tabla, columnas, filtro, orden) {
   const filas = [];
   for (let desde = 0; ; desde += 1000) {
-    const { data, error } = await filtro(db.from(tabla).select(columnas)).range(desde, desde + 999);
+    const { data, error } = await filtro(db.from(tabla).select(columnas)).order(orden).range(desde, desde + 999);
     if (error) throw new Error(`No se pudo leer ${tabla}: ${error.message}`);
     filas.push(...(data || []));
     if (!data || data.length < 1000) return filas;
@@ -29,7 +32,7 @@ export async function marcarError(db, fuente, mensaje) {
 export async function revisarFuente(db, fuente, conector) {
   const actuales = await conector.listar();
   const previos = await leerTodo(db, "fuente_archivos", "archivo_id, nombre, ruta, modificado, tamano, eliminado_en",
-    q => q.eq("fuente_id", fuente.id));
+    q => q.eq("fuente_id", fuente.id), "archivo_id");
 
   const ahora = new Date().toISOString();
   const r = compararInventario(previos, actuales, { baseCargada: fuente.base_cargada, ahora });

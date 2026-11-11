@@ -2,7 +2,7 @@
 
 Rama: `audit/seguridad-y-correcciones` (sin commit; revisa el diff antes de subir).
 
-Verificación al cierre: `npm run typecheck` (modo **strict**) ✅ · `npm test` 53/53 ✅ · `npm run lint` 0 errores, 0 avisos ✅ · `next build` ✅
+Verificación al cierre: `npm run typecheck` (modo **strict**) ✅ · `npm test` 59/59 ✅ · `npm run lint` 0 errores, 0 avisos ✅ · `next build` ✅
 
 ---
 
@@ -101,6 +101,11 @@ Verificación al cierre: `npm run typecheck` (modo **strict**) ✅ · `npm test`
 
 **Después de desplegar esta rama**, ninguna parte del sitio público necesita escribir ni leer con la llave anónima en `leads`, `chatbot_sessions`, `chatbot_messages`, `boards` ni `board_properties`. Puedes quitar esas políticas para `anon` en Supabase (ver §6). Hazlo **después** del deploy, no antes.
 
+**Merge con `main` (feeds por portal, switches, nueva Sofía):**
+- Las 13 rutas `/api/feed/<portal>` eran copias idénticas del feed viejo (sin escapar el XML, con `select("*")`). Ahora usan un solo handler (`lib/portal-feed.ts`); mismas URLs y misma columna `publicar_<portal>`.
+- La nueva Sofía de `main` (búsqueda en 2 fases) se conservó con las protecciones. Además: la zona/tipo que extrae la IA se metía sin limpiar en filtros `.or()` de PostgREST (una coma o paréntesis del cliente alteraba la consulta), y "muéstrame todo" mandaba el inventario completo al modelo en cada mensaje (ahora el total real con `count` + 40 propiedades).
+- `main` pasó las páginas admin a service role (sin RLS). Se conservó, y se agregó que en el detalle de cliente/propiedad el asesor solo abra lo suyo. Se corrigió que las notas de propiedad se guardaban sin autor.
+
 **Pendiente:**
 1. **Aplicar la migración SQL** (`supabase/migrations/…conteos_por_propiedad.sql`) en el SQL Editor de Supabase.
 2. **Upstash:** crear la base gratuita y agregar `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` en Vercel.
@@ -117,7 +122,7 @@ Verificación al cierre: `npm run typecheck` (modo **strict**) ✅ · `npm test`
 No había ninguna prueba. Se agregó Vitest + ESLint:
 
 ```
-npm test          # 53 pruebas
+npm test          # 59 pruebas
 npm run typecheck
 npm run lint
 npm run check     # las tres

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeChatMessages, validateEmail, validateName, validateOptions, validatePhone } from "@/lib/validation";
+import { cleanFilterNumber, cleanFilterText, sanitizeChatMessages, validateEmail, validateName, validateOptions, validatePhone } from "@/lib/validation";
 
 describe("validatePhone", () => {
   it.each([
@@ -58,5 +58,20 @@ describe("sanitizeChatMessages", () => {
     const out = sanitizeChatMessages(many, { maxMessages: 10, maxChars: 100 })!;
     expect(out.length).toBeLessThanOrEqual(10);
     expect(out.every(m => m.content.length <= 100)).toBe(true);
+  });
+});
+
+describe("filtros de Sofía", () => {
+  it("quita caracteres que alteran los filtros de PostgREST", () => {
+    expect(cleanFilterText("Mérida),id.neq.0,(zone")).toBe("Mérida id.neq.0 zone");
+    expect(cleanFilterText("100%_*")).toBe("100");
+    expect(cleanFilterText("   ")).toBeNull();
+    expect(cleanFilterText(42)).toBeNull();
+  });
+  it("convierte precios a números positivos o null", () => {
+    expect(cleanFilterNumber(3500000)).toBe(3500000);
+    expect(cleanFilterNumber("$3,500,000")).toBe(3500000);
+    expect(cleanFilterNumber("mucho")).toBeNull();
+    expect(cleanFilterNumber(-5)).toBeNull();
   });
 });

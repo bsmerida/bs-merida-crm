@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { fmtMXN } from "@/lib/utils";
 import { Icon } from "@/components/Icon";
 
@@ -9,7 +9,7 @@ const ESTADOS_FUNNEL = [
 ];
 
 export default async function AdminDashboard() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
   const inicioMesIso = inicioMes.toISOString();
 

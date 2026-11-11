@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { CopyableUrl } from "@/components/CopyableUrl";
 
@@ -77,7 +77,7 @@ const PORTALES = [
 ];
 
 export default async function PortalesAdminPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { count: propsCount } = await supabase.from("properties").select("*", { count: "exact", head: true }).eq("is_published", true);
 
   const headersList = headers();

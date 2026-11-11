@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { canManage, getAuth } from "@/lib/auth";
 import { LeadEditor } from "@/components/LeadEditor";
 import { LeadTablero } from "@/components/LeadTablero";
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const [{ data: lead }, { data: agentes }, { data: activities }] = await Promise.all([
     supabase.from("leads").select("*").eq("id", params.id).single(),
@@ -13,7 +14,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     supabase.from("activities").select("*, user:profiles(full_name)").eq("lead_id", params.id).order("created_at", { ascending: false }).limit(50),
   ]);
 
-  if (!lead) notFound();
+  // Con service role no aplica RLS: el asesor solo puede abrir sus propios clientes
+  const auth = await getAuth();
+  if (!lead || !auth || !canManage(auth, lead.agent_id)) notFound();
 
   return (
     <div className="p-10 max-w-5xl space-y-8">

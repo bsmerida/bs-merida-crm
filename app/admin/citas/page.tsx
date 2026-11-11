@@ -1,10 +1,11 @@
 // app/admin/citas/page.tsx
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { CitasClient } from "@/components/CitasClient";
 
 export default async function AdminCitasPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = createAdminClient();
+  const authClient = createClient();
+  const { data: { user } } = await authClient.auth.getUser();
   const { data: profile }  = await supabase.from("profiles").select("role").eq("id", user!.id).single();
   const isAdmin = profile?.role === "admin";
 

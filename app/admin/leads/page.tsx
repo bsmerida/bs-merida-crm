@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { LeadsClient } from "@/components/LeadsClient";
 
 export default async function AdminLeadsPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = createAdminClient();
+  const authClient = createClient();
+  const { data: { user } } = await authClient.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
   const isAdmin = profile?.role === "admin";
 

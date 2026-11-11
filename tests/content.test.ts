@@ -13,12 +13,16 @@ describe("buildListingsXml", () => {
     ],
     updated_at: "2026-11-10",
   };
-  const xml = buildListingsXml([prop], "https://duclaud.mx", { email: "a@b.mx", phone: "1" });
+  const xml = buildListingsXml([prop], "https://duclaud.mx", { name: "Duclaud", website: "https://duclaud.mx", email: "a@b.mx", phone: "1", phone2: "2" });
 
   it("escapa valores fuera de CDATA", () => {
     expect(xml).toContain("<type>Casa&lt;x&gt;</type>");
     expect(xml).toContain("<city>Mérida &amp; Co</city>");
     expect(xml).toContain("?x=1&amp;y=2");
+  });
+  it("incluye los datos del proveedor", () => {
+    expect(xml).toContain("<name>Duclaud</name>");
+    expect(xml).toContain("<phone2>2</phone2>");
   });
   it("pone la portada primero", () => {
     expect(xml.indexOf("1.jpg")).toBeLessThan(xml.indexOf("2.jpg"));

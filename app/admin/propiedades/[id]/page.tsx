@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { canManage, getAuth } from "@/lib/auth";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyImageManager } from "@/components/PropertyImageManager";
 import { PropertyNotes } from "@/components/PropertyNotes";
@@ -7,11 +8,12 @@ import { PropertyStats } from "@/components/PropertyStats";
 import type { Property } from "@/lib/supabase/types";
 
 export default async function EditarPropiedadPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase.from("properties").select("*").eq("id", params.id).single();
-  if (!data) notFound();
+  // Con service role no aplica RLS: el asesor solo puede abrir sus propiedades
+  const auth = await getAuth();
+  if (!data || !auth || !canManage(auth, data.agent_id)) notFound();
   const property = data as Property;
-  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="p-10 max-w-4xl">
@@ -41,7 +43,7 @@ export default async function EditarPropiedadPage({ params }: { params: { id: st
         {/* 1. Estadísticas */}
         <PropertyStats propertyId={property.id} />
         {/* 2. Notas internas */}
-        <PropertyNotes propertyId={property.id} userId={user?.id || ""} />
+        <PropertyNotes propertyId={property.id} userId={auth.userId} />
         {/* 3. Imágenes */}
         <PropertyImageManager propertyId={property.id} />
         {/* 4. Formulario */}

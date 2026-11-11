@@ -3,7 +3,9 @@
 // antes un título con "]]>" o un tipo con "<" rompía el XML para los portales.
 import { cdata, escapeXml as x } from "@/lib/security";
 
-export function buildListingsXml(props: any[], baseUrl: string, provider: { email: string; phone: string }): string {
+export type FeedProvider = { name: string; website: string; email: string; phone: string; phone2?: string };
+
+export function buildListingsXml(props: any[], baseUrl: string, provider: FeedProvider): string {
   const listings = props.map(p => {
     const images = [...(p.images || [])]
       .sort((a: any, b: any) => (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.position - b.position)
@@ -46,10 +48,11 @@ export function buildListingsXml(props: any[], baseUrl: string, provider: { emai
   return `<?xml version="1.0" encoding="UTF-8"?>
 <listings>
   <provider>
-    <name>Inmobiliaria BS Mérida</name>
-    <website>https://www.bsmerida.com</website>
+    <name>${x(provider.name)}</name>
+    <website>${x(provider.website)}</website>
     <email>${x(provider.email)}</email>
     <phone>${x(provider.phone)}</phone>
+    ${provider.phone2 ? `<phone2>${x(provider.phone2)}</phone2>` : ""}
   </provider>
   ${listings}
 </listings>`.trim();

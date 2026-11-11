@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { countByProperty } from "@/lib/stats";
 import { PropertiesStatsClient } from "@/components/PropertiesStatsClient";
 import Link from "next/link";
 
 export default async function PropiedadesEstadisticasPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   // Solo se descargan las vistas de los últimos 30 días (para la gráfica);
   // los totales y los conteos por propiedad se calculan en la base.

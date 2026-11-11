@@ -54,3 +54,18 @@ export function sanitizeChatMessages(
   if (!msgs.length || msgs[msgs.length - 1].role !== "user") return null;
   return msgs;
 }
+
+// ── Filtros de búsqueda generados por la IA (Sofía) ─────────────────────────
+// Salen de lo que escribe el cliente, así que se limpian antes de meterlos en
+// la consulta: ",()" alteran los filtros .or() de PostgREST y "%_*\" son
+// comodines de ilike.
+export function cleanFilterText(v: unknown, max = 60): string | null {
+  if (typeof v !== "string") return null;
+  const s = v.replace(/[,()%_*\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  return s || null;
+}
+
+export function cleanFilterNumber(v: unknown): number | null {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.replace(/[^\d.]/g, "")) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}

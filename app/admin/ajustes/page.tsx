@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 import { Icon } from "@/components/Icon";
 import { EquipoClient } from "@/components/EquipoClient";
 
 export default async function AjustesPage() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const auth = await getAuth();
   // La gestión de equipo es solo para admins; los asesores entran aquí para conectar su calendario
   const { data: profiles } = auth?.isAdmin

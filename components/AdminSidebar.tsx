@@ -18,6 +18,7 @@ const icons: Record<string, JSX.Element> = {
   check:     <><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,
   trending:  <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
   coins:     <><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1110.34 18"/><path d="M7 6h1v4"/></>,
+  folder:    <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>,
   globe:     <><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></>,
   settings:  <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3h.1a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8v.1a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></>,
   sparkle:   <path d="M12 3l1.88 5.76a1 1 0 00.63.63L20.24 11.35 14.48 13.12a1 1 0 00-.63.63L12 19.5l-1.85-5.75a1 1 0 00-.63-.63L3.76 11.35l5.76-1.96a1 1 0 00.63-.63L12 3z"/>,
@@ -55,6 +56,7 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
     { href: "/admin/kpis",     label: "KPIs",     icon: "trending" },
     { href: "/admin/finanzas", label: "Finanzas", icon: "coins"    },
     { href: "/admin/portales", label: "Portales", icon: "globe"    },
+    { href: "/admin/fuentes",  label: "Fuentes",  icon: "folder"   },
     { href: "/admin/ajustes",  label: "Ajustes",  icon: "settings" },
   ];
 

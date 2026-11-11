@@ -8,6 +8,7 @@ export const ADMIN_ONLY_PATHS = [
   "/admin/finanzas",
   "/admin/cuentas-por-pagar",
   "/admin/portales",
+  "/admin/fuentes",
   "/admin/branding",
   "/admin/geocode",
   "/admin/propiedades/tokko",

@@ -29,6 +29,20 @@ export default async function FuentesPage() {
   const lista = fuentes || [];
   const pendientes = borradores || [];
   const ultima = corridas?.[0] || null;
+  // Fotos que ya tiene en el CRM la propiedad a actualizar (y las parecidas),
+  // para reconocer de un vistazo de cuál se trata.
+  const idsPropiedades = [...new Set(pendientes.flatMap((b: any) =>
+    [b.property_id, ...(b.coincidencia?.candidatos || []).map((c: any) => c.id)]).filter(Boolean))] as string[];
+  const fotosActuales: Record<string, string[]> = {};
+  if (idsPropiedades.length) {
+    const { data: imagenes } = await supabase.from("property_images")
+      .select("property_id, url, position, is_cover").in("property_id", idsPropiedades)
+      .order("position", { ascending: true });
+    for (const img of imagenes || []) {
+      const l = (fotosActuales[img.property_id] ||= []);
+      if (img.is_cover) l.unshift(img.url); else l.push(img.url);
+    }
+  }
   const proveedores = Object.fromEntries(lista.map(f => [f.id, `${f.proveedor}${f.alcance ? ` · ${f.alcance}` : ""}`]));
 
   return (
@@ -60,7 +74,7 @@ export default async function FuentesPage() {
         </div>
       )}
 
-      <FuentesRevision borradores={pendientes} proveedores={proveedores} />
+      <FuentesRevision borradores={pendientes} proveedores={proveedores} fotosActuales={fotosActuales} />
 
       <FuentesPanel
         fuentes={lista}

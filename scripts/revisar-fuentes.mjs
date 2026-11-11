@@ -31,7 +31,8 @@ const bandera = (nombre) => args.includes(`--${nombre}`);
 const MAX_DESARROLLOS = Number(opcion("max-desarrollos") || process.env.FUENTES_MAX_DESARROLLOS || 25);
 const MAX_COSTO_USD = Number(opcion("max-costo") || process.env.FUENTES_MAX_COSTO_USD || 15);
 
-const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Acepta la URL del proyecto aunque venga copiada con /rest/v1/ al final.
+const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) { console.error("Faltan SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY"); process.exit(1); }
 const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });

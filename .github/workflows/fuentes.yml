@@ -47,6 +47,7 @@ jobs:
           DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FUENTES_EXCEL_URL: ${{ secrets.FUENTES_EXCEL_URL }}
           FUENTE: ${{ inputs.fuente }}
           SOLO_REVISAR: ${{ inputs.solo_revisar }}
           FUENTES_MAX_COSTO_USD: ${{ inputs.max_costo || '15' }}

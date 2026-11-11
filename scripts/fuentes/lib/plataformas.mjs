@@ -106,6 +106,19 @@ export async function descargarDrive(archivo, apiKey, { fetchImpl = fetch } = {}
   return { buffer: Buffer.from(await res.arrayBuffer()), mime: nativo ? "application/pdf" : archivo.mime };
 }
 
+// Hoja de cálculo compartida con enlace (Excel subido o Google Sheets) como .xlsx.
+export async function descargarHojaDrive(url, apiKey, { fetchImpl = fetch } = {}) {
+  if (!apiKey) throw new Error("Falta GOOGLE_API_KEY");
+  const m = String(url).match(/\/d\/([A-Za-z0-9_-]{10,})/) || String(url).match(/[?&]id=([A-Za-z0-9_-]{10,})/);
+  if (!m) throw new Error("El enlace del Excel no es un archivo de Drive");
+  const meta = await (await driveGet(`${DRIVE_API}/${m[1]}?fields=mimeType&supportsAllDrives=true&key=${apiKey}`, fetchImpl)).json();
+  const xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const res = await driveGet(meta.mimeType === "application/vnd.google-apps.spreadsheet"
+    ? `${DRIVE_API}/${m[1]}/export?mimeType=${encodeURIComponent(xlsx)}&key=${apiKey}`
+    : `${DRIVE_API}/${m[1]}?alt=media&supportsAllDrives=true&key=${apiKey}`, fetchImpl);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 // Imagen reducida (JPEG) generada por Drive; ancho en px.
 export async function miniaturaDrive(archivo, ancho, { fetchImpl = fetch } = {}) {
   const res = await conReintentos(async () => {

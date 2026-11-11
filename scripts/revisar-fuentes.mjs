@@ -6,6 +6,8 @@
 //   node scripts/revisar-fuentes.mjs --solo-revisar     # sin IA: solo detecta cambios de archivos
 //   node scripts/revisar-fuentes.mjs --max-desarrollos 5 --max-costo 3
 //
+// Paso 0 (si hay FUENTES_EXCEL_URL): lee el Excel de fuentes en Drive y agrega
+//   las fuentes con ID nuevo, apagadas. Si falla, se sigue con las ya registradas.
 // Paso 1 (siempre, sin IA): lista cada carpeta en solo lectura y registra
 //   archivos nuevos, modificados y eliminados.
 // Paso 2 (fuentes con "agente_activo"): los especialistas leen los documentos
@@ -14,9 +16,10 @@
 //
 // Variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_API_KEY,
 // DROPBOX_REFRESH_TOKEN + DROPBOX_APP_KEY + DROPBOX_APP_SECRET (o DROPBOX_ACCESS_TOKEN)
-// y ANTHROPIC_API_KEY (paso 2). Nunca se imprimen.
+// ANTHROPIC_API_KEY (paso 2) y FUENTES_EXCEL_URL (paso 0). Nunca se imprimen.
 import { createClient } from "@supabase/supabase-js";
-import { conectarFuente } from "./fuentes/lib/plataformas.mjs";
+import { conectarFuente, descargarHojaDrive } from "./fuentes/lib/plataformas.mjs";
+import { leerExcelFuentes, sincronizarFuentes } from "./fuentes/lib/excel.mjs";
 import { revisarFuente, marcarError } from "./fuentes/lib/revisar.mjs";
 import { cargarContexto, procesarFuentes } from "./fuentes/lib/agente.mjs";
 import { crearIA, PresupuestoAgotado } from "./fuentes/lib/ia.mjs";
@@ -33,7 +36,24 @@ const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) { console.error("Faltan SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY"); process.exit(1); }
 const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 
+// Paso 0: nunca detiene la corrida; el error queda registrado.
+async function sincronizarExcel() {
+  const excel = process.env.FUENTES_EXCEL_URL;
+  if (!excel) return { resumen: null, error: null };
+  console.log("Paso 0 · Excel de fuentes");
+  try {
+    const r = await sincronizarFuentes(db, leerExcelFuentes(await descargarHojaDrive(excel, process.env.GOOGLE_API_KEY)));
+    console.log(r.agregadas.length ? `✓ Fuentes nuevas (apagadas): ${r.agregadas.join(", ")}` : "✓ Sin fuentes nuevas");
+    for (const o of r.omitidas) console.log(`· ${o.id} no se agregó: ${o.motivo}`);
+    return { resumen: r, error: null };
+  } catch (e) {
+    console.log(`✗ Excel de fuentes: ${e.message}`);
+    return { resumen: null, error: `Excel de fuentes: ${e.message}` };
+  }
+}
+
 async function main() {
+  const excel = await sincronizarExcel();
   let q = db.from("fuentes").select("*").order("id");
   if (opcion("fuente")) q = q.eq("id", opcion("fuente"));
   const { data: fuentes, error } = await q;
@@ -41,11 +61,11 @@ async function main() {
   if (!fuentes?.length) { console.log("No hay fuentes registradas. Corre supabase/seed/fuentes.sql."); return; }
 
   const { data: corrida } = await db.from("agente_corridas").insert({}).select("id").single();
-  const errores = [];
-  const resumen = { fuentes: {}, borradores: 0, desarrollos: 0 };
+  const errores = excel.error ? [excel.error] : [];
+  const resumen = { fuentes: {}, borradores: 0, desarrollos: 0, ...(excel.resumen && { excel: excel.resumen }) };
 
   // ── Paso 1: revisar carpetas ──────────────────────────────────────────────
-  console.log("Paso 1 · Revisión de carpetas");
+  console.log("\nPaso 1 · Revisión de carpetas");
   const revisadas = [];
   for (const fuente of fuentes) {
     const etiqueta = `${fuente.id} ${fuente.proveedor}${fuente.alcance ? ` · ${fuente.alcance}` : ""}`;

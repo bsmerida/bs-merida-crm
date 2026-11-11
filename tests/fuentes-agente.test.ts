@@ -96,6 +96,10 @@ describe("candidatos", () => {
   it("encuentra el desarrollo y prioriza el modelo correcto", () => {
     expect(candidatos(inventario, kinora, tipoA).map(p => p.id)).toEqual(["2", "1"]);
   });
+  it("encuentra el desarrollo aunque esté en la dirección y no en el título", () => {
+    const inv = [{ id: "r", title: "Casa en Conkal", address: "rosamora", type: "Casa", operation: "Venta", bedrooms: 3 }];
+    expect(candidatos(inv, { nombre: "Rosamora" }, { ...tipoA, type: "Casa", modelo: "Modelo Iris", bedrooms: 3 }).map(p => p.id)).toEqual(["r"]);
+  });
   it("no confunde códigos de modelo con palabras sueltas", () => {
     expect(candidatos(inventario, { nombre: "Torre Temozón" }, { ...tipoA, modelo: "Tipo B1" })[0].id).toBe("4");
   });

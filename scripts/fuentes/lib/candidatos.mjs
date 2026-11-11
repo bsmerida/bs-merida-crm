@@ -18,7 +18,8 @@ export const palabrasClave = (texto) =>
 export function puntaje(prop, desarrollo, modelo) {
   const claves = palabrasClave(desarrollo.nombre);
   if (!claves.length) return 0;
-  const texto = ` ${normalizar(`${prop.title} ${prop.development || ""}`)} `;
+  // En el inventario actual el desarrollo a veces está en la dirección ("Casa en Conkal", address "rosamora").
+  const texto = ` ${normalizar(`${prop.title} ${prop.development || ""} ${prop.address || ""}`)} `;
   const coinciden = claves.filter(c => texto.includes(` ${c} `)).length;
   if (coinciden === 0) return 0; // sin el nombre del desarrollo no es candidato
   let p = (coinciden / claves.length) * 10;

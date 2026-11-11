@@ -20,7 +20,7 @@ Una propiedad del inventario es el mismo modelo solo si coincide el desarrollo Y
 - Si no estás seguro, responde cadena vacía: es mejor crear un borrador nuevo que actualizar la propiedad equivocada.`;
 
 const resumenProp = (p) => [
-  `id=${p.id}`, `"${p.title}"`, p.development ? `desarrollo: ${p.development}` : "", `${p.type} en ${p.operation}`,
+  `id=${p.id}`, `"${p.title}"`, p.development ? `desarrollo: ${p.development}` : "", p.address ? `dirección: ${p.address}` : "", `${p.type} en ${p.operation}`,
   p.zone ? `zona: ${p.zone}` : "", p.bedrooms ? `${p.bedrooms} rec` : "", p.m2_construction ? `${p.m2_construction} m²` : "",
   p.price ? `$${Number(p.price).toLocaleString("es-MX")}` : "", p.status,
 ].filter(Boolean).join(" · ");

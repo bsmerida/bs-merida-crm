@@ -35,7 +35,7 @@ export async function cargarContexto(db) {
       "id, title, type, operation, status, development, zone, address, city, state, price, price_type, currency, " +
       "bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, description, is_published, updated_at").order("id")),
     leerTodo(() => db.from("property_images").select("property_id, url, is_cover").order("property_id").order("url")),
-    leerTodo(() => db.from("propiedad_fuentes").select("fuente_id, clave_modelo, property_id").order("vinculado_en")),
+    leerTodo(() => db.from("propiedad_fuentes").select("fuente_id, clave_modelo, property_id").order("fuente_id").order("clave_modelo")),
     db.from("agente_lecciones").select("paso, leccion").eq("activa", true).order("created_at", { ascending: false }).limit(200),
     db.from("propiedad_borradores").select("datos, datos_finales, extra").eq("estado", "Aprobado")
       .not("datos_finales", "is", null).order("revisado_en", { ascending: false }).limit(40),

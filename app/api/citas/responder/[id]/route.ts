@@ -30,8 +30,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (searchParams.get("action") === "accept" && request.status === "pending") {
     const option = (request.client_options as any[])?.[optionIdx];
     if (!option) return NextResponse.redirect(new URL("/admin/citas?error=invalid_option", SITE));
-    await confirmRequest(db, request, option);
-    return NextResponse.redirect(new URL("/admin/citas?confirmed=1", SITE));
+    const ok = await confirmRequest(db, request, option, "pending");
+    return NextResponse.redirect(new URL(ok ? "/admin/citas?confirmed=1" : "/admin/citas?error=already", SITE));
   }
 
   return NextResponse.redirect(new URL("/admin/citas", SITE));
@@ -54,7 +54,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (action === "accept") {
     const option = (request.client_options as any[])?.[Number(option_index ?? 0)];
     if (!option) return NextResponse.json({ error: "Opción inválida" }, { status: 400 });
-    await confirmRequest(db, request, option);
+    // Antes se podía confirmar una cita ya confirmada: otro evento y otro correo
+    if (request.status !== "pending" || !await confirmRequest(db, request, option, "pending")) {
+      return NextResponse.json({ error: "Esta solicitud ya fue atendida. Recarga la página." }, { status: 409 });
+    }
     return NextResponse.json({ ok: true, status: "confirmed" });
   }
 

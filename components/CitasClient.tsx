@@ -109,6 +109,7 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
     });
     const r = await res.json();
     if (r.ok) setData((d: any) => ({...d, status:"confirmed", confirmed_option: options[idx]}));
+    else alert(r.error || "No se pudo confirmar la visita. Intenta de nuevo.");
     setAccepting(null);
   }
 

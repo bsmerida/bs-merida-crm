@@ -90,20 +90,86 @@ describe("POST /api/citas/responder/[id]", () => {
   });
 });
 
-describe("GET /api/citas/confirmar-cliente", () => {
-  it("confirma la opción del ASESOR que eligió el cliente (no la del cliente)", async () => {
-    db = createFakeDb({
-      appointment_requests: [{
-        id: REQ, agent_id: ASESOR_A, status: "rescheduled", client_token: "tok",
-        client_options: [{ date: "2026-11-20", time: "10:00" }],
-        agent_options: [{ date: "2026-11-21", time: "12:00" }],
-      }],
-    });
+describe("confirmación del cliente (link del correo)", () => {
+  const reagendada = (status = "rescheduled") => createFakeDb({
+    appointment_requests: [{
+      id: REQ, agent_id: ASESOR_A, status, client_token: "tok",
+      client_options: [{ date: "2026-11-20", time: "10:00" }],
+      agent_options: [{ date: "2026-11-21", time: "12:00" }],
+    }],
+  });
+  const form = (fields: Record<string, string>) =>
+    new NextRequest("http://x/api/citas/confirmar-cliente", { method: "POST", body: new URLSearchParams(fields) });
+
+  it("abrir el link NO confirma nada: solo lleva a la página con el botón", async () => {
+    db = reagendada();
     const { GET } = await import("@/app/api/citas/confirmar-cliente/route");
     const res = await GET(new NextRequest("http://x/api/citas/confirmar-cliente?token=tok&option=0"));
     expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toContain("/cita-elegir?token=tok&option=0");
+    expect(db.writes).toHaveLength(0);
+  });
+
+  it("el botón confirma la opción del ASESOR que eligió el cliente (no la del cliente)", async () => {
+    db = reagendada();
+    const { POST } = await import("@/app/api/citas/confirmar-cliente/route");
+    const res = await POST(form({ token: "tok", option: "0" }));
+    expect(res.status).toBe(303);
+    expect(res.headers.get("location")).toContain("/cita-confirmada?date=");
     const update = db.writes.find(w => w.table === "appointment_requests" && w.op === "update");
     expect((update?.payload as any).confirmed_option).toEqual({ date: "2026-11-21", time: "12:00" });
+    // Solo confirma si sigue reagendada (nadie la confirmó antes)
+    expect(update?.filters).toContainEqual(["status", "rescheduled"]);
+  });
+
+  it("si ya estaba confirmada no vuelve a confirmar ni manda correo", async () => {
+    db = reagendada("confirmed");
+    const { sendEmail } = await import("@/lib/emails");
+    vi.mocked(sendEmail).mockClear();
+    const { POST } = await import("@/app/api/citas/confirmar-cliente/route");
+    const res = await POST(form({ token: "tok", option: "0" }));
+    expect(res.headers.get("location")).toContain("status=already");
+    expect(db.writes).toHaveLength(0);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("confirmRequest", () => {
+  it("si otra persona la confirmó primero (carrera), no crea evento ni manda correo", async () => {
+    // La fila ya no está en 'pending': el update condicionado no encuentra nada
+    db = createFakeDb({ appointment_requests: [{ id: REQ, status: "confirmed", client_email: "a@b.mx" }] });
+    const { sendEmail } = await import("@/lib/emails");
+    const { getCalendarAccess } = await import("@/lib/google-calendar");
+    vi.mocked(sendEmail).mockClear(); vi.mocked(getCalendarAccess).mockClear();
+    const { confirmRequest } = await import("@/lib/citas");
+    const ok = await confirmRequest(db as any, { id: REQ, client_email: "a@b.mx" }, { date: "2026-11-20", time: "10:00" }, "pending");
+    expect(ok).toBe(false);
+    expect(getCalendarAccess).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("si sigue pendiente, confirma una vez y manda el correo", async () => {
+    db = createFakeDb({ appointment_requests: [{ id: REQ, status: "pending" }], profiles: [] });
+    const { sendEmail } = await import("@/lib/emails");
+    vi.mocked(sendEmail).mockClear();
+    const { confirmRequest } = await import("@/lib/citas");
+    const ok = await confirmRequest(db as any, { id: REQ, client_email: "a@b.mx", client_name: "Ana" }, { date: "2026-11-20", time: "10:00" }, "pending");
+    expect(ok).toBe(true);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("POST /api/citas/responder/[id] (aceptar)", () => {
+  it("una cita ya confirmada no se vuelve a confirmar (409)", async () => {
+    db = createFakeDb({
+      profiles: [{ id: ASESOR_A, role: "asesor", active: true }],
+      appointment_requests: [{ id: REQ, agent_id: ASESOR_A, status: "confirmed", client_options: [{ date: "2026-11-20", time: "10:00" }] }],
+    });
+    currentUser = ASESOR_A;
+    const { POST } = await import("@/app/api/citas/responder/[id]/route");
+    const res = await POST(json("http://x", "POST", { action: "accept", option_index: 0 }), { params: { id: REQ } });
+    expect(res.status).toBe(409);
+    expect(db.writes).toHaveLength(0);
   });
 });
 

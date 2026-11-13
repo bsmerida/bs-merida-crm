@@ -2,6 +2,7 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { PropertiesMap } from "@/components/PropertiesMap";
 import Link from "next/link";
+import { fotosPorPropiedad } from "@/lib/fotos";
 
 export default async function AdminMapaPage() {
   const supabase = createAdminClient();
@@ -13,18 +14,9 @@ export default async function AdminMapaPage() {
     .not("lng", "is", null)
     .order("created_at", { ascending: false });
 
-  const propIds = (props || []).map(p => p.id);
-  const { data: images } = await supabase
-    .from("property_images")
-    .select("property_id, url, position, is_cover")
-    .in("property_id", propIds)
-    .order("position", { ascending: true });
-
-  const imageMap: Record<string, string[]> = {};
-  for (const img of images || []) {
-    if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
-    if (imageMap[img.property_id].length < 5) imageMap[img.property_id].push(img.url);
-  }
+  // Hasta 3 fotos por propiedad, por lotes (antes la consulta fallaba completa y no
+  // salía ninguna). 3 y no 5: con 408 propiedades son ~170 KB en vez de ~270 KB por visita.
+  const imageMap = await fotosPorPropiedad(supabase, (props || []).map(p => p.id), 3);
 
   const properties = (props || []).map(p => ({
     ...p,

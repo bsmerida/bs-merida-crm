@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { fechaCorta } from "@/lib/finanzas";
 
 const fmt = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
 const pct = (n: number) => `${((n || 0) * 100).toFixed(1)}%`;
@@ -154,7 +155,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         Number(d.agent_commission || 0) + Number(d.agent2_commission || 0) + Number(d.referral_amount || 0),
         Number(d.net_commission),
         d.agent?.full_name || "—",
-        new Date(d.closing_date).toLocaleDateString("es-MX"),
+        fechaCorta(d.closing_date),
         d.status,
       ]);
 
@@ -228,7 +229,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         e.description,
         Number(e.amount),
         Number(e.amount) / totalGastos,
-        new Date(e.expense_date).toLocaleDateString("es-MX"),
+        fechaCorta(e.expense_date),
         e.recurring ? "Sí" : "No",
       ]);
       const expTotals = ["TOTAL", "", totalGastos, 1, "", ""];

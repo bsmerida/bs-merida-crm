@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { hoyLocal } from "@/lib/finanzas";
 
 const db = createClient();
 const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
@@ -25,7 +26,7 @@ export default function CuentasPorPagarPage() {
   }
   useEffect(() => { load(); }, []);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = hoyLocal();
   const processed = useMemo(() => (bills as Bill[]).map(b => ({
     ...b,
     estado: b.estado === "pendiente" && b.fecha_vencimiento < today ? "vencido" : b.estado,

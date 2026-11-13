@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { fechaCorta } from "@/lib/finanzas";
 
 const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
 const fmtPct = (n: number) => `${(n * 100).toFixed(1)}%`;
@@ -63,7 +64,7 @@ export function ReportExporter({ data }: { data: ReportData }) {
         Number(d.gross_commission),
         Number(d.agent_commission || 0) + Number(d.agent2_commission || 0) + Number(d.referral_amount || 0),
         Number(d.net_commission),
-        new Date(d.closing_date).toLocaleDateString("es-MX"),
+        fechaCorta(d.closing_date),
         d.status,
       ]);
       const wsDeals = XLSX.utils.aoa_to_sheet([dealHeaders, ...dealRows]);
@@ -76,7 +77,7 @@ export function ReportExporter({ data }: { data: ReportData }) {
         e.category.replace(/_/g, " "),
         e.description,
         Number(e.amount),
-        new Date(e.expense_date).toLocaleDateString("es-MX"),
+        fechaCorta(e.expense_date),
         e.recurring ? "Sí" : "No",
       ]);
       const wsExp = XLSX.utils.aoa_to_sheet([expHeaders, ...expRows]);
@@ -180,7 +181,7 @@ export function ReportExporter({ data }: { data: ReportData }) {
             d.operation_type,
             fmtMXN(Number(d.gross_commission)),
             fmtMXN(Number(d.net_commission)),
-            new Date(d.closing_date).toLocaleDateString("es-MX"),
+            fechaCorta(d.closing_date),
             d.status,
           ]),
           headStyles: { fillColor: brandColor, textColor: 255, fontStyle: "bold", fontSize: 8 },

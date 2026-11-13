@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { calcularComision, fechaLocal, hoyLocal } from "@/lib/finanzas";
 
 type Agent    = { id: string; full_name: string };
 type Lead     = { id: string; name: string };
@@ -24,7 +25,7 @@ const EMPTY = {
   shared_agency_name: "", shared_pct: "0.50",
   referral_name: "", referral_pct: "0.10",
   agent_split_pct: "0.40", agent2_split_pct: "0.30",
-  closing_date: new Date().toISOString().slice(0, 10),
+  closing_date: hoyLocal(),
   expected_collection_date: "", amount_collected: "",
   status: "pendiente", notes: "",
 };
@@ -47,7 +48,7 @@ function fromDeal(d: any): FormState {
     referral_pct:               String(d.referral_pct  || "0.10"),
     agent_split_pct:            String(d.agent_split_pct  || "0.40"),
     agent2_split_pct:           String(d.agent2_split_pct || "0.30"),
-    closing_date:               d.closing_date              || new Date().toISOString().slice(0, 10),
+    closing_date:               d.closing_date              || hoyLocal(),
     expected_collection_date:   d.expected_collection_date  || "",
     amount_collected:           String(d.amount_collected   || ""),
     status:                     d.status || "pendiente",
@@ -74,7 +75,8 @@ export function DealForm({
     Promise.all([
       supabase.from("profiles").select("id, full_name").eq("role", "asesor").eq("active", true),
       supabase.from("leads").select("id, name").order("created_at", { ascending: false }).limit(200),
-      supabase.from("properties").select("id, title, price").eq("is_published", true).limit(300),
+      // Antes .limit(300): con 432 publicadas, las demás no se podían elegir
+      supabase.from("properties").select("id, title, price").eq("is_published", true).order("title").limit(1000),
     ]).then(([a, l, p]) => {
       setAgents(a.data || []);
       setLeads(l.data || []);
@@ -88,29 +90,16 @@ export function DealForm({
   // ── Cálculos en tiempo real ─────────────────────────────────
   const tv    = Number(form.transaction_value) || 0;
   const rate  = Number(form.commission_rate)   || 0;
-  // Rentas: el ingreso es el honorario directo (transaction_value), no tv × rate
-  // Ventas: el ingreso es tv × rate (% de comisión sobre el valor de venta)
   const isRenta = form.operation_type === "renta";
-  const gross = isRenta ? tv : tv * rate;
-
-  // Compartida con otra inmobiliaria
-  const sharedPct    = form.deal_type === "compartida" ? Number(form.shared_pct) || 0 : 0;
-  const sharedAmt    = gross * sharedPct;
-  const afterShared  = gross - sharedAmt; // lo que nos queda a nosotros
-
-  // Referido
-  const refPct = form.deal_type === "referido" ? Number(form.referral_pct) || 0 : 0;
-  const refAmt = afterShared * refPct;
-
-  // Asesores internos (aplican sobre lo que queda tras compartida/referido)
-  const base      = afterShared - refAmt;
-  const agentPct  = ["asesor_solo","asesor_compartida"].includes(form.deal_type) ? Number(form.agent_split_pct) || 0 : 0;
-  const agent2Pct = form.deal_type === "asesor_compartida" ? Number(form.agent2_split_pct) || 0 : 0;
-  const agentAmt  = base * agentPct;
-  const agent2Amt = base * agent2Pct;
-
-  // Ingreso real de la empresa
-  const netAmt = gross - sharedAmt - refAmt - agentAmt - agent2Amt;
+  // Reparto: compartida → referido → asesores (lib/finanzas.ts, con pruebas)
+  const {
+    gross, sharedPct, sharedAmt, refPct, refAmt, agentPct, agentAmt, agent2Pct, agent2Amt, net: netAmt,
+  } = calcularComision({
+    operation_type: form.operation_type, deal_type: form.deal_type, transaction_value: tv, commission_rate: rate,
+    shared_pct: Number(form.shared_pct), referral_pct: Number(form.referral_pct),
+    agent_split_pct: Number(form.agent_split_pct), agent2_split_pct: Number(form.agent2_split_pct),
+  });
+  const afterShared = gross - sharedAmt; // lo que nos queda a nosotros
 
   const save = async () => {
     if (!form.transaction_value || !form.commission_rate || !form.closing_date) {
@@ -180,7 +169,7 @@ export function DealForm({
     onSaved();
 
     // Avisar si la operación quedó fuera del período visible actual
-    const dealDate = new Date(form.closing_date);
+    const dealDate = fechaLocal(form.closing_date) ?? new Date();
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     if (dealDate < thisMonth) {

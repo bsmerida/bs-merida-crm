@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { DealForm } from "@/components/finanzas/DealForm";
 import { ExpenseForm } from "@/components/finanzas/ExpenseForm";
 import { ReportExporterPro } from "@/components/finanzas/ReportExporterPro";
+import { cobradoDeal, cuentaEnResultados, enRango, fechaCorta, fechaLocal, gastoEnPeriodo, hoyLocal, ingresoDeal, netoDeal } from "@/lib/finanzas";
 
 const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
 const fmtPct = (n: number) => `${(n * 100).toFixed(1)}%`;
@@ -236,61 +237,33 @@ export default function FinanzasPage() {
   const { start, end } = useMemo(() => getPeriodRange(period), [period]);
 
   const dealsInPeriod = useMemo(() =>
-    deals.filter(d => { const dt = new Date(d.closing_date); return dt >= start && dt <= end; }),
+    deals.filter(d => cuentaEnResultados(d) && enRango(d.closing_date, start, end)),
     [deals, start, end]
   );
 
   // ── GASTOS: separar caja vs P&L ────────────────────────────────────────────
   // Flujo de caja: usa el monto real pagado en la fecha del pago
   const expensesCashInPeriod = useMemo(() =>
-    expenses.filter(e => { const dt = new Date(e.expense_date); return dt >= start && dt <= end; }),
+    expenses.filter(e => enRango(e.expense_date, start, end)),
     [expenses, start, end]
   );
 
   // P&L: usa gastos amortizados (diferidos se distribuyen entre meses de cobertura)
-  const expensesPnL = useMemo(() => {
-    const periodStartM = new Date(start.getFullYear(), start.getMonth(), 1);
-    const periodEndM   = new Date(end.getFullYear(),   end.getMonth() + 1, 0);
-
-    return expenses.reduce((total: Record<string, number>, e: any) => {
+  const expensesPnL = useMemo(() =>
+    expenses.reduce((total: Record<string, number>, e: any) => {
       const cat = e.category || "otro";
-      const isDeferred = e.is_deferred && e.amortization_months > 1;
-
-      if (!isDeferred) {
-        // Gasto normal: cae en el período si su fecha de pago está dentro
-        const payDate = new Date(e.expense_date);
-        if (payDate >= start && payDate <= end) {
-          total[cat] = (total[cat] || 0) + Number(e.amount);
-        }
-        return total;
-      }
-
-      // Gasto diferido: calcular qué parte de la cobertura cae en el período
-      const coverFrom = e.deferred_start_date ? new Date(e.deferred_start_date) : new Date(e.expense_date);
-      const coverStart = new Date(coverFrom.getFullYear(), coverFrom.getMonth(), 1);
-      const coverEnd   = new Date(coverFrom.getFullYear(), coverFrom.getMonth() + e.amortization_months, 0);
-
-      const overlapStart = new Date(Math.max(coverStart.getTime(), periodStartM.getTime()));
-      const overlapEnd   = new Date(Math.min(coverEnd.getTime(),   periodEndM.getTime()));
-      if (overlapStart > overlapEnd) return total; // sin solapamiento
-
-      const overlapMonths = (overlapEnd.getFullYear() - overlapStart.getFullYear()) * 12
-        + overlapEnd.getMonth() - overlapStart.getMonth() + 1;
-
-      const monthly = Number(e.amount) / e.amortization_months;
-      total[cat] = (total[cat] || 0) + (monthly * overlapMonths);
+      const monto = gastoEnPeriodo(e, start, end);
+      if (monto) total[cat] = (total[cat] || 0) + monto;
       return total;
-    }, {} as Record<string, number>);
-  }, [expenses, start, end]);
+    }, {} as Record<string, number>),
+    [expenses, start, end]
+  );
 
   // ── P&L ────────────────────────────────────────────────────────────────────
   // Para rentas: el ingreso es el valor de la renta completo (transaction_value)
   // Para ventas: el ingreso es gross_commission (tv × % comisión)
   // Esto corrige deals existentes que pudieran tener gross_commission calculado con %
-  const getIncome = (d: any) =>
-    d.operation_type === "renta"
-      ? Number(d.transaction_value || d.gross_commission || 0)
-      : Number(d.gross_commission || 0);
+  const getIncome = ingresoDeal;
 
   const ingresoVenta   = dealsInPeriod.filter(d => d.operation_type === "venta").reduce((s: number, d: any) => s + getIncome(d), 0);
   const ingresoRenta   = dealsInPeriod.filter(d => d.operation_type === "renta").reduce((s: number, d: any) => s + getIncome(d), 0);
@@ -315,7 +288,7 @@ export default function FinanzasPage() {
   const totalCxC  = dealsPendientes.reduce((s: number, d: any) => s + Number(d.gross_commission) - Number(d.amount_collected || 0), 0);
   const today     = new Date();
   const vencido   = dealsPendientes
-    .filter(d => d.expected_collection_date && new Date(d.expected_collection_date) < today)
+    .filter(d => d.expected_collection_date && fechaLocal(d.expected_collection_date)! < today)
     .reduce((s: number, d: any) => s + Number(d.gross_commission) - Number(d.amount_collected || 0), 0);
 
   // ── ASESORES ───────────────────────────────────────────────────────────────
@@ -390,8 +363,6 @@ export default function FinanzasPage() {
   };
 
   const marketingByChannel = useMemo(() => {
-    const periodStartM = new Date(start.getFullYear(), start.getMonth(), 1);
-    const periodEndM   = new Date(end.getFullYear(), end.getMonth() + 1, 0);
     const spendByChannel: Record<string, number> = {};
 
     const mktCategories = ["marketing_digital", "portales_inmobiliarios"];
@@ -401,27 +372,8 @@ export default function FinanzasPage() {
       const channel = inferChannel(e);
       if (!channel) return;
 
-      const isDeferred = e.is_deferred && e.amortization_months > 1;
-
-      if (!isDeferred) {
-        const payDate = new Date(e.expense_date);
-        if (payDate >= start && payDate <= end) {
-          spendByChannel[channel] = (spendByChannel[channel] || 0) + Number(e.amount);
-        }
-        return;
-      }
-
-      const coverFrom  = e.deferred_start_date ? new Date(e.deferred_start_date) : new Date(e.expense_date);
-      const coverStart = new Date(coverFrom.getFullYear(), coverFrom.getMonth(), 1);
-      const coverEnd   = new Date(coverFrom.getFullYear(), coverFrom.getMonth() + e.amortization_months, 0);
-      const overlapStart = new Date(Math.max(coverStart.getTime(), periodStartM.getTime()));
-      const overlapEnd   = new Date(Math.min(coverEnd.getTime(), periodEndM.getTime()));
-      if (overlapStart > overlapEnd) return;
-
-      const overlapMonths = (overlapEnd.getFullYear() - overlapStart.getFullYear()) * 12
-        + overlapEnd.getMonth() - overlapStart.getMonth() + 1;
-      const monthly = Number(e.amount) / e.amortization_months;
-      spendByChannel[channel] = (spendByChannel[channel] || 0) + (monthly * overlapMonths);
+      const monto = gastoEnPeriodo(e, start, end);
+      if (monto) spendByChannel[channel] = (spendByChannel[channel] || 0) + monto;
     });
 
     // Leads y deals por canal (todos los leads, no solo del período — para ver el total histórico)
@@ -437,7 +389,8 @@ export default function FinanzasPage() {
       const lead = leads.find((l: any) => l.id === d.lead_id);
       const ch = lead?.source || "Sin origen";
       if (!leadsByChannel[ch]) leadsByChannel[ch] = { leads: 0, cerrados: 0, revenue: 0 };
-      leadsByChannel[ch].revenue += Number(d.net_commission || 0);
+      // netoDeal en vez de net_commission: hay operaciones viejas sin restar lo compartido
+      leadsByChannel[ch].revenue += netoDeal(d);
     });
 
     // Unir todos los canales conocidos
@@ -470,12 +423,12 @@ export default function FinanzasPage() {
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       mesesMap[key] = { entradas: 0, salidas: 0 };
     }
-    // Entradas: comisiones de deals cobrados (amount_collected)
+    // Entradas: lo cobrado de cada operación (antes contaba también las pendientes)
     deals.forEach((d: any) => {
       if (!d.closing_date) return;
       const key = d.closing_date.slice(0, 7);
       if (!mesesMap[key]) return;
-      mesesMap[key].entradas += Number(d.amount_collected || d.gross_commission || 0);
+      mesesMap[key].entradas += cobradoDeal(d);
     });
     // Salidas: gastos reales pagados en el mes (no amortizados — esto es flujo de caja real)
     expenses.forEach((e: any) => {
@@ -487,7 +440,7 @@ export default function FinanzasPage() {
     // Salidas: pagos de comisiones a terceros (compartida, referidos, asesores)
     // Se registran en la fecha de cierre del deal como salida de caja
     deals.forEach((d: any) => {
-      if (!d.closing_date) return;
+      if (!d.closing_date || !cuentaEnResultados(d)) return;
       const key = d.closing_date.slice(0, 7);
       if (!mesesMap[key]) return;
       const pagosComisiones =
@@ -523,7 +476,7 @@ export default function FinanzasPage() {
   ];
 
   // ── CXP calcs ──────────────────────────────────────────────────────────────
-  const hoyStr = new Date().toISOString().split("T")[0];
+  const hoyStr = hoyLocal();
   const billsProc = bills.map((b: any) => ({ ...b, estado: b.estado === "pendiente" && b.fecha_vencimiento < hoyStr ? "vencido" : b.estado }));
   const cxpTotalPend = billsProc.filter((b: any) => b.estado !== "pagado").reduce((s: number, b: any) => s + Number(b.monto), 0);
   const cxpTotalVenc = billsProc.filter((b: any) => b.estado === "vencido").reduce((s: number, b: any) => s + Number(b.monto), 0);
@@ -859,7 +812,7 @@ export default function FinanzasPage() {
                     {dealsPendientes.map((d: any) => {
                       const pendiente = Number(d.gross_commission) - Number(d.amount_collected || 0);
                       const diasVencidos = d.expected_collection_date
-                        ? Math.max(0, Math.floor((today.getTime() - new Date(d.expected_collection_date).getTime()) / (1000 * 60 * 60 * 24)))
+                        ? Math.max(0, Math.floor((today.getTime() - fechaLocal(d.expected_collection_date)!.getTime()) / (1000 * 60 * 60 * 24)))
                         : 0;
                       return (
                         <tr key={d.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
@@ -868,7 +821,7 @@ export default function FinanzasPage() {
                           <td className="px-4 py-3 text-sm font-medium text-ink">{fmtMXN(Number(d.gross_commission))}</td>
                           <td className="px-4 py-3 text-sm font-semibold text-amber-600">{fmtMXN(pendiente)}</td>
                           <td className="px-4 py-3 text-sm text-ink-muted">
-                            {d.expected_collection_date ? new Date(d.expected_collection_date).toLocaleDateString("es-MX") : "—"}
+                            {fechaCorta(d.expected_collection_date)}
                           </td>
                           <td className="px-4 py-3">
                             {diasVencidos > 0 ? (
@@ -1028,7 +981,7 @@ export default function FinanzasPage() {
                             : "—"}
                         </td>
                         <td className="px-3 py-3 text-sm font-semibold text-emerald-600">{fmtMXN(Number(d.net_commission))}</td>
-                        <td className="px-3 py-3 text-xs text-ink-muted">{new Date(d.closing_date).toLocaleDateString("es-MX")}</td>
+                        <td className="px-3 py-3 text-xs text-ink-muted">{fechaCorta(d.closing_date)}</td>
                         <td className="px-3 py-3">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[d.status] || ""}`}>{d.status}</span>
                         </td>
@@ -1270,7 +1223,7 @@ export default function FinanzasPage() {
                 </thead>
                 <tbody>
                   {expenses.filter(e => e.is_deferred && e.amortization_months > 1).map((e: any) => {
-                    const coverStart = new Date(e.deferred_start_date || e.expense_date);
+                    const coverStart = fechaLocal(e.deferred_start_date || e.expense_date)!;
                     const coverEnd   = new Date(coverStart.getFullYear(), coverStart.getMonth() + e.amortization_months, 0);
                     const nowDate    = new Date();
                     const isActive   = nowDate >= coverStart && nowDate <= coverEnd;
@@ -1366,7 +1319,7 @@ export default function FinanzasPage() {
                             ? <span className="text-brand-600">{fmtMXN(monthly)}/mes × {e.amortization_months}</span>
                             : <span className="text-ink-soft">—</span>}
                         </td>
-                        <td className="px-4 py-3 text-xs text-ink-muted">{new Date(e.expense_date).toLocaleDateString("es-MX")}</td>
+                        <td className="px-4 py-3 text-xs text-ink-muted">{fechaCorta(e.expense_date)}</td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-0.5">
                             {e.is_deferred && <span className="text-xs text-brand-600">Diferido</span>}

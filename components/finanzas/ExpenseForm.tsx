@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { hoyLocal } from "@/lib/finanzas";
 
 const CATEGORIES: { value: string; label: string; icon: string }[] = [
   { value: "nomina",                 label: "Nómina",                      icon: "👥" },
@@ -34,10 +35,10 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
     description:         expense?.description         || "",
     vendor:              expense?.vendor              || "",
     amount:              String(expense?.amount       || ""),
-    expense_date:        expense?.expense_date        || new Date().toISOString().slice(0, 10),
+    expense_date:        expense?.expense_date        || hoyLocal(),
     is_deferred:         expense?.is_deferred         || false,
     amortization_months: expense?.amortization_months || 1,
-    deferred_start_date: expense?.deferred_start_date || new Date().toISOString().slice(0, 10),
+    deferred_start_date: expense?.deferred_start_date || hoyLocal(),
     recurring:           expense?.recurring           || false,
     invoiced:            expense?.invoiced            || false,
     marketing_channel:   expense?.marketing_channel   || "",

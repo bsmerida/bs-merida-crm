@@ -8,7 +8,28 @@ import type { SlotOption } from "@/lib/validation";
 // Asesora por defecto cuando la solicitud no trae agent_id.
 export const FALLBACK_AGENT_ID = process.env.FALLBACK_AGENT_ID || "15f01899-4206-4613-bb01-e26ea4ba003f";
 
-export async function confirmRequest(db: SupabaseClient, request: any, confirmed: SlotOption) {
+const DAYS   = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+// "Sábado 21 de noviembre" para una fecha YYYY-MM-DD
+export function etiquetaFecha(date: string): string {
+  const d = new Date(`${date}T12:00:00-06:00`);
+  return `${DAYS[d.getUTCDay()]} ${d.getUTCDate()} de ${MONTHS[d.getUTCMonth()]}`;
+}
+
+// Confirma la solicitud solo si sigue en `fromStatus`. Devuelve false si ya la había
+// confirmado alguien más (doble clic, asesor y cliente a la vez): así no se crean
+// dos eventos en el calendario ni se mandan dos correos.
+export async function confirmRequest(
+  db: SupabaseClient, request: any, confirmed: SlotOption, fromStatus: "pending" | "rescheduled",
+): Promise<boolean> {
+  const { data: claimed } = await db.from("appointment_requests").update({
+    status:           "confirmed",
+    confirmed_option: confirmed,
+    updated_at:       new Date().toISOString(),
+  }).eq("id", request.id).eq("status", fromStatus).select("id");
+  if (!claimed?.length) return false;
+
   const startsAt = new Date(`${confirmed.date}T${confirmed.time}:00-06:00`).toISOString();
   const endsAt   = new Date(new Date(startsAt).getTime() + 60 * 60_000).toISOString();
   const agentId  = request.agent_id || FALLBACK_AGENT_ID;
@@ -42,12 +63,9 @@ export async function confirmRequest(db: SupabaseClient, request: any, confirmed
     console.error("[GCal] Sin calendario conectado para agentId:", agentId);
   }
 
-  await db.from("appointment_requests").update({
-    status:           "confirmed",
-    confirmed_option: confirmed,
-    google_event_id:  googleEventId,
-    updated_at:       new Date().toISOString(),
-  }).eq("id", request.id);
+  if (googleEventId) {
+    await db.from("appointment_requests").update({ google_event_id: googleEventId }).eq("id", request.id);
+  }
 
   if (request.client_email) {
     const { html, subject } = emailClienteConfirmado({
@@ -59,4 +77,5 @@ export async function confirmRequest(db: SupabaseClient, request: any, confirmed
     });
     await sendEmail({ to: request.client_email, subject, html });
   }
+  return true;
 }

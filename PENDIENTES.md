@@ -7,15 +7,17 @@ Actualizado: 13 nov 2026. Detalle y evidencia de cada punto: reporte de la audit
 - [ ] Crear el proyecto Supabase `duclaud-pruebas` y pasar solo su URL.
 - [ ] Correr en Supabase (SQL Editor) la consulta de solo lectura de RLS y pegar el resultado.
 - [ ] Decir en qué plan está el Supabase de producción (Free/Pro).
+- [ ] Vercel tiene un segundo proyecto `crm_demo` conectado a este repo: ¿se usa? Si no, borrarlo (consume la misma cuota).
 - [ ] Decidir los valores correctos de las 10 operaciones "compartida" cuya comisión neta no cuadra.
 - [ ] Revisar con abogado el aviso de privacidad (proveedores que reciben datos, fecha y versión).
 - [ ] Borrar/rotar la GEMINI_API_KEY del commit local `3c599ad` del clon externo y borrar ese clon.
 - [ ] ¿Las comisiones se capturan con o sin IVA?
 
 ## Correcciones planeadas (un PR por tema)
-- [ ] Finanzas: funciones puras + pruebas; fechas sin corrimiento de zona horaria.
-- [ ] Citas: confirmación idempotente; el link del cliente confirma con botón, no al abrirse.
-- [ ] Mapas: fotos por lotes (hoy no sale ninguna).
+- [x] Finanzas: funciones puras + pruebas; fechas sin corrimiento de zona horaria → PR #9 (falta merge).
+- [x] Citas: confirmación idempotente; el link del cliente confirma con botón → PR #10 (falta merge).
+- [x] Mapas: fotos por lotes → PR #11 (falta merge).
+- [ ] Páginas públicas cacheadas (ISR) para bajar el consumo de Vercel: hoy se generan en cada visita.
 - [ ] Costos: límite de uso en "Generar descripción"; revisar Upstash para Sofía.
 - [ ] Monitoreo: errores guardados en BD, `/api/estado`, registro de corridas del cron, pantalla de error.
 - [ ] Legal: casilla de consentimiento con fecha y versión guardadas.

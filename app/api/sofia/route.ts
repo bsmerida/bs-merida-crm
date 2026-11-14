@@ -24,6 +24,11 @@ export async function POST(req: NextRequest) {
   if (!await rateLimit(`sofia:${clientIp(req.headers)}`, 40, 60 * 60 * 1000)) {
     return NextResponse.json({ error: "Demasiados mensajes, intente más tarde." }, { status: 429 });
   }
+  // Tope global diario (todo el sitio): si alguien automatiza muchas IPs, el gasto
+  // tiene techo. Solo es global si Upstash está configurado; si no, es por instancia.
+  if (!await rateLimit("sofia:global", 1500, 24 * 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Sofía está muy ocupada hoy. Escríbenos por WhatsApp o en Contacto." }, { status: 429 });
+  }
 
   const body = await req.json().catch(() => null);
   const messages = sanitizeChatMessages(body?.messages, { maxMessages: 16, maxChars: 1000 });

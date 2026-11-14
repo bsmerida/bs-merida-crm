@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
+import { rateLimit } from "@/lib/security";
 import Anthropic from "@anthropic-ai/sdk";
 
 export const dynamic = "force-dynamic";
@@ -8,12 +10,20 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    // Sesión activa (rechaza usuarios desactivados) y tope de uso: cada llamada
+    // cuesta (Claude Sonnet con hasta 4 fotos) y antes no tenía límite.
+    const { auth, error: authError } = await requireAuth();
+    if (authError) return authError;
+    if (!await rateLimit(`generar-descripcion:${auth.userId}`, 20, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Llegaste al límite de 20 descripciones por hora. Intenta más tarde." }, { status: 429 });
+    }
+
     const { property_id } = await req.json();
     if (!property_id) return NextResponse.json({ error: "property_id requerido" }, { status: 400 });
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    // Llave de servicio tras verificar la sesión: con la de sesión, RLS solo deja
+    // leer propiedades publicadas y las no publicadas daban "no encontrada".
+    const supabase = createAdminClient();
 
     const { data: prop } = await supabase
       .from("properties").select("*").eq("id", property_id).single();

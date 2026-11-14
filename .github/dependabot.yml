@@ -1,0 +1,15 @@
+# Revisa cada semana si hay versiones nuevas de dependencias y abre PRs.
+# Las menores se agrupan en un solo PR; las mayores (cambios que pueden romper)
+# llegan por separado para revisarlas con calma. Ningún PR se une solo.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday, time: "07:00", timezone: America/Merida }
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

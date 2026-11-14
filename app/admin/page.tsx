@@ -2,6 +2,9 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fmtMXN } from "@/lib/utils";
 import { Icon } from "@/components/Icon";
+import { resumenInicio } from "@/lib/finanzas";
+import { meridaParts } from "@/lib/time";
+import { getAuth } from "@/lib/auth";
 
 const ESTADOS_FUNNEL = [
   "Nuevo", "Contactado", "Calificado", "Visita agendada",
@@ -10,8 +13,6 @@ const ESTADOS_FUNNEL = [
 
 export default async function AdminDashboard() {
   const supabase = createAdminClient();
-  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
-  const inicioMesIso = inicioMes.toISOString();
 
   const [
     { data: leadsAll },
@@ -22,7 +23,8 @@ export default async function AdminDashboard() {
   ] = await Promise.all([
     supabase.from("leads").select("id, status, source, agent_id, created_at, name"),
     supabase.from("properties").select("id, price, status"),
-    supabase.from("operations").select("id, value, commission, agent_id, stage, closed_at, created_at"),
+    // Las operaciones reales están en deals (Finanzas); "operations" es una tabla vieja vacía
+    supabase.from("deals").select("status, operation_type, closing_date, transaction_value, gross_commission, amount_collected, agent_id, agent2_id, agent_commission, agent2_commission"),
     supabase.from("visits")
       .select("id, scheduled_at, status, lead:leads(name), property:properties(title), agent:profiles(full_name)")
       .gte("scheduled_at", new Date().toISOString())
@@ -33,7 +35,10 @@ export default async function AdminDashboard() {
 
   const leads = leadsAll || [];
   const props = propsAll || [];
-  const ops = opsAll || [];
+  const resumen = resumenInicio(opsAll || [], meridaParts(new Date()).ymd);
+  // Montos de la empresa: solo administradores (como Finanzas)
+  const auth = await getAuth();
+  const verDinero = !!auth?.isAdmin;
   const visits = visitsProx || [];
   const agentList = agentes || [];
 
@@ -41,9 +46,6 @@ export default async function AdminDashboard() {
   const leadsActivos = leads.filter(l => !["Cerrado ganado", "Cerrado perdido"].includes(l.status)).length;
   const propsDisponibles = props.filter(p => p.status === "Disponible").length;
   const valorInventario = props.filter(p => p.status === "Disponible").reduce((a, p) => a + Number(p.price), 0);
-  const opsCerradasMes = ops.filter(o => o.stage === "Cerrada ganada" && o.closed_at && new Date(o.closed_at) >= inicioMes);
-  const comisionesMes = opsCerradasMes.reduce((a, o) => a + Number(o.commission || 0), 0);
-  const valorPipeline = ops.filter(o => !["Cerrada ganada", "Cerrada perdida"].includes(o.stage)).reduce((a, o) => a + Number(o.value || 0), 0);
 
   // Funnel
   const funnelTotal = leads.length || 1;
@@ -67,24 +69,13 @@ export default async function AdminDashboard() {
   // Ranking agentes
   const ranking = agentList.map(a => {
     const myLeads = leads.filter(l => l.agent_id === a.id).length;
-    const myOps = ops.filter(o => o.agent_id === a.id && o.stage === "Cerrada ganada").length;
-    const myCom = ops.filter(o => o.agent_id === a.id && o.closed_at && new Date(o.closed_at) >= inicioMes)
-                     .reduce((s, o) => s + Number(o.commission || 0), 0);
+    const { ops: myOps, comision: myCom } = resumen.porAsesor(a.id);
     return { ...a, leads: myLeads, ops: myOps, comision: myCom };
   }).sort((a, b) => b.comision - a.comision).slice(0, 5);
 
-  // Ventas últimos 6 meses
+  // Operaciones cerradas en los últimos 6 meses (ingreso por comisiones)
   const ahora = new Date();
-  const meses = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(ahora.getFullYear(), ahora.getMonth() - (5 - i), 1);
-    const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-    const opsDeMes = ops.filter(o => o.closed_at && new Date(o.closed_at) >= d && new Date(o.closed_at) <= fin && o.stage === "Cerrada ganada");
-    return {
-      mes: d.toLocaleDateString("es-MX", { month: "short" }),
-      val: opsDeMes.reduce((a, o) => a + Number(o.value || 0), 0),
-      ops: opsDeMes.length,
-    };
-  });
+  const meses = resumen.meses;
   const maxMes = Math.max(...meses.map(m => m.val), 1);
 
   return (
@@ -106,16 +97,20 @@ export default async function AdminDashboard() {
           <div className="text-3xl font-semibold tracking-tight mt-2 text-ink">{propsDisponibles}</div>
           <div className="text-xs text-ink-muted mt-3">{fmtMXN(valorInventario)} en inventario</div>
         </div>
-        <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
-          <div className="text-[13px] text-ink-muted">Pipeline en curso</div>
-          <div className="text-3xl font-semibold tracking-tight mt-2 text-brand-600">{fmtMXN(valorPipeline)}</div>
-          <div className="text-xs text-ink-muted mt-3">{ops.filter(o => !["Cerrada ganada","Cerrada perdida"].includes(o.stage)).length} operaciones abiertas</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
-          <div className="text-[13px] text-ink-muted">Comisiones del mes</div>
-          <div className="text-3xl font-semibold tracking-tight mt-2 text-ink">{fmtMXN(comisionesMes)}</div>
-          <div className="text-xs text-ink-muted mt-3">{opsCerradasMes.length} operaciones cerradas</div>
-        </div>
+        {verDinero && (
+          <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
+            <div className="text-[13px] text-ink-muted">Por cobrar</div>
+            <div className="text-3xl font-semibold tracking-tight mt-2 text-brand-600">{fmtMXN(resumen.porCobrar)}</div>
+            <div className="text-xs text-ink-muted mt-3">{resumen.opsPorCobrar} operaciones sin cobrar completas</div>
+          </div>
+        )}
+        {verDinero && (
+          <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
+            <div className="text-[13px] text-ink-muted">Comisiones del mes</div>
+            <div className="text-3xl font-semibold tracking-tight mt-2 text-ink">{fmtMXN(resumen.comisionesMes)}</div>
+            <div className="text-xs text-ink-muted mt-3">{resumen.opsCerradasMes} operaciones cerradas</div>
+          </div>
+        )}
       </div>
 
       {/* Funnel + Ranking */}
@@ -159,9 +154,11 @@ export default async function AdminDashboard() {
                     <div className="font-medium text-sm text-ink truncate">{a.full_name}</div>
                     <div className="text-xs text-ink-muted">{a.leads} clientes · {a.ops} ops</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-ink">{fmtMXN(a.comision)}</div>
-                  </div>
+                  {verDinero && (
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-ink">{fmtMXN(a.comision)}</div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -169,13 +166,13 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Gráfico de ventas mensual */}
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-        <h3 className="font-semibold text-ink mb-6">Ventas cerradas (últimos 6 meses)</h3>
+      {/* Gráfico de operaciones cerradas por mes */}
+      {verDinero && <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+        <h3 className="font-semibold text-ink mb-6">Operaciones cerradas (últimos 6 meses)</h3>
         <div className="flex items-end justify-between gap-3 h-56">
           {meses.map(m => (
             <div key={m.mes} className="flex-1 flex flex-col items-center gap-2">
-              <div className="text-xs text-ink-muted">{m.val > 0 ? `${(m.val / 1_000_000).toFixed(1)}M` : "—"}</div>
+              <div className="text-xs text-ink-muted">{m.val > 0 ? (m.val >= 1_000_000 ? `${(m.val / 1_000_000).toFixed(1)}M` : `${Math.round(m.val / 1000)}k`) : "—"}</div>
               <div className="w-full bg-brand-500 rounded-t-lg relative" style={{ height: `${(m.val / maxMes) * 100}%`, minHeight: m.val > 0 ? "8px" : "2px" }}>
                 {m.ops > 0 && <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-ink">{m.ops}</div>}
               </div>
@@ -183,8 +180,8 @@ export default async function AdminDashboard() {
             </div>
           ))}
         </div>
-        <div className="text-xs text-ink-muted mt-4 text-center">El número arriba de cada barra es la cantidad de operaciones cerradas en ese mes</div>
-      </div>
+        <div className="text-xs text-ink-muted mt-4 text-center">Comisión cobrable de ventas y rentas por mes de cierre. El número arriba de cada barra es la cantidad de operaciones.</div>
+      </div>}
 
       {/* Origen de leads + Próximas visitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calcularComision, cobradoDeal, cuentaEnResultados, enRango, fechaCorta, fechaLocal, gastoEnPeriodo, hoyLocal, netoDeal,
+  resumenInicio, ultimosMeses,
 } from "@/lib/finanzas";
 
 // Noviembre 2026 en hora local (Mérida)
@@ -114,5 +115,44 @@ describe("gastoEnPeriodo", () => {
   it("diferido que termina antes del período: 0", () => {
     const e = { amount: 3_000, expense_date: "2026-01-10", is_deferred: true, amortization_months: 3 };
     expect(gastoEnPeriodo(e, NOV_INI, NOV_FIN)).toBe(0);
+  });
+});
+
+describe("resumenInicio (página de Inicio)", () => {
+  const A = "asesor-a", B = "asesor-b";
+  const deals = [
+    { status: "cobrado", operation_type: "venta", closing_date: "2026-11-01", gross_commission: 120_000, amount_collected: 120_000, agent_id: A, agent_commission: 48_000 },
+    { status: "pendiente", operation_type: "renta", closing_date: "2026-11-20", transaction_value: 15_000, gross_commission: 15_000, agent_id: B, agent2_id: A, agent_commission: 3_000, agent2_commission: 2_000 },
+    { status: "parcial", operation_type: "venta", closing_date: "2026-09-30", gross_commission: 80_000, amount_collected: 30_000 },
+    { status: "cancelado", operation_type: "venta", closing_date: "2026-11-10", gross_commission: 999_999 },
+    { status: "cobrado", operation_type: "venta", closing_date: "2026-05-31", gross_commission: 50_000 }, // fuera de los 6 meses
+  ];
+  const r = resumenInicio(deals, "2026-11-13");
+
+  it("6 meses de jun a nov, el día 1 cae en su mes y la cancelada no cuenta", () => {
+    expect(r.meses.map(m => m.mes)).toEqual(["jun", "jul", "ago", "sep", "oct", "nov"]);
+    expect(r.meses[5]).toEqual({ mes: "nov", val: 135_000, ops: 2 });
+    expect(r.meses[3]).toEqual({ mes: "sep", val: 80_000, ops: 1 });
+    expect(r.meses[0].ops).toBe(0);
+  });
+
+  it("comisiones del mes = ingreso de las cerradas este mes (sin canceladas)", () => {
+    expect(r.comisionesMes).toBe(135_000);
+    expect(r.opsCerradasMes).toBe(2);
+  });
+
+  it("por cobrar = ingreso − cobrado de las no cobradas", () => {
+    // renta 15,000 − 0 + venta 80,000 − 30,000
+    expect(r.porCobrar).toBe(65_000);
+    expect(r.opsPorCobrar).toBe(2);
+  });
+
+  it("comisión del asesor en el mes, como principal o segundo", () => {
+    expect(r.porAsesor(A)).toEqual({ ops: 2, comision: 50_000 });
+    expect(r.porAsesor(B)).toEqual({ ops: 1, comision: 3_000 });
+  });
+
+  it("cruce de año: en enero los meses empiezan en agosto del año anterior", () => {
+    expect(ultimosMeses("2027-01-05", 6).map(m => m.clave)).toEqual(["2026-08", "2026-09", "2026-10", "2026-11", "2026-12", "2027-01"]);
   });
 });

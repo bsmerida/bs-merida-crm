@@ -121,3 +121,48 @@ export function gastoEnPeriodo(e: Gasto, start: Date, end: Date): number {
   if (desdeP > hastaP) return 0;
   return (n(e.amount) / meses) * (hastaP - desdeP + 1);
 }
+
+// ── Resumen de la página de Inicio ─────────────────────────────────────────
+// Se agrupa por el mes de la fecha de cierre ("YYYY-MM"), comparando texto:
+// el servidor corre en UTC y no debe recorrer cierres de un mes a otro.
+type DealResumen = DealMontos & {
+  closing_date?: string | null; agent_id?: string | null; agent2_id?: string | null;
+  agent_commission?: number | string | null; agent2_commission?: number | string | null;
+};
+
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+// Los últimos `n` meses terminando en el mes de `hoyYmd` (fecha de Mérida).
+export function ultimosMeses(hoyYmd: string, n: number): { clave: string; etiqueta: string }[] {
+  const y = Number(hoyYmd.slice(0, 4)), m = Number(hoyYmd.slice(5, 7)) - 1;
+  return Array.from({ length: n }, (_, i) => {
+    const total = y * 12 + m - (n - 1 - i);
+    const anio = Math.floor(total / 12), mes = total % 12;
+    return { clave: `${anio}-${String(mes + 1).padStart(2, "0")}`, etiqueta: MESES_CORTOS[mes] };
+  });
+}
+
+export function resumenInicio(deals: DealResumen[], hoyYmd: string) {
+  const validos = deals.filter(cuentaEnResultados);
+  const mesActual = hoyYmd.slice(0, 7);
+  const delMes = validos.filter(d => d.closing_date?.slice(0, 7) === mesActual);
+  const pendientes = validos.filter(d => d.status !== "cobrado");
+
+  return {
+    meses: ultimosMeses(hoyYmd, 6).map(({ clave, etiqueta }) => {
+      const ds = validos.filter(d => d.closing_date?.slice(0, 7) === clave);
+      return { mes: etiqueta, val: ds.reduce((s, d) => s + ingresoDeal(d), 0), ops: ds.length };
+    }),
+    comisionesMes: delMes.reduce((s, d) => s + ingresoDeal(d), 0),
+    opsCerradasMes: delMes.length,
+    porCobrar: pendientes.reduce((s, d) => s + Math.max(0, ingresoDeal(d) - Number(d.amount_collected || 0)), 0),
+    opsPorCobrar: pendientes.length,
+    porAsesor(agentId: string) {
+      const suyas = validos.filter(d => d.agent_id === agentId || d.agent2_id === agentId);
+      const comisionMes = suyas.filter(d => d.closing_date?.slice(0, 7) === mesActual).reduce((s, d) =>
+        s + (d.agent_id === agentId ? Number(d.agent_commission || 0) : 0)
+          + (d.agent2_id === agentId ? Number(d.agent2_commission || 0) : 0), 0);
+      return { ops: suyas.length, comision: comisionMes };
+    },
+  };
+}

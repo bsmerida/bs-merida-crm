@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { TIPOS_PROPIEDAD, OPERACIONES, ESTADOS_PROPIEDAD } from "@/lib/utils";
 import type { Property } from "@/lib/supabase/types";
+import { PORTALES } from "@/lib/portales";
 
 const SIN_PERMISO = "No se guardó: tu usuario no tiene permiso para editar propiedades. Avisa a un administrador.";
 
@@ -167,6 +168,8 @@ export function PropertyForm({ property }: Props) {
       featured: form.featured,
       reference: form.reference || null,
       development: form.development || null,
+      // Antes los interruptores de portales no se guardaban (ninguna propiedad tenía uno)
+      ...Object.fromEntries(PORTALES.map(p => [p.clave, !!(form as any)[p.clave]])),
     };
 
     if (property) {

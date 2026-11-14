@@ -44,9 +44,9 @@ export default function GeocodeBatchPage() {
         const data = await res.json();
 
         if (res.ok && data.lat) {
-          await supabase.from("properties").update({ lat: data.lat, lng: data.lng }).eq("id", p.id);
-          addLog(`✓ ${p.title}`);
-          ok++;
+          const { data: saved } = await supabase.from("properties").update({ lat: data.lat, lng: data.lng }).eq("id", p.id).select("id");
+          if (saved?.length) { addLog(`✓ ${p.title}`); ok++; }
+          else { addLog(`✗ No se pudo guardar: ${p.title}`); fail++; }
         } else {
           addLog(`✗ Sin resultado: ${p.title} (${q})`);
           fail++;

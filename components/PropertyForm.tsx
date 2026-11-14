@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { TIPOS_PROPIEDAD, OPERACIONES, ESTADOS_PROPIEDAD } from "@/lib/utils";
 import type { Property } from "@/lib/supabase/types";
 
+const SIN_PERMISO = "No se guardó: tu usuario no tiene permiso para editar propiedades. Avisa a un administrador.";
+
 type Props = { property?: Property };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -168,9 +170,12 @@ export function PropertyForm({ property }: Props) {
     };
 
     if (property) {
-      const { error: err } = await supabase.from("properties").update(payload).eq("id", property.id);
+      // .select() para saber si de verdad se guardó: si las reglas de la base lo
+      // impiden, Supabase no da error, solo actualiza 0 filas (antes parecía guardado)
+      const { data: saved, error: err } = await supabase.from("properties").update(payload).eq("id", property.id).select("id");
       setSubmitting(false);
       if (err) { setError(err.message); return; }
+      if (!saved?.length) { setError(SIN_PERMISO); return; }
       router.push("/admin/propiedades");
       router.refresh();
     } else {
@@ -186,9 +191,10 @@ export function PropertyForm({ property }: Props) {
   const remove = async () => {
     if (!property || !confirm("¿Eliminar esta propiedad?")) return;
     setSubmitting(true);
-    const { error: err } = await supabase.from("properties").delete().eq("id", property.id);
+    const { data: borradas, error: err } = await supabase.from("properties").delete().eq("id", property.id).select("id");
     setSubmitting(false);
     if (err) setError(err.message);
+    else if (!borradas?.length) setError("No se eliminó: solo un administrador puede eliminar propiedades.");
     else { router.push("/admin/propiedades"); router.refresh(); }
   };
 

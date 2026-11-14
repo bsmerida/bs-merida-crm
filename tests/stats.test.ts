@@ -22,3 +22,13 @@ describe("countByProperty", () => {
     expect([m.get("a"), m.get("b")]).toEqual([2, 1]);
   });
 });
+
+describe("ultimosClientes", () => {
+  it("los más recientes primero aunque la base los devuelva desordenados", async () => {
+    const { ultimosClientes } = await import("@/lib/stats");
+    const leads = ["2026-07-07T10:00:00Z", "2026-11-11T09:00:00Z", "2026-09-01T00:00:00Z", "2026-11-11T18:00:00Z", "2026-01-01T00:00:00Z", "2026-10-05T00:00:00Z"]
+      .map((created_at, i) => ({ id: i, created_at }));
+    expect(ultimosClientes(leads, 3).map(l => l.id)).toEqual([3, 1, 5]);
+    expect(leads[0].id).toBe(0); // no modifica la lista original
+  });
+});

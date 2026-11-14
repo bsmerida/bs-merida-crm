@@ -31,3 +31,11 @@ describe("isVisitInNextHourWindow", () => {
     expect(isVisitInNextHourWindow(visit, new Date("2026-11-10T10:00:00Z"))).toBe(false);
   });
 });
+
+describe("fechaMerida", () => {
+  it("un cliente que llegó a las 7:30 pm en Mérida es de ese día (en UTC ya es el siguiente)", async () => {
+    const { fechaMerida } = await import("@/lib/time");
+    expect(fechaMerida("2026-11-14T01:30:00Z")).toBe("13/11/2026");
+    expect(fechaMerida("2026-11-14T06:30:00Z")).toBe("14/11/2026");
+  });
+});

@@ -30,3 +30,9 @@ export function isVisitInNextHourWindow(visit: Date, now: Date): boolean {
   const t = visit.getTime() - now.getTime();
   return t >= 30 * 60_000 && t < 90 * 60_000;
 }
+
+// Fecha corta (13/11/2026) de un instante, en hora de Mérida. En el servidor
+// toLocaleDateString usa UTC: después de las 6 pm daría el día siguiente.
+export function fechaMerida(instante: string | Date): string {
+  return new Date(instante).toLocaleDateString("es-MX", { timeZone: MERIDA_TZ });
+}

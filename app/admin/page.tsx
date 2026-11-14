@@ -3,7 +3,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { fmtMXN } from "@/lib/utils";
 import { Icon } from "@/components/Icon";
 import { resumenInicio } from "@/lib/finanzas";
-import { meridaParts } from "@/lib/time";
+import { fechaMerida, meridaParts } from "@/lib/time";
+import { ultimosClientes } from "@/lib/stats";
 import { getAuth } from "@/lib/auth";
 
 const ESTADOS_FUNNEL = [
@@ -21,7 +22,7 @@ export default async function AdminDashboard() {
     { data: visitsProx },
     { data: agentes },
   ] = await Promise.all([
-    supabase.from("leads").select("id, status, source, agent_id, created_at, name"),
+    supabase.from("leads").select("id, status, source, agent_id, created_at, name").order("created_at", { ascending: false }),
     supabase.from("properties").select("id, price, status"),
     // Las operaciones reales están en deals (Finanzas); "operations" es una tabla vieja vacía
     supabase.from("deals").select("status, operation_type, closing_date, transaction_value, gross_commission, amount_collected, agent_id, agent2_id, agent_commission, agent2_commission"),
@@ -33,12 +34,14 @@ export default async function AdminDashboard() {
     supabase.from("profiles").select("id, full_name, initials, role").eq("active", true),
   ]);
 
-  const leads = leadsAll || [];
+  const auth = await getAuth();
+  // Montos de la empresa: solo administradores (como Finanzas)
+  const verDinero = !!auth?.isAdmin;
+  const todosLosLeads = leadsAll || [];
+  // Un asesor ve solo sus clientes, como en la sección Clientes
+  const leads = auth?.isAdmin ? todosLosLeads : todosLosLeads.filter(l => l.agent_id === auth?.userId);
   const props = propsAll || [];
   const resumen = resumenInicio(opsAll || [], meridaParts(new Date()).ymd);
-  // Montos de la empresa: solo administradores (como Finanzas)
-  const auth = await getAuth();
-  const verDinero = !!auth?.isAdmin;
   const visits = visitsProx || [];
   const agentList = agentes || [];
 
@@ -68,7 +71,7 @@ export default async function AdminDashboard() {
 
   // Ranking agentes
   const ranking = agentList.map(a => {
-    const myLeads = leads.filter(l => l.agent_id === a.id).length;
+    const myLeads = todosLosLeads.filter(l => l.agent_id === a.id).length;
     const { ops: myOps, comision: myCom } = resumen.porAsesor(a.id);
     return { ...a, leads: myLeads, ops: myOps, comision: myCom };
   }).sort((a, b) => b.comision - a.comision).slice(0, 5);
@@ -249,12 +252,14 @@ export default async function AdminDashboard() {
               ))}</tr>
             </thead>
             <tbody>
-              {leads.slice(0, 5).map((l: any) => (
-                <tr key={l.id} className="border-b border-ink-line last:border-0">
-                  <td className="px-6 py-4"><div className="font-medium text-sm text-ink">{l.name}</div></td>
+              {ultimosClientes(leads, 5).map((l: any) => (
+                <tr key={l.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/40">
+                  <td className="px-6 py-4">
+                    <Link href={`/admin/leads/${l.id}`} className="font-medium text-sm text-ink hover:text-brand-600">{l.name}</Link>
+                  </td>
                   <td className="px-6 py-4 text-xs text-ink-muted">{l.source || "—"}</td>
                   <td className="px-6 py-4"><span className="text-xs px-2 py-1 rounded-full bg-brand-50 text-brand-700">{l.status}</span></td>
-                  <td className="px-6 py-4 text-xs text-ink-muted">{new Date(l.created_at).toLocaleDateString("es-MX")}</td>
+                  <td className="px-6 py-4 text-xs text-ink-muted">{fechaMerida(l.created_at)}</td>
                 </tr>
               ))}
             </tbody>

@@ -21,3 +21,8 @@ export async function countByProperty(db: SupabaseClient, source: Source): Promi
   for (const r of rows || []) counts.set(r.property_id, (counts.get(r.property_id) || 0) + 1);
   return counts;
 }
+
+// Los `n` clientes más recientes, sin depender del orden en que los devuelva la base.
+export function ultimosClientes<T extends { created_at: string }>(leads: T[], n = 5): T[] {
+  return [...leads].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, n);
+}

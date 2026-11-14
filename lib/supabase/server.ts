@@ -25,6 +25,12 @@ export function createClient() {
   );
 }
 
+// Next 14 guarda en su caché de datos las consultas del servidor que se hacen antes
+// de leer cookies: la página de editar propiedad mostraba la versión de la primera
+// visita aunque la base ya tuviera cambios. Con la llave de servicio siempre se lee
+// el dato actual.
+export const sinCache: typeof fetch = (input, init) => fetch(input, { ...init, cache: "no-store" });
+
 // Cliente admin — usa service role key
 // Bypasea RLS completamente — usar SOLO en rutas admin protegidas
 export function createAdminClient() {
@@ -36,6 +42,7 @@ export function createAdminClient() {
         autoRefreshToken: false,
         persistSession:   false,
       },
+      global: { fetch: sinCache },
     }
   );
 }

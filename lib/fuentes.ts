@@ -4,6 +4,7 @@
 // cambia solo los campos aceptados. Nada se publica ni se despublica aquí.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { TIPOS_PROPIEDAD, OPERACIONES, ESTADOS_PROPIEDAD } from "@/lib/utils";
+import { portalesValidos } from "@/lib/portales";
 
 export const MOTIVOS_RECHAZO = ["Datos", "Fotos", "Texto", "Coincidencia", "Otro"] as const;
 export type MotivoRechazo = (typeof MOTIVOS_RECHAZO)[number];
@@ -81,9 +82,13 @@ async function tomar(db: Db, id: string, cambios: Record<string, unknown>) {
 
 export async function aprobarBorrador(
   db: Db, borrador: Borrador,
-  entrada: { datos?: Record<string, unknown>; aceptados?: string[]; fotos?: unknown },
+  entrada: {
+    datos?: Record<string, unknown>; aceptados?: string[]; fotos?: unknown;
+    // Lo elige la persona al aprobar una nueva; nunca se publica sin esto
+    publicar?: { sitio?: unknown; portales?: unknown };
+  },
   userId: string,
-): Promise<{ propertyId: string }> {
+): Promise<{ propertyId: string; publicada: boolean }> {
   const revisado = { revisado_por: userId, revisado_en: new Date().toISOString() };
   const fotos = fotosElegidas(borrador, entrada.fotos);
 
@@ -92,10 +97,17 @@ export async function aprobarBorrador(
     if (!final.title) throw new ErrorBorrador("Falta el título.");
     if (!final.type) throw new ErrorBorrador("Falta el tipo de propiedad.");
     if (!final.price) throw new ErrorBorrador("Falta el precio.");
+    // Los portales leen solo publicadas: sin "sitio" no se marca ningún portal
+    const publicar = entrada.publicar?.sitio === true;
+    if (publicar && !fotos.length) {
+      throw new ErrorBorrador("Para publicarla necesita al menos una foto. Elige una o apruébala sin publicar.");
+    }
+    const portales = publicar ? portalesValidos(entrada.publicar?.portales) : [];
 
     await tomar(db, borrador.id, { estado: "Aprobado", ...revisado });
     const { data: prop, error } = await db.from("properties").insert({
-      ...final, status: final.status || "Disponible", is_published: false, featured: false,
+      ...final, status: final.status || "Disponible", is_published: publicar, featured: false,
+      ...Object.fromEntries(portales.map(p => [p, true])),
       reference: await siguienteReferencia(db),
     }).select("id").single();
     if (error || !prop) {
@@ -109,7 +121,7 @@ export async function aprobarBorrador(
     }
     await db.from("propiedad_fuentes").upsert({ property_id: prop.id, fuente_id: borrador.fuente_id, clave_modelo: borrador.clave_modelo });
     await db.from("propiedad_borradores").update({ property_id: prop.id, datos_finales: final, fotos }).eq("id", borrador.id);
-    return { propertyId: prop.id };
+    return { propertyId: prop.id, publicada: publicar };
   }
 
   // Actualizar: solo los campos propuestos que la persona dejó marcados.
@@ -138,7 +150,7 @@ export async function aprobarBorrador(
   }
   await db.from("propiedad_fuentes").upsert({ property_id: borrador.property_id, fuente_id: borrador.fuente_id, clave_modelo: borrador.clave_modelo });
   await db.from("propiedad_borradores").update({ datos_finales: final, fotos }).eq("id", borrador.id);
-  return { propertyId: borrador.property_id };
+  return { propertyId: borrador.property_id, publicada: false };
 }
 
 export async function rechazarBorrador(

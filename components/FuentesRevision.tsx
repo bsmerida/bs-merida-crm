@@ -1,12 +1,26 @@
 "use client";
 // Carrusel de borradores del agente de fuentes: uno a la vez, con fotos,
-// datos editables y evidencia. Aprobar crea/actualiza (sin publicar);
-// rechazar pide motivo y comentario para que el agente aprenda.
+// datos editables y evidencia. Aprobar crea/actualiza; una nueva se publica solo si
+// la persona marca "Publicar" al aprobar. Rechazar pide motivo y comentario para
+// que el agente aprenda.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fmtMXN, TIPOS_PROPIEDAD, OPERACIONES } from "@/lib/utils";
 import { Icon } from "@/components/Icon";
+import { PORTALES } from "@/lib/portales";
+
+// Lo último que eligió esta persona al aprobar (solo en su navegador), para no
+// marcar lo mismo en cada propiedad.
+type Publicar = { sitio: boolean; portales: string[] };
+const CLAVE_PUBLICAR = "duclaud:publicar-al-aprobar";
+function leerPublicar(): Publicar {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLAVE_PUBLICAR) || "null");
+    if (v && typeof v.sitio === "boolean" && Array.isArray(v.portales)) return v;
+  } catch { /* sin almacenamiento */ }
+  return { sitio: false, portales: [] };
+}
 
 type Foto = { url: string; nombre?: string; ruta?: string };
 type Cambio = { antes: unknown; despues: unknown };
@@ -62,6 +76,16 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
   const [aviso, setAviso] = useState<{ texto: string; href?: string } | null>(null);
+  const [publicar, setPublicarState] = useState<Publicar>({ sitio: false, portales: [] });
+  useEffect(() => setPublicarState(leerPublicar()), []);
+  const setPublicar = (p: Publicar) => {
+    setPublicarState(p);
+    try { localStorage.setItem(CLAVE_PUBLICAR, JSON.stringify(p)); } catch { /* sin almacenamiento */ }
+  };
+  const togglePortal = (clave: string) => setPublicar({
+    ...publicar,
+    portales: publicar.portales.includes(clave) ? publicar.portales.filter(c => c !== clave) : [...publicar.portales, clave],
+  });
 
   const b = lista[Math.min(i, lista.length - 1)];
   const ed = useMemo(() => (b ? ediciones[b.id] || inicial(b) : null), [b, ediciones]);
@@ -131,8 +155,14 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
     const datos = nueva
       ? { ...ed.datos, amenities: String(ed.datos.amenities || "").split(",").map((s: string) => s.trim()).filter(Boolean) }
       : Object.fromEntries(ed.aceptados.filter(c => c in ed.datos && c !== "amenities").map(c => [c, ed.datos[c]]));
-    const r = await enviar({ accion: "aprobar", datos, aceptados: ed.aceptados, fotos: ed.fotos });
-    if (r) quitarActual(nueva ? "✓ Propiedad creada sin publicar." : "✓ Cambios aplicados.", `/admin/propiedades/${r.property_id}`);
+    const r = await enviar({
+      accion: "aprobar", datos, aceptados: ed.aceptados, fotos: ed.fotos,
+      ...(nueva ? { publicar } : {}),
+    });
+    if (r) quitarActual(
+      !nueva ? "✓ Cambios aplicados." : r.publicada ? "✓ Propiedad creada y publicada." : "✓ Propiedad creada sin publicar.",
+      `/admin/propiedades/${r.property_id}`,
+    );
   };
 
   const rechazar = async () => {
@@ -363,6 +393,30 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
           <div className="mb-3 text-sm text-emerald-700">{aviso.texto} {aviso.href && <Link href={aviso.href} className="underline">Ver →</Link>}</div>
         )}
 
+        {nueva && !rechazando && (
+          <div className="mb-4 p-3 rounded-xl border border-ink-line bg-white space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-ink">
+              <input type="checkbox" checked={publicar.sitio} onChange={e => setPublicar({ ...publicar, sitio: e.target.checked })}
+                className="accent-brand-500" />
+              Publicar al aprobar en duclaud.com.mx
+            </label>
+            {publicar.sitio && (
+              <>
+                <div className="text-xs text-ink-muted">Y enviarla a estos portales (se recuerda tu elección):</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PORTALES.map(p => (
+                    <button key={p.clave} type="button" onClick={() => togglePortal(p.clave)} aria-pressed={publicar.portales.includes(p.clave)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition ${publicar.portales.includes(p.clave) ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-ink border-ink-line hover:border-emerald-300"}`}>
+                      {p.nombre}
+                    </button>
+                  ))}
+                </div>
+                {!ed.fotos.length && <div className="text-xs text-amber-700">⚠️ Sin fotos elegidas no se puede publicar.</div>}
+              </>
+            )}
+          </div>
+        )}
+
         {rechazando ? (
           <div className="space-y-3">
             <div className="text-sm font-medium text-ink">¿Qué estuvo mal?</div>
@@ -397,7 +451,7 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
               className="px-5 py-2.5 rounded-full text-sm text-ink-muted hover:text-ink disabled:opacity-40">Saltar</button>
             <button onClick={aprobar} disabled={enviando}
               className="ml-auto px-6 py-2.5 rounded-full text-sm font-medium bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white">
-              {enviando ? "Guardando…" : nueva ? "Aprobar y crear (sin publicar)" : `Aprobar ${ed.aceptados.length + (ed.fotos.length ? 1 : 0)} cambios`}
+              {enviando ? "Guardando…" : nueva ? (publicar.sitio ? "Aprobar y publicar" : "Aprobar y crear (sin publicar)") : `Aprobar ${ed.aceptados.length + (ed.fotos.length ? 1 : 0)} cambios`}
             </button>
           </div>
         )}

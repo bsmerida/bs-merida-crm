@@ -90,7 +90,7 @@ export default async function FuentesPage() {
           <li><strong>1.</strong> Cada día a las 6:00 am leemos el Excel de fuentes (si agregaron una liga nueva, aparece aquí <strong>apagada</strong>) y revisamos las carpetas de tus proveedores en Drive y Dropbox. Solo leemos: nunca movemos, editamos ni borramos nada en ellas.</li>
           <li><strong>2.</strong> En las fuentes con el agente activo, leemos los brochures, listas de precios y fichas técnicas de los desarrollos que cambiaron.</li>
           <li><strong>3.</strong> Comparamos cada modelo con tu inventario: si ya existe te proponemos solo lo que cambió (por ejemplo, el precio); si no existe, te armamos la propiedad completa con fotos, características, desarrollador y descripción.</li>
-          <li><strong>4.</strong> Tú decides en el carrusel. Al aprobar una nueva, se crea <strong>sin publicar</strong>: la publicas desde Propiedades cuando quieras, igual que siempre.</li>
+          <li><strong>4.</strong> Tú decides en el carrusel. Al aprobar una nueva, se crea <strong>sin publicar</strong>, salvo que marques <strong>«Publicar al aprobar»</strong> (y los portales que quieras). Esa elección se recuerda para las siguientes.</li>
           <li><strong>5.</strong> Cuando rechazas, tu comentario se convierte en una lección para el paso que se equivocó (datos, fotos, texto o coincidencia) y el agente la toma en cuenta desde la siguiente revisión.</li>
         </ol>
         <p className="text-xs text-ink-muted mt-4">

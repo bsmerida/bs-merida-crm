@@ -82,6 +82,41 @@ describe("aprobar una nueva", () => {
     expect(writes("propiedad_fuentes", "upsert")[0].payload).toMatchObject({ fuente_id: "F-0010", clave_modelo: "kinora|tipo-a|Departamento|Venta" });
   });
 
+  it("con 'Publicar' marcado: se publica y solo en los portales válidos elegidos", async () => {
+    const res = await patch(NUEVA, {
+      accion: "aprobar",
+      publicar: { sitio: true, portales: ["publicar_inmuebles24", "publicar_proppit", "is_published", "agent_id", "publicar_inmuebles24"] },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ publicada: true });
+    const prop = writes("properties", "insert")[0].payload as any;
+    expect(prop.is_published).toBe(true);
+    expect(prop.publicar_inmuebles24).toBe(true);
+    expect(prop.publicar_proppit).toBe(true);
+    expect(prop.agent_id).toBeUndefined();
+    expect(Object.keys(prop).filter(k => k.startsWith("publicar_")).sort()).toEqual(["publicar_inmuebles24", "publicar_proppit"]);
+  });
+
+  it("portales sin marcar 'Publicar' en el sitio: no publica nada", async () => {
+    await patch(NUEVA, { accion: "aprobar", publicar: { sitio: false, portales: ["publicar_inmuebles24"] } });
+    const prop = writes("properties", "insert")[0].payload as any;
+    expect(prop.is_published).toBe(false);
+    expect(prop.publicar_inmuebles24).toBeUndefined();
+  });
+
+  it("'sitio' tiene que ser exactamente true (no 'true' ni 1)", async () => {
+    await patch(NUEVA, { accion: "aprobar", publicar: { sitio: "true" } });
+    expect((writes("properties", "insert")[0].payload as any).is_published).toBe(false);
+  });
+
+  it("publicar sin fotos: no crea nada y lo explica", async () => {
+    const res = await patch(NUEVA, { accion: "aprobar", fotos: [], publicar: { sitio: true } });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/foto/);
+    expect(writes("properties")).toHaveLength(0);
+    expect(writes("propiedad_borradores", "update")).toHaveLength(0);
+  });
+
   it("sin precio no crea nada", async () => {
     const res = await patch(NUEVA, { accion: "aprobar", datos: { price: 0 } });
     expect(res.status).toBe(400);
@@ -92,7 +127,10 @@ describe("aprobar una nueva", () => {
 
 describe("aprobar una actualización", () => {
   it("cambia solo los campos marcados y nunca el título ni la publicación", async () => {
-    const res = await patch(ACTUALIZAR, { accion: "aprobar", aceptados: ["price", "title", "is_published"], datos: { title: "X", is_published: true } });
+    const res = await patch(ACTUALIZAR, {
+      accion: "aprobar", aceptados: ["price", "title", "is_published"], datos: { title: "X", is_published: true },
+      publicar: { sitio: true, portales: ["publicar_inmuebles24"] },
+    });
     expect(res.status).toBe(200);
     const upd = writes("properties", "update")[0];
     expect(upd.payload).toEqual({ price: 2450000 });

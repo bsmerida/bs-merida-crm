@@ -7,7 +7,7 @@ import { isUuid } from "@/lib/security";
 import { aprobarBorrador, rechazarBorrador, ErrorBorrador, type Borrador } from "@/lib/fuentes";
 
 // PATCH /api/fuentes/borradores/[id]
-//   { accion: "aprobar", datos?, aceptados?, fotos? }
+//   { accion: "aprobar", datos?, aceptados?, fotos?, publicar?: { sitio, portales } }
 //   { accion: "rechazar", motivo, feedback, rehacer? }
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { auth, error: authError } = await requireAuth({ admin: true });
@@ -30,8 +30,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.accion === "aprobar") {
       const datos = body.datos && typeof body.datos === "object" ? body.datos : undefined;
       const aceptados = Array.isArray(body.aceptados) ? body.aceptados.map(String) : undefined;
-      const { propertyId } = await aprobarBorrador(db, borrador as Borrador, { datos, aceptados, fotos: body.fotos }, auth.userId);
-      return NextResponse.json({ ok: true, property_id: propertyId });
+      const publicar = body.publicar && typeof body.publicar === "object" ? body.publicar : undefined;
+      const { propertyId, publicada } = await aprobarBorrador(
+        db, borrador as Borrador, { datos, aceptados, fotos: body.fotos, publicar }, auth.userId);
+      return NextResponse.json({ ok: true, property_id: propertyId, publicada });
     }
     await rechazarBorrador(db, borrador as Borrador, body, auth.userId);
     return NextResponse.json({ ok: true });

@@ -52,7 +52,7 @@ export function ValuacionForm() {
   }
 
   return (
-    <form onSubmit={submit} className="bg-white rounded-[28px] md:rounded-[44px] p-6 md:px-12 md:py-11 w-full max-w-[760px] flex flex-col gap-4.5">
+    <form onSubmit={submit} className="bg-white rounded-[28px] md:rounded-[44px] p-6 md:px-12 md:py-11 w-full max-w-[760px] flex flex-col gap-[18px]">
       <h2 className="font-serif text-navy text-3xl md:text-[44px] md:leading-[44px]">Solicita tu valuación</h2>
       <div>
         <p className="text-[#6b7385] text-xs font-semibold tracking-[1.68px] uppercase mb-2.5">Tipo de propiedad</p>

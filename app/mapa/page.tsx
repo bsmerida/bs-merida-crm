@@ -1,9 +1,9 @@
 // app/mapa/page.tsx
 import { createClient } from "@/lib/supabase/server";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import { PublicHeaderV3 } from "@/components/PublicHeaderV3";
+import { PublicFooterV3 } from "@/components/PublicFooterV3";
 import { PublicChatbot } from "@/components/PublicChatbot";
-import { PropertiesMap } from "@/components/PropertiesMap";
+import { MapaExplorer } from "@/components/MapaExplorer";
 import { fotosPorPropiedad } from "@/lib/fotos";
 
 export const metadata = { title: "Mapa de Propiedades — Duclaud Bienes Raíces" };
@@ -13,7 +13,7 @@ export default async function MapaPage() {
 
   const { data: props } = await supabase
     .from("properties")
-    .select("id, title, price, operation, type, zone, lat, lng")
+    .select("id, title, price, operation, type, zone, city, bedrooms, bathrooms, m2_construction, lat, lng")
     .eq("is_published", true)
     .not("lat", "is", null)
     .not("lng", "is", null)
@@ -29,19 +29,13 @@ export default async function MapaPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col">
-      <PublicHeader/>
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-8 py-10">
-        <div className="mb-6">
-          <h1 className="font-serif text-3xl text-navy">Mapa de propiedades</h1>
-          <p className="text-sm text-ink-muted mt-1">
-            {properties.length} propiedad{properties.length !== 1 ? "es" : ""} disponible{properties.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <PropertiesMap properties={properties} height="70vh"/>
-      </main>
-      <PublicFooter/>
-      <PublicChatbot/>
+    <div className="bg-cream p-4 font-dmsans break-words">
+      <PublicHeaderV3 active="/mapa" />
+      <section className="py-4">
+        <MapaExplorer properties={properties as any} />
+      </section>
+      <PublicFooterV3 />
+      <PublicChatbot />
     </div>
   );
 }

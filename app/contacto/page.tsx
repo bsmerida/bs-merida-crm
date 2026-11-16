@@ -1,18 +1,20 @@
 "use client";
 import { useState } from "react";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import { PublicHeaderV3 } from "@/components/PublicHeaderV3";
+import { PublicFooterV3 } from "@/components/PublicFooterV3";
 import { PublicChatbot } from "@/components/PublicChatbot";
 
+const INTERESES = ["Comprar", "Rentar", "Vender", "Invertir"];
 
 export default function ContactoPage() {
   const [form, setForm]   = useState({ name: "", email: "", phone: "", message: "" });
+  const [interes, setInteres] = useState("Comprar");
   const [sent, setSent]   = useState(false);
   const [busy, setBusy]   = useState(false);
   const [error, setError] = useState("");
   const wa    = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
-  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE    || "999 303 4815";
-  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL    || "contacto@duclaud.mx";
+  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE    || "999 746 6272";
+  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL    || "contacto@duclaud.com.mx";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function ContactoPage() {
       const res = await fetch("/api/contacto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, message: `Interés: ${interes}. ${form.message}`.trim() }),
       });
       const data = await res.json();
       if (data.ok) setSent(true);
@@ -33,94 +35,102 @@ export default function ContactoPage() {
     setBusy(false);
   };
 
-  const inp = "w-full border border-stone bg-white px-4 py-3 rounded-xl text-sm text-navy placeholder:text-ink-soft focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/10 transition-all";
+  const field = "bg-cream rounded-[24px] px-6 py-3.5 flex flex-col gap-0.5";
+  const label = "text-[#6b7385] text-[11px] font-semibold tracking-[1.1px] uppercase";
+  const inp   = "bg-transparent text-navy text-[17px] w-full focus:outline-none placeholder:text-[#6b7385]";
 
   return (
-    <>
-      <PublicHeader />
-      <div className="bg-navy py-20">
-        <div className="max-w-7xl mx-auto px-8">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-gold mb-4">Contacto</p>
-          <h1 className="font-serif text-5xl font-light text-white">
-            Hablemos<br /><em className="italic text-gold">directamente.</em>
-          </h1>
-        </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-8 py-20 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <div>
-            <p className="text-sm text-ink-muted leading-relaxed max-w-sm mb-10">
-              Cuéntenos qué busca. Respondemos en menos de 30 minutos en horario hábil con la información que necesita.
-            </p>
-            <div className="space-y-4">
-              {[
-                { svg: <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>, l: "WhatsApp", v: phone, href: `https://wa.me/${wa}` },
-                { svg: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>, l: "Correo", v: email, href: `mailto:${email}` },
-                { svg: <><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></>, l: "Sede", v: "Mérida, Yucatán · México", href: undefined },
-              ].map(({ svg, l, v, href }) => (
-                <div key={l} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-stone hover:border-gold/40 transition-colors group">
-                  <div className="w-10 h-10 bg-navy/5 rounded-xl flex items-center justify-center text-gold shrink-0 group-hover:bg-gold/10 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">{svg}</svg>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-ink-soft">{l}</p>
-                    {href ? (
-                      <a href={href} target={href.startsWith("http") ? "_blank" : undefined}
-                        rel="noopener noreferrer" className="text-sm font-medium text-navy hover:text-gold transition-colors">
-                        {v}
-                      </a>
-                    ) : <p className="text-sm text-ink-muted">{v}</p>}
+    <div className="bg-cream p-4 font-dmsans break-words">
+      <PublicHeaderV3 active="/contacto" />
+
+      <section className="pt-10 md:pt-24 pb-6 md:pb-10 px-5 md:px-16">
+        <h1 className="font-serif italic text-navy text-5xl md:text-[108px] md:leading-[108px] tracking-tight min-w-0">Hablemos.</h1>
+        <p className="text-[#6b7385] text-base md:text-[24px] mt-3 min-w-0">Un asesor de Duclaud te responde en horario hábil.</p>
+      </section>
+
+      <section className="px-5 md:px-8 pb-12 md:pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Formulario */}
+          <div className="lg:col-span-3 bg-white rounded-[32px] md:rounded-[40px] p-6 md:p-11">
+            {sent ? (
+              <div className="flex flex-col items-center text-center gap-4 py-10">
+                <div className="w-14 h-14 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-gold" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <h3 className="font-serif text-navy text-3xl">Mensaje recibido</h3>
+                <p className="text-[#6b7385] max-w-xs">Un consultor Duclaud le contactará en menos de 24 horas.</p>
+                <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-dk text-sm font-semibold mt-1">
+                  También por WhatsApp →
+                </a>
+              </div>
+            ) : (
+              <form onSubmit={submit} className="flex flex-col gap-4">
+                <h2 className="font-serif text-navy text-2xl md:text-[36px] mb-1">Cuéntanos qué buscas</h2>
+                <div className={field}>
+                  <label className={label} htmlFor="name">Nombre</label>
+                  <input id="name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Tu nombre" className={inp} />
+                </div>
+                <div className={field}>
+                  <label className={label} htmlFor="phone">Teléfono</label>
+                  <input id="phone" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="999 000 0000" className={inp} />
+                </div>
+                <div className={field}>
+                  <label className={label} htmlFor="email">Correo</label>
+                  <input id="email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="tucorreo@correo.com" className={inp} />
+                </div>
+                <div>
+                  <p className={label + " mb-2.5"}>Interés</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {INTERESES.map(i => (
+                      <button key={i} type="button" onClick={() => setInteres(i)}
+                        className={`px-5 py-2.5 rounded-full text-[15px] font-semibold transition-colors ${
+                          interes === i ? "bg-navy text-white" : "border border-navy/20 text-navy"}`}>
+                        {i}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className={field}>
+                  <label className={label} htmlFor="message">Mensaje</label>
+                  <textarea id="message" rows={3} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
+                    placeholder="Cuéntanos zona, presupuesto y tiempos." className={inp + " resize-none"} />
+                </div>
+                {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
+                <button type="submit" disabled={busy}
+                  className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white font-semibold py-[18px] rounded-full transition-colors mt-1">
+                  {busy ? "Enviando..." : "Enviar mensaje"}
+                </button>
+              </form>
+            )}
           </div>
 
-          {sent ? (
-            <div className="bg-white border border-stone rounded-3xl p-12 flex flex-col items-center justify-center text-center gap-5">
-              <div className="w-14 h-14 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-gold" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          {/* Info */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            {[
+              { l: "WHATSAPP", v: phone, s: "Respuesta más rápida", href: `https://wa.me/${wa}` },
+              { l: "CORREO",   v: email, s: "Te respondemos el mismo día", href: `mailto:${email}` },
+              { l: "HORARIO",  v: "Lun – Vie · 9:00 a 18:00", s: "Sáb · 10:00 a 14:00", href: undefined },
+            ].map(d => (
+              <div key={d.l} className="bg-white rounded-[24px] p-6">
+                <p className="text-gold text-[11px] font-semibold tracking-[1.1px]">{d.l}</p>
+                {d.href ? (
+                  <a href={d.href} target={d.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
+                    className="block font-serif text-navy text-2xl mt-1 hover:text-gold transition-colors">{d.v}</a>
+                ) : (
+                  <p className="font-serif text-navy text-2xl mt-1">{d.v}</p>
+                )}
+                <p className="text-[#6b7385] text-sm mt-1.5">{d.s}</p>
               </div>
-              <h3 className="font-serif text-2xl font-light text-navy">Mensaje recibido</h3>
-              <p className="text-sm text-ink-muted max-w-xs">Un consultor Duclaud le contactará en menos de 24 horas.</p>
-              <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
-                className="text-[11px] uppercase tracking-[0.1em] text-gold hover:text-gold-dk mt-2 transition-colors">
-                También por WhatsApp →
-              </a>
+            ))}
+            <div className="bg-stone rounded-[24px] h-[200px] flex items-center justify-center">
+              <p className="text-navy/50 text-xs uppercase tracking-wide">Duclaud · Mérida</p>
             </div>
-          ) : (
-            <form onSubmit={submit} className="bg-white border border-stone rounded-3xl p-8 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-[0.12em] text-ink-soft block mb-2">Nombre *</label>
-                  <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Su nombre" className={inp} />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-[0.12em] text-ink-soft block mb-2">Correo</label>
-                  <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="correo@ejemplo.com" className={inp} />
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] uppercase tracking-[0.12em] text-ink-soft block mb-2">Teléfono *</label>
-                <input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="999 123 4567" className={inp} />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase tracking-[0.12em] text-ink-soft block mb-2">¿Cómo podemos ayudarle?</label>
-                <textarea value={form.message} onChange={e => setForm({...form, message: e.target.value})}
-                  placeholder="Cuéntenos qué busca..." rows={5} className={`${inp} resize-none`} />
-              </div>
-              <p className="text-[11px] text-ink-soft">Al enviar autoriza que un consultor Duclaud le contacte.</p>
-              {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
-              <button type="submit" disabled={busy}
-                className="w-full bg-navy hover:bg-navy-mid disabled:opacity-50 text-white text-[11px] uppercase tracking-[0.1em] font-semibold py-4 rounded-full transition-colors">
-                {busy ? "Enviando..." : "Enviar mensaje"}
-              </button>
-            </form>
-          )}
+          </div>
         </div>
-      </div>
-      <PublicFooter />
+      </section>
+
+      <PublicFooterV3 />
       <PublicChatbot />
-    </>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FavoritosNavLink } from "./FavoritosNavLink";
 
 export const NAV_V3 = [
   { href: "/",         l: "Inicio"             },
@@ -28,11 +29,7 @@ export function PublicHeaderV3({ active }: { active: string }) {
         ))}
       </nav>
       <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-        <span className="bg-stone w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-navy shrink-0" title="Favoritos (próximamente)">
-          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-            <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.7 1-1a5.5 5.5 0 000-7.8z"/>
-          </svg>
-        </span>
+        <FavoritosNavLink />
         <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
           className="bg-navy hover:bg-navy-mid text-white px-5 md:px-[26px] py-3 md:py-[14px] rounded-full text-sm md:text-[15px] font-semibold transition-colors whitespace-nowrap">
           Agendar visita

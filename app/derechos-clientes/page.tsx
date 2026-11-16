@@ -1,7 +1,7 @@
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import { PublicHeaderV3 } from "@/components/PublicHeaderV3";
+import { PublicFooterV3 } from "@/components/PublicFooterV3";
 
-export const metadata = { title: "Carta de Derechos del Consumidor — Inmobiliaria BS Mérida" };
+export const metadata = { title: "Carta de Derechos del Consumidor — Duclaud Bienes Raíces" };
 
 const DERECHOS = [
   "Recibir, respecto de los servicios ofertados, información y publicidad veraz, clara y actualizada, sin importar el medio por el que se comunique, incluyendo los medios digitales, de forma tal que le permita a EL CONSUMIDOR tomar la mejor decisión respecto de los servicios que contrate a EL ASESOR INMOBILIARIO.",
@@ -23,35 +23,38 @@ const DERECHOS = [
 ];
 
 export default function DerechosClientesPage() {
+  const email = process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "contacto@duclaud.com.mx";
+  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 746 6272";
+
   return (
-    <>
-      <PublicHeader />
-      <div className="max-w-4xl mx-auto px-8 py-20">
-        <div className="text-xs uppercase tracking-wider text-brand-600 font-semibold">Información al consumidor</div>
-        <h1 className="text-4xl font-semibold text-ink tracking-tight mt-3 leading-tight">
-          Carta de derechos del consumidor
-        </h1>
-        <p className="text-lg text-ink-muted leading-relaxed mt-6">
-          De acuerdo con el contrato de adhesión registrado ante la Procuraduría Federal del Consumidor número <strong>5589-2022</strong>, todo cliente de Inmobiliaria BS Mérida tiene los siguientes derechos:
+    <div className="bg-cream p-4 font-dmsans break-words">
+      <PublicHeaderV3 active="" />
+
+      <section className="pt-10 md:pt-24 px-5 md:px-16">
+        <p className="text-gold text-[13px] font-semibold tracking-[3.12px]">INFORMACIÓN AL CONSUMIDOR</p>
+        <h1 className="font-serif text-navy text-4xl md:text-7xl mt-3 md:mt-4 min-w-0">Carta de derechos del consumidor.</h1>
+        <p className="text-[#6b7385] text-base md:text-[20px] md:leading-[26px] mt-4 md:mt-6 max-w-[900px] min-w-0">
+          De acuerdo con el contrato de adhesión registrado ante la Procuraduría Federal del Consumidor número <strong className="text-navy">5589-2022</strong>, todo cliente de Duclaud tiene los siguientes derechos:
         </p>
 
-        <ol className="mt-12 space-y-6">
+        <ol className="mt-10 md:mt-14">
           {DERECHOS.map((d, i) => (
-            <li key={i} className="flex gap-5 pb-6 border-b border-ink-line last:border-0">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-sm font-semibold">{i + 1}</span>
-              <p className="text-ink leading-relaxed flex-1 text-[15px]">{d}</p>
+            <li key={i} className="flex gap-4 md:gap-6 py-5 border-b border-stone last:border-0">
+              <span className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-stone text-navy flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</span>
+              <p className="text-navy text-[15px] md:text-[18px] leading-6 md:leading-7">{d}</p>
             </li>
           ))}
         </ol>
 
-        <div className="mt-16 p-6 bg-brand-50 border border-brand-200 rounded-2xl">
-          <h3 className="font-semibold text-ink">¿Cómo presentar una queja o sugerencia?</h3>
-          <p className="text-sm text-ink-muted mt-2 leading-relaxed">
-            Puedes contactarnos directamente a <strong>{process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "bsmerida19@gmail.com"}</strong> o al teléfono <strong>{process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815"}</strong>. Si lo consideras necesario, también puedes acudir a la Procuraduría Federal del Consumidor (PROFECO) en <a href="https://www.gob.mx/profeco" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline">gob.mx/profeco</a>.
+        <div className="bg-stone rounded-[28px] md:rounded-[36px] px-7 md:px-10 py-8 md:py-9 mt-10 mb-12 md:mb-16">
+          <h3 className="font-serif text-navy text-2xl md:text-[40px] md:leading-[42px]">¿Cómo presentar una queja o sugerencia?</h3>
+          <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] mt-2.5">
+            Escríbenos a <a href={`mailto:${email}`} className="text-navy hover:text-gold transition-colors font-medium">{email}</a> o llama al <a href={`https://wa.me/${process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272"}`} target="_blank" rel="noopener noreferrer" className="text-navy hover:text-gold transition-colors font-medium">{phone}</a>. Te atendemos de lunes a viernes de 9:00 a 18:00 y sábados de 10:00 a 14:00. Si lo consideras necesario, también puedes acudir a la Procuraduría Federal del Consumidor (PROFECO) en <a href="https://www.gob.mx/profeco" target="_blank" rel="noopener noreferrer" className="text-navy hover:text-gold transition-colors font-medium">gob.mx/profeco</a>.
           </p>
         </div>
-      </div>
-      <PublicFooter />
-    </>
+      </section>
+
+      <PublicFooterV3 />
+    </div>
   );
 }

@@ -179,9 +179,30 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
       </div>
 
       {filtered.length === 0 ? (
-        <div className="py-24 text-center">
-          <p className="text-sm text-[#6b7385]">Sin propiedades con esos filtros.</p>
-          <button onClick={clear} className="text-sm text-gold hover:underline mt-2 block mx-auto">Limpiar filtros</button>
+        <div className="py-16 text-center flex flex-col items-center gap-6">
+          <div>
+            <h3 className="font-serif text-navy text-4xl md:text-5xl">Sin resultados.</h3>
+            <p className="text-[#6b7385] text-base md:text-lg mt-3 max-w-xl">
+              No encontramos propiedades con esos filtros. Prueba ampliar el presupuesto o la zona, o pídele a Sofía que te ayude.
+            </p>
+          </div>
+          <div className="flex gap-2.5 flex-wrap justify-center">
+            <button onClick={clear} className="border border-navy/20 text-navy font-semibold px-7 py-3.5 rounded-full hover:bg-cream transition-colors">
+              Quitar filtros
+            </button>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("sofia:open", { detail: null }))}
+              className="bg-navy hover:bg-navy-mid text-white font-semibold px-7 py-3.5 rounded-full transition-colors">
+              Hablar con Sofía
+            </button>
+          </div>
+          {props.length > 0 && (
+            <div className="w-full mt-4">
+              <p className="font-serif text-navy text-2xl mb-5">Propiedades que podrían interesarte</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {props.slice(0, 3).map((p: Prop) => <PropertyCardV3 key={p.id} p={p} coverUrl={p.cover} />)}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <>

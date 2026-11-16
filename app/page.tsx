@@ -29,7 +29,8 @@ export default async function HomePage() {
   const destacadas = (properties || []).map(conPortada);
 
   return (
-    <div className="bg-cream p-4 font-dmsans break-words">
+    <div className="bg-cream">
+    <div className="max-w-[1280px] mx-auto p-4 font-dmsans break-words">
       {/* Hero + Header */}
       <section className="rounded-[32px] md:rounded-[48px] px-5 md:px-12 pt-7 md:pt-9 pb-8 md:pb-14 relative overflow-hidden" style={{ backgroundImage: "linear-gradient(145deg, #2B3F68 0%, #1C2B4B 71%)" }}>
         <div className="flex items-center justify-between gap-3 md:gap-6 flex-wrap">
@@ -258,6 +259,7 @@ export default async function HomePage() {
 
       <PublicFooterV3 />
       <PublicChatbot />
+    </div>
     </div>
   );
 }

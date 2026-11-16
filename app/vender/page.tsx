@@ -16,8 +16,7 @@ export default function VenderPage() {
   const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
 
   return (
-    <div className="bg-cream">
-    <div className="max-w-[1280px] mx-auto p-4 font-dmsans break-words">
+    <div className="bg-cream p-4 font-dmsans break-words">
       <PublicHeaderV3 active="/vender" />
 
       {/* Título */}
@@ -62,7 +61,6 @@ export default function VenderPage() {
 
       <PublicFooterV3 />
       <PublicChatbot />
-    </div>
     </div>
   );
 }

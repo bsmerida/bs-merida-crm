@@ -173,15 +173,21 @@ export default async function AdminDashboard() {
       {verDinero && <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
         <h3 className="font-semibold text-ink mb-6">Operaciones cerradas (últimos 6 meses)</h3>
         <div className="flex items-end justify-between gap-3 h-56">
-          {meses.map(m => (
-            <div key={m.mes} className="flex-1 flex flex-col items-center gap-2">
-              <div className="text-xs text-ink-muted">{m.val > 0 ? (m.val >= 1_000_000 ? `${(m.val / 1_000_000).toFixed(1)}M` : `${Math.round(m.val / 1000)}k`) : "—"}</div>
-              <div className="w-full bg-brand-500 rounded-t-lg relative" style={{ height: `${(m.val / maxMes) * 100}%`, minHeight: m.val > 0 ? "8px" : "2px" }}>
-                {m.ops > 0 && <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-ink">{m.ops}</div>}
+          {meses.map(m => {
+            // Alto en px, no %: la columna no tiene altura fija y un % no se puede
+            // resolver contra un contenedor de alto automático (colapsaba a minHeight).
+            const ALTO_MAX_BARRA = 160;
+            const alto = m.val > 0 ? Math.max((m.val / maxMes) * ALTO_MAX_BARRA, 8) : 2;
+            return (
+              <div key={m.mes} className="flex-1 h-full flex flex-col items-center justify-end gap-2">
+                <div className="text-xs text-ink-muted">{m.val > 0 ? (m.val >= 1_000_000 ? `${(m.val / 1_000_000).toFixed(1)}M` : `${Math.round(m.val / 1000)}k`) : "—"}</div>
+                <div className="w-full bg-brand-500 rounded-t-lg relative" style={{ height: `${alto}px` }}>
+                  {m.ops > 0 && <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-ink">{m.ops}</div>}
+                </div>
+                <div className="text-xs text-ink-muted font-medium capitalize">{m.mes}</div>
               </div>
-              <div className="text-xs text-ink-muted font-medium capitalize">{m.mes}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="text-xs text-ink-muted mt-4 text-center">Comisión cobrable de ventas y rentas por mes de cierre. El número arriba de cada barra es la cantidad de operaciones.</div>
       </div>}

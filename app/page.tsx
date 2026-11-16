@@ -4,14 +4,9 @@ import { PUBLIC_PROPERTY_COLUMNS, conPortada } from "@/lib/public-property";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { SearchBox } from "@/components/SearchBox";
 import { SofiaTeaser } from "@/components/SofiaTeaser";
-import { Icon } from "@/components/Icon";
+import { PropertyCardV3 } from "@/components/PropertyCardV3";
 import { NAV_V3 } from "@/components/PublicHeaderV3";
 import { PublicFooterV3 } from "@/components/PublicFooterV3";
-
-const fmtPrice = (n: number, cur = "MXN") =>
-  new Intl.NumberFormat(cur === "USD" ? "en-US" : "es-MX", {
-    style: "currency", currency: cur, maximumFractionDigits: 0,
-  }).format(n);
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -90,8 +85,8 @@ export default async function HomePage() {
           </Link>
           <Link href="/comprar?zone=Monterrey" className="flex-1 h-[420px] md:h-[580px] rounded-[40px] p-9 flex flex-col justify-end text-white"
             style={{ backgroundImage: "linear-gradient(135deg, #22345A 0%, #1C2B4B 71%)" }}>
-            <p className="font-serif text-4xl md:text-[48px] md:leading-[50px]">Nuevo León</p>
-            <p className="text-white/75 mt-1.5 md:text-[16px]">Monterrey</p>
+            <p className="font-serif text-4xl md:text-[48px] md:leading-[50px]">Monterrey</p>
+            <p className="text-white/75 mt-1.5 md:text-[16px]">Nuevo León</p>
           </Link>
         </div>
       </section>
@@ -106,29 +101,7 @@ export default async function HomePage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full min-w-0">
               {(destacadas as any[]).map(p => (
-                <Link key={p.id} href={`/propiedad/${p.id}`} className="bg-white rounded-[32px] p-3 flex flex-col gap-3.5 hover:shadow-float transition-shadow min-w-0">
-                  <div className="h-[240px] md:h-[320px] rounded-[24px] relative overflow-hidden bg-navy flex items-start justify-between p-3.5">
-                    {p.cover
-                      ? <img src={p.cover} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
-                      : <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(138deg, #2B3F68 0%, #1C2B4B 71%)" }} />}
-                    <span className="relative bg-white text-navy text-[13px] font-semibold px-4 py-2 rounded-full">{p.operation}</span>
-                    <span className="relative bg-white w-[42px] h-[42px] rounded-full flex items-center justify-center">
-                      <Icon name="heart" className="w-[18px] h-[18px] text-navy" />
-                    </span>
-                  </div>
-                  <div className="px-2 pb-2 flex flex-col gap-1.5 min-w-0">
-                    <p className="font-semibold text-navy text-[28px] md:text-[31px] tracking-tight md:tracking-[-0.31px]">
-                      {fmtPrice(Number(p.price), (p as any).currency)}{p.operation === "Renta" && <span className="text-base font-medium text-[#6b7385]"> / mes</span>}
-                    </p>
-                    <p className="font-medium text-navy text-lg truncate">{p.title}</p>
-                    <p className="text-[#6b7385] text-[15px]">{[p.city, p.state].filter(Boolean).join(", ")}</p>
-                    <div className="flex gap-1.5 pt-2 flex-wrap">
-                      {p.bedrooms > 0 && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.bedrooms} rec</span>}
-                      {p.bathrooms > 0 && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.bathrooms} baños</span>}
-                      {p.m2_construction && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.m2_construction} m²</span>}
-                    </div>
-                  </div>
-                </Link>
+                <PropertyCardV3 key={p.id} p={p} coverUrl={p.cover} />
               ))}
             </div>
             <Link href="/comprar" className="bg-navy hover:bg-navy-mid text-white font-semibold px-8 py-4 rounded-full transition-colors">

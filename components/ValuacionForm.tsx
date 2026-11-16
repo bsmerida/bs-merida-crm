@@ -38,7 +38,7 @@ export function ValuacionForm() {
 
   if (sent) {
     return (
-      <div className="bg-white rounded-[28px] sm:rounded-[44px] p-6 sm:p-11 w-full max-w-xl flex flex-col items-center text-center gap-4">
+      <div className="bg-white rounded-[28px] md:rounded-[44px] p-6 md:p-11 w-full max-w-xl flex flex-col items-center text-center gap-4">
         <div className="w-14 h-14 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center">
           <svg className="w-5 h-5 text-gold" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -52,8 +52,8 @@ export function ValuacionForm() {
   }
 
   return (
-    <form onSubmit={submit} className="bg-white rounded-[28px] sm:rounded-[44px] p-6 sm:p-11 w-full max-w-xl flex flex-col gap-4.5">
-      <h2 className="font-serif text-navy text-3xl sm:text-4xl">Solicita tu valuación</h2>
+    <form onSubmit={submit} className="bg-white rounded-[28px] md:rounded-[44px] p-6 md:p-11 w-full max-w-xl flex flex-col gap-4.5">
+      <h2 className="font-serif text-navy text-3xl md:text-[44px] md:leading-[44px]">Solicita tu valuación</h2>
       <div>
         <p className={label + " mb-2.5"}>Tipo de propiedad</p>
         <div className="flex gap-2 flex-wrap">

@@ -10,6 +10,9 @@ const config: Config = {
       fontFamily: {
         sans:  ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         serif: ["Cormorant Garamond", "Georgia", "serif"],
+        // Tipografía del rediseño 2026 (Figma); no reemplaza "sans" para no
+        // afectar páginas aún no rediseñadas.
+        dmsans: ["DM Sans", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         navy: {

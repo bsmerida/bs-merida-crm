@@ -20,10 +20,18 @@ const fmt = (n: number, cur = "MXN") =>
 const GREETING = "Hola, soy Sofía — asistente de Duclaud. ¿Qué tipo de propiedad está buscando? Cuénteme y le muestro opciones de nuestro inventario.";
 const GREETING_PROP = (t: string) => `Hola, soy Sofía. Veo que le interesa *${t}*. ¿Tiene alguna pregunta o desea ver opciones similares?`;
 
+function Avatar({ size = "w-10 h-10", text = "text-base" }: { size?: string; text?: string }) {
+  return (
+    <div className={`${size} bg-navy rounded-full flex items-center justify-center shrink-0`}>
+      <span className={`font-serif ${text} text-gold`}>S</span>
+    </div>
+  );
+}
+
 function PropCard({ card }: { card: PropCard }) {
   return (
     <a href={card.url} target="_blank" rel="noopener noreferrer"
-      className="flex gap-3 bg-white border border-stone rounded-2xl overflow-hidden hover:border-gold/50 hover:shadow-sm transition-all group">
+      className="flex gap-3 bg-white rounded-[22px] overflow-hidden shadow-sm hover:shadow-float transition-shadow group">
       <div className="w-20 h-20 shrink-0 bg-stone">
         {card.cover
           ? <img src={card.cover} alt={card.title} className="w-full h-full object-cover" />
@@ -32,14 +40,14 @@ function PropCard({ card }: { card: PropCard }) {
       <div className="flex-1 py-2.5 pr-2 min-w-0">
         <p className="text-xs font-medium text-navy truncate">{card.title}</p>
         <p className="text-gold font-semibold text-sm mt-0.5">{fmt(card.price, card.currency)}</p>
-        <p className="text-ink-muted text-[10px] truncate mt-0.5">{card.zone}</p>
-        <div className="flex items-center gap-2 mt-1 text-[10px] text-ink-muted">
+        <p className="text-[#6b7385] text-[10px] truncate mt-0.5">{card.zone}</p>
+        <div className="flex items-center gap-2 mt-1 text-[10px] text-[#6b7385]">
           {card.bedrooms > 0  && <span className="flex items-center gap-1"><Icon name="bed"  className="w-3 h-3" />{card.bedrooms}</span>}
           {card.bathrooms > 0 && <span className="flex items-center gap-1"><Icon name="bath" className="w-3 h-3" />{card.bathrooms}</span>}
           {(card.m2 ?? 0) > 0 && <span>{card.m2}m²</span>}
         </div>
       </div>
-      <div className="flex items-center pr-2 text-stone-dk group-hover:text-gold transition">
+      <div className="flex items-center pr-3 text-stone-dk group-hover:text-gold transition-colors">
         <Icon name="chevronRight" className="w-4 h-4" />
       </div>
     </a>
@@ -163,25 +171,24 @@ export function PublicChatbot() {
     <>
       {/* Teaser */}
       {showTeaser && !open && (
-        <div className="fixed bottom-28 right-6 z-40 max-w-[280px]">
-          <div className="bg-white rounded-2xl shadow-float border border-stone p-4 relative">
+        <div className="fixed bottom-28 right-6 z-40 max-w-[300px] font-dmsans">
+          <div className="bg-white rounded-[28px] shadow-float p-5 relative">
             <button onClick={() => { setShowTeaser(false); setTeaserDismissed(true); }}
-              className="absolute top-2 right-2 text-ink-soft hover:text-ink-muted">
+              className="absolute top-3.5 right-3.5 text-navy/30 hover:text-navy transition-colors">
               <Icon name="x" className="w-3.5 h-3.5" />
             </button>
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <div className="w-8 h-8 bg-navy flex items-center justify-center">
-                <span className="font-serif text-xs text-gold">S</span>
-              </div>
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar size="w-10 h-10" text="text-base" />
               <div>
-                <div className="font-medium text-xs text-navy">Sofía · Duclaud</div>
-                <div className="text-[10px] text-emerald-600 flex items-center gap-1">
+                <div className="font-semibold text-sm text-navy">Sofía · Duclaud</div>
+                <div className="text-[11px] text-emerald-600 flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>En línea
                 </div>
               </div>
             </div>
-            <p className="text-sm text-ink leading-relaxed">¿Buscando una propiedad? Dígame qué necesita y le muestro opciones al instante.</p>
-            <button onClick={openChat} className="mt-3 text-[11px] uppercase tracking-[0.08em] text-gold hover:text-gold-dk transition-colors">
+            <p className="text-sm text-navy leading-relaxed">¿Buscando una propiedad? Dígame qué necesita y le muestro opciones al instante.</p>
+            <button onClick={openChat}
+              className="mt-3.5 bg-navy hover:bg-navy-mid text-white text-[13px] font-semibold px-4 py-2 rounded-full transition-colors">
               Iniciar conversación →
             </button>
           </div>
@@ -191,44 +198,42 @@ export function PublicChatbot() {
       {/* Botón flotante */}
       <button onClick={() => open ? setOpen(false) : openChat()} className="fixed bottom-6 right-6 z-40">
         <div className="relative">
-          <div className="w-14 h-14 bg-navy hover:bg-navy-mid text-white shadow-float flex items-center justify-center transition-colors rounded-full">
+          <div className="w-16 h-16 bg-navy hover:bg-navy-mid text-white shadow-float flex items-center justify-center transition-colors rounded-full">
             {open
               ? <Icon name="x" className="w-5 h-5" />
-              : <span className="font-serif text-lg text-gold">S</span>}
+              : <span className="font-serif text-xl text-gold">S</span>}
           </div>
-          {!open && <span className="absolute inset-0 bg-navy opacity-20 animate-ping pointer-events-none"></span>}
+          {!open && <span className="absolute inset-0 bg-navy opacity-20 animate-ping pointer-events-none rounded-full"></span>}
         </div>
       </button>
 
       {/* Ventana */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-40 w-[390px] max-w-[calc(100vw-3rem)] bg-white rounded-3xl shadow-float border border-stone overflow-hidden">
+        <div className="fixed bottom-24 right-6 z-40 w-[400px] max-w-[calc(100vw-3rem)] bg-white rounded-[36px] shadow-float overflow-hidden flex flex-col font-dmsans">
           {/* Header */}
-          <div className="bg-navy text-white p-4 flex items-center gap-3">
-            <div className="w-9 h-9 bg-gold/20 border border-gold/30 rounded-full flex items-center justify-center shrink-0">
-              <span className="font-serif text-base text-gold">S</span>
-            </div>
+          <div className="bg-navy text-white p-5 flex items-center gap-3.5">
+            <Avatar size="w-11 h-11" text="text-lg" />
             <div className="flex-1 min-w-0">
-              <div className="font-medium tracking-wide text-sm">Sofía · Asistente Duclaud</div>
-              <div className="text-[10px] text-white/50 flex items-center gap-1.5 mt-0.5">
+              <div className="font-semibold text-[15px]">Sofía · Asistente Duclaud</div>
+              <div className="text-[12px] text-white/55 flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
                 En línea · responde en segundos
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white/40 hover:text-white transition-colors">
+            <button onClick={() => setOpen(false)} className="text-white/40 hover:text-white transition-colors shrink-0">
               <Icon name="x" className="w-4 h-4" />
             </button>
           </div>
 
           {/* Mensajes */}
-          <div ref={chatRef} className="h-80 overflow-y-auto p-4 space-y-3 bg-cream">
+          <div ref={chatRef} className="h-[380px] overflow-y-auto p-4 space-y-3 bg-cream">
             {displayMsgs.map((m, i) => (
               <div key={i} className={`flex flex-col ${!m.from_bot ? "items-end" : "items-start"} gap-2`}>
                 {m.text && (
-                  <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`max-w-[85%] px-4 py-3 rounded-[22px] text-[14px] leading-relaxed ${
                     !m.from_bot
-                      ? "bg-navy text-white rounded-br-sm"
-                      : "bg-white text-ink border border-stone rounded-bl-sm"}`}>
+                      ? "bg-navy text-white rounded-br-[8px]"
+                      : "bg-white text-navy shadow-sm rounded-bl-[8px]"}`}>
                     {fmtText(m.text)}
                   </div>
                 )}
@@ -241,9 +246,9 @@ export function PublicChatbot() {
             ))}
             {typing && (
               <div className="flex justify-start">
-                <div className="bg-white border border-stone rounded-2xl px-3.5 py-2.5 flex gap-1 items-center">
+                <div className="bg-white shadow-sm rounded-[22px] px-4 py-3 flex gap-1 items-center">
                   {[0,1,2].map(i => (
-                    <span key={i} className="w-1.5 h-1.5 bg-ink-soft rounded-full animate-bounce"
+                    <span key={i} className="w-1.5 h-1.5 bg-navy/30 rounded-full animate-bounce"
                       style={{ animationDelay: `${i * 0.15}s` }} />
                   ))}
                 </div>
@@ -251,26 +256,26 @@ export function PublicChatbot() {
             )}
             {leadSaved && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full mt-1 bg-navy hover:bg-navy-mid text-white text-sm font-medium py-3 rounded-2xl transition-colors">
+                className="flex items-center justify-center gap-2 w-full mt-1 bg-navy hover:bg-navy-mid text-white text-sm font-semibold py-3.5 rounded-full transition-colors">
                 <Icon name="whatsapp" className="w-4 h-4" /> Hablar con un asesor
               </a>
             )}
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-stone flex gap-2 bg-white">
+          <div className="p-3.5 flex gap-2 bg-white">
             <input value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
               placeholder={typing ? "Sofía está escribiendo..." : "¿Qué tipo de propiedad busca?"}
               disabled={typing}
-              className="flex-1 bg-cream rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-gold/40 disabled:opacity-50" />
+              className="flex-1 min-w-0 bg-cream rounded-full px-5 py-3 text-[14px] text-navy focus:outline-none focus:ring-1 focus:ring-gold/40 disabled:opacity-50 placeholder:text-[#6b7385]" />
             <button onClick={send} disabled={typing || !input.trim()}
-              className="w-10 h-10 bg-navy hover:bg-navy-mid disabled:opacity-40 text-white rounded-full flex items-center justify-center transition-colors shrink-0">
+              className="w-11 h-11 bg-navy hover:bg-navy-mid disabled:opacity-40 text-white rounded-full flex items-center justify-center transition-colors shrink-0">
               <Icon name="send" className="w-4 h-4" />
             </button>
           </div>
-          <div className="px-4 py-2 border-t border-stone bg-white text-[10px] text-ink-soft text-center tracking-wide">
-            SOFÍA · ASISTENTE DUCLAUD · Sus datos están protegidos
+          <div className="px-5 pb-4 pt-1 bg-white text-[10px] text-navy/35 text-center tracking-[1.2px] uppercase whitespace-nowrap">
+            Sofía · Duclaud · Datos protegidos
           </div>
         </div>
       )}

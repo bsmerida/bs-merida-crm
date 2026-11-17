@@ -48,8 +48,8 @@ export default async function FuentesPage() {
   return (
     <div className="p-6 md:p-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-ink tracking-tight">Fuentes</h1>
-        <p className="text-sm text-ink-muted mt-0.5">
+        <h1 className="text-2xl font-semibold text-navy tracking-tight">Fuentes</h1>
+        <p className="text-sm text-[#6b7385] mt-0.5">
           {lista.length} fuentes · {pendientes.length} {pendientes.length === 1 ? "borrador" : "borradores"} por revisar
           {totalCambios ? ` · ${totalCambios} cambios en archivos` : ""}
         </p>
@@ -57,18 +57,18 @@ export default async function FuentesPage() {
 
       {!ultima && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
-          <h3 className="font-semibold text-ink">⚠️ El agente todavía no ha corrido</h3>
-          <p className="text-sm text-ink-muted mt-2 leading-relaxed">
+          <h3 className="font-semibold text-navy">⚠️ El agente todavía no ha corrido</h3>
+          <p className="text-sm text-[#6b7385] mt-2 leading-relaxed">
             Revisa diario a las 6:00 am desde GitHub Actions. Para activarlo, agrega estos secrets en GitHub → tu repositorio → Settings → Secrets and variables → Actions:
           </p>
-          <ul className="mt-3 space-y-1 text-sm text-ink font-mono">
+          <ul className="mt-3 space-y-1 text-sm text-navy font-mono">
             <li>• <strong>SUPABASE_URL</strong> y <strong>SUPABASE_SERVICE_ROLE_KEY</strong></li>
             <li>• <strong>GOOGLE_API_KEY</strong> = API key de Google restringida a Drive API</li>
             <li>• <strong>DROPBOX_REFRESH_TOKEN</strong>, <strong>DROPBOX_APP_KEY</strong>, <strong>DROPBOX_APP_SECRET</strong></li>
             <li>• <strong>ANTHROPIC_API_KEY</strong></li>
             <li>• <strong>FUENTES_EXCEL_URL</strong> (opcional) = enlace del Excel de fuentes en Drive</li>
           </ul>
-          <p className="text-xs text-ink-muted mt-3">
+          <p className="text-xs text-[#6b7385] mt-3">
             Después ve a Actions → “Agente de fuentes” → Run workflow para la primera corrida.
           </p>
         </div>
@@ -84,16 +84,16 @@ export default async function FuentesPage() {
         ultima={ultima}
       />
 
-      <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-ink">¿Qué hace esto exactamente?</h3>
-        <ol className="mt-3 space-y-2 text-sm text-ink-muted leading-relaxed">
+      <div className="bg-cream border border-gold/30 rounded-2xl p-6">
+        <h3 className="font-semibold text-navy">¿Qué hace esto exactamente?</h3>
+        <ol className="mt-3 space-y-2 text-sm text-[#6b7385] leading-relaxed">
           <li><strong>1.</strong> Cada día a las 6:00 am leemos el Excel de fuentes (si agregaron una liga nueva, aparece aquí <strong>apagada</strong>) y revisamos las carpetas de tus proveedores en Drive y Dropbox. Solo leemos: nunca movemos, editamos ni borramos nada en ellas.</li>
           <li><strong>2.</strong> En las fuentes con el agente activo, leemos los brochures, listas de precios y fichas técnicas de los desarrollos que cambiaron.</li>
           <li><strong>3.</strong> Comparamos cada modelo con tu inventario: si ya existe te proponemos solo lo que cambió (por ejemplo, el precio); si no existe, te armamos la propiedad completa con fotos, características, desarrollador y descripción.</li>
           <li><strong>4.</strong> Tú decides en el carrusel. Al aprobar una nueva, se crea <strong>sin publicar</strong>, salvo que marques <strong>«Publicar al aprobar»</strong> (y los portales que quieras). Esa elección se recuerda para las siguientes.</li>
           <li><strong>5.</strong> Cuando rechazas, tu comentario se convierte en una lección para el paso que se equivocó (datos, fotos, texto o coincidencia) y el agente la toma en cuenta desde la siguiente revisión.</li>
         </ol>
-        <p className="text-xs text-ink-muted mt-4">
+        <p className="text-xs text-[#6b7385] mt-4">
           Importante: que un archivo desaparezca de una carpeta no significa que se vendió. Confírmalo con el proveedor antes de cambiar algo en tu inventario.
         </p>
       </div>

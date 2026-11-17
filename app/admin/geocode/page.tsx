@@ -78,7 +78,7 @@ export default function GeocodeBatchPage() {
       <button
         onClick={run}
         disabled={running}
-        className="px-6 py-3 bg-cream0 hover:bg-navy-mid disabled:opacity-50 text-white rounded-full font-medium"
+        className="px-6 py-3 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full font-medium"
       >
         {running ? "Procesando..." : "Iniciar geocodificación"}
       </button>

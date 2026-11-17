@@ -52,7 +52,7 @@ export default async function AjustesPage() {
           <p className="text-xs text-[#6b7385] mt-1">Conecta tu calendario para que las visitas confirmadas se agenden solas.</p>
         </div>
         <a href="/api/citas/google-connect"
-          className="px-4 py-2 bg-cream0 hover:bg-navy-mid text-white rounded-full text-sm font-medium">
+          className="px-4 py-2 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium">
           Conectar mi calendario
         </a>
       </div>

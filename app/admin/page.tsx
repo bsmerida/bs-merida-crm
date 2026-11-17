@@ -26,10 +26,10 @@ export default async function AdminDashboard() {
     // Las operaciones reales están en deals (Finanzas); "operations" es una tabla vieja vacía
     supabase.from("deals").select("status, operation_type, closing_date, transaction_value, gross_commission, amount_collected, agent_id, agent2_id, agent_commission, agent2_commission"),
     supabase.from("visits")
-      .select("id, scheduled_at, status, lead:leads(name), property:properties(title), agent:profiles(full_name)")
+      .select("id, scheduled_at, status, agent_id, lead:leads(name), property:properties(title), agent:profiles(full_name)")
       .gte("scheduled_at", new Date().toISOString())
       .order("scheduled_at")
-      .limit(5),
+      .limit(20),
     supabase.from("profiles").select("id, full_name, initials, role").eq("active", true),
   ]);
 
@@ -41,7 +41,9 @@ export default async function AdminDashboard() {
   const leads = auth?.isAdmin ? todosLosLeads : todosLosLeads.filter(l => l.agent_id === auth?.userId);
   const props = propsAll || [];
   const resumen = resumenInicio(opsAll || [], meridaParts(new Date()).ymd);
-  const visits = visitsProx || [];
+  // Un asesor ve solo sus propias visitas, igual que en Clientes y en el filtro de leads de arriba
+  const visitsAll = visitsProx || [];
+  const visits = (auth?.isAdmin ? visitsAll : visitsAll.filter(v => v.agent_id === auth?.userId)).slice(0, 5);
   const agentList = agentes || [];
   const yo = agentList.find(a => a.id === auth?.userId);
   const primerNombre = yo?.full_name?.split(" ")[0] || "";

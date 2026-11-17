@@ -1,6 +1,7 @@
 // app/admin/tareas/page.tsx
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { TareasClient } from "@/components/TareasClient";
+import { meridaParts } from "@/lib/time";
 
 export default async function AdminTareasPage() {
   const supabase = createAdminClient();
@@ -22,11 +23,13 @@ export default async function AdminTareasPage() {
     ? await supabase.from("profiles").select("id, full_name").eq("active", true)
     : { data: [] };
 
-  // KPIs
+  // KPIs — due_at es fecha sin hora (YYYY-MM-DD): comparar como string contra
+  // el día de hoy en Mérida, no con new Date() (se corre en UTC en el servidor).
+  const hoy        = meridaParts(new Date()).ymd;
   const all        = tasks || [];
   const done       = all.filter(t => t.status === "done");
-  const overdue    = all.filter(t => t.status !== "done" && t.due_at && new Date(t.due_at) < new Date());
-  const dueToday   = all.filter(t => t.status !== "done" && t.due_at && new Date(t.due_at).toDateString() === new Date().toDateString());
+  const overdue    = all.filter(t => t.status !== "done" && t.due_at && t.due_at < hoy);
+  const dueToday   = all.filter(t => t.status !== "done" && t.due_at === hoy);
   const compliance = all.length > 0 ? Math.round((done.length / all.length) * 100) : 0;
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
+import { meridaParts } from "@/lib/time";
 import { Select } from "@/components/Select";
 
 type Task = {
@@ -36,8 +37,11 @@ const STATUS_COLS: { key: Task["status"]; label: string; color: string }[] = [
   { key: "done",        label: "Completado",  color: "border-emerald-200 bg-emerald-50"},
 ];
 
+// due_at es fecha sin hora (YYYY-MM-DD): comparar como string contra el día
+// de hoy en Mérida, no con new Date() (interpreta "YYYY-MM-DD" como medianoche
+// UTC, que cae en la tarde del día anterior en Mérida).
 function isOverdue(task: Task) {
-  return task.status !== "done" && task.due_at && new Date(task.due_at) < new Date();
+  return task.status !== "done" && !!task.due_at && task.due_at < meridaParts(new Date()).ymd;
 }
 
 function formatDate(d: string) {

@@ -128,7 +128,7 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-navy">{data.client_name}</p>
-          <p className="text-xs text-ink-muted">{data.property_title}</p>
+          <p className="text-xs text-[#6b7385]">{data.property_title}</p>
         </div>
         <StatusBadge status={data.status} />
       </div>
@@ -136,10 +136,10 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
       {/* Contacto */}
       <div className="flex flex-wrap gap-3">
         {data.client_phone && (
-          <a href={`tel:${data.client_phone}`} className="text-xs text-brand-500 hover:underline">{data.client_phone}</a>
+          <a href={`tel:${data.client_phone}`} className="text-xs text-gold hover:underline">{data.client_phone}</a>
         )}
         {data.client_email && (
-          <a href={`mailto:${data.client_email}`} className="text-xs text-brand-500 hover:underline">{data.client_email}</a>
+          <a href={`mailto:${data.client_email}`} className="text-xs text-gold hover:underline">{data.client_email}</a>
         )}
         {data.lead_id && (
           <Link href={`/admin/leads/${data.lead_id}`} className="text-[10px] text-gold hover:underline">Ver en Clientes →</Link>
@@ -149,13 +149,13 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
       {/* Opciones del cliente */}
       {isPending && options.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-[0.12em] text-ink-soft mb-2">Opciones del cliente</p>
+          <p className="text-[10px] uppercase tracking-[0.12em] text-[#6b7385] mb-2">Opciones del cliente</p>
           <div className="space-y-2">
             {options.map((o,i) => (
               <div key={i} className="flex items-center justify-between gap-2 border border-stone rounded-xl px-3 py-2">
                 <div>
                   <p className="text-xs font-medium text-navy">{labelDate(o.date)}</p>
-                  <p className="text-[11px] text-ink-muted">a las {o.time} hrs</p>
+                  <p className="text-[11px] text-[#6b7385]">a las {o.time} hrs</p>
                 </div>
                 <button onClick={()=>accept(i)} disabled={accepting!==null}
                   className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-full font-semibold transition disabled:opacity-50 shrink-0">
@@ -167,7 +167,7 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
 
           {!showReject ? (
             <button onClick={()=>setShowReject(true)}
-              className="mt-3 text-xs text-ink-soft hover:text-navy underline">
+              className="mt-3 text-xs text-[#6b7385] hover:text-navy underline">
               Ninguno me funciona — proponer otras fechas
             </button>
           ) : (
@@ -181,7 +181,7 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
         <div className="bg-emerald-50 rounded-xl px-4 py-3">
           <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-600 mb-1">Visita confirmada</p>
           <p className="text-sm font-semibold text-navy">{labelDate(data.confirmed_option.date)}</p>
-          <p className="text-xs text-ink-muted">a las {data.confirmed_option.time} hrs</p>
+          <p className="text-xs text-[#6b7385]">a las {data.confirmed_option.time} hrs</p>
           {data.google_event_id && (
             <p className="text-[10px] text-emerald-600 mt-2 flex items-center gap-1">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -210,8 +210,8 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <p className="text-xs text-ink-muted flex-1">¿Cancelar esta solicitud?</p>
-              <button onClick={()=>setConfirmDel(false)} className="text-xs text-ink-soft px-2 py-1 rounded-lg hover:bg-cream">No</button>
+              <p className="text-xs text-[#6b7385] flex-1">¿Cancelar esta solicitud?</p>
+              <button onClick={()=>setConfirmDel(false)} className="text-xs text-[#6b7385] px-2 py-1 rounded-lg hover:bg-cream">No</button>
               <button onClick={handleDelete} disabled={deleting}
                 className="text-xs text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg disabled:opacity-50">
                 {deleting?"...":"Sí"}
@@ -243,7 +243,7 @@ export function CitasClient({ requests, isAdmin }: { requests: any[]; isAdmin: b
       )}
       {rest.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-ink-soft mb-3">Otras</p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-[#6b7385] mb-3">Otras</p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {rest.map(r => <RequestCard key={r.id} req={r} isAdmin={isAdmin}/>)}
           </div>
@@ -251,13 +251,13 @@ export function CitasClient({ requests, isAdmin }: { requests: any[]; isAdmin: b
       )}
       {all.length === 0 && (
         <div className="text-center py-20">
-          <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-ink-line" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+          <div className="w-14 h-14 bg-stone rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7 text-[#6b7385]" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
           </div>
-          <p className="text-sm font-medium text-ink">Sin solicitudes</p>
-          <p className="text-xs text-ink-muted mt-1">Las solicitudes de visita del sitio aparecerán aquí.</p>
+          <p className="text-sm font-medium text-navy">Sin solicitudes</p>
+          <p className="text-xs text-[#6b7385] mt-1">Las solicitudes de visita del sitio aparecerán aquí.</p>
         </div>
       )}
     </div>

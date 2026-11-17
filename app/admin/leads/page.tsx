@@ -19,17 +19,19 @@ export default async function AdminLeadsPage() {
   const leads = (data || []) as any[];
 
   return (
-    <div className="p-10 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="p-4 md:p-6 space-y-5 font-dmsans">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Clientes</h1>
-          <p className="text-sm text-ink-muted mt-0.5">
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Clientes<em className="italic font-serif text-gold">.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">
             {isAdmin ? `${leads.length} en seguimiento` : `${leads.length} clientes asignados a ti`}
           </p>
         </div>
         <Link href="/admin/leads/nuevo"
-          className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium">
-          + Cliente
+          className="bg-navy hover:bg-navy-mid text-white font-semibold text-sm px-[22px] py-3 rounded-full transition-colors">
+          Nuevo cliente
         </Link>
       </div>
       <LeadsClient leads={leads} isAdmin={isAdmin} />

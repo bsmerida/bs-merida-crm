@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMXN } from "@/lib/utils";
+import { LeadsKanban } from "@/components/LeadsKanban";
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
   "Nuevo":            { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-500",    bar: "#3B82F6" },
@@ -15,7 +16,7 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; bar
   "Cerrado ganado":   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", bar: "#10B981" },
   "Cerrado perdido":  { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-400",     bar: "#EF4444" },
 };
-const DEFAULT_STATUS = { bg: "bg-ink-ghost", text: "text-ink-muted", dot: "bg-ink-soft", bar: "#9CA3AF" };
+const DEFAULT_STATUS = { bg: "bg-stone", text: "text-[#6b7385]", dot: "bg-stone-dk", bar: "#9CA3AF" };
 
 function StatusBadge({ status }: { status: string }) {
   const c = STATUS_CONFIG[status] || DEFAULT_STATUS;
@@ -33,10 +34,10 @@ function HBarChart({ data, max, colorFn }: { data: [string, number][]; max: numb
       {data.map(([label, count]) => (
         <div key={label}>
           <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-ink truncate max-w-[60%]">{label}</span>
-            <span className="text-ink-muted text-xs">{count}</span>
+            <span className="text-navy truncate max-w-[60%]">{label}</span>
+            <span className="text-[#6b7385] text-xs">{count}</span>
           </div>
-          <div className="h-2 bg-ink-ghost rounded-full overflow-hidden">
+          <div className="h-2 bg-stone rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500"
               style={{ width: `${(count / max) * 100}%`, backgroundColor: colorFn?.(label) || "#5E4B8E" }} />
           </div>
@@ -59,7 +60,7 @@ function VBarChart({ data, color = "#5E4B8E", height = 120 }: { data: { label: s
           return (
             <div key={i} className="flex-1 group relative flex flex-col justify-end">
               {d.value > 0 && (
-                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-navy text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
                   {d.label}: {d.value}
                 </div>
               )}
@@ -72,7 +73,7 @@ function VBarChart({ data, color = "#5E4B8E", height = 120 }: { data: { label: s
       <div className="flex gap-1 mt-1">
         {data.map((d, i) => (
           <div key={i} className="flex-1 text-center">
-            <span className="text-[9px] text-ink-muted truncate block">{d.label}</span>
+            <span className="text-[9px] text-[#6b7385] truncate block">{d.label}</span>
           </div>
         ))}
       </div>
@@ -83,7 +84,7 @@ function VBarChart({ data, color = "#5E4B8E", height = 120 }: { data: { label: s
 // Gráfica donut simple con SVG
 function DonutChart({ slices }: { slices: { label: string; value: number; color: string }[] }) {
   const total = slices.reduce((s, d) => s + d.value, 0);
-  if (total === 0) return <div className="text-sm text-ink-muted text-center py-4">Sin datos</div>;
+  if (total === 0) return <div className="text-sm text-[#6b7385] text-center py-4">Sin datos</div>;
 
   let cumAngle = -90;
   const r = 60; const cx = 80; const cy = 80;
@@ -115,8 +116,8 @@ function DonutChart({ slices }: { slices: { label: string; value: number; color:
         {paths.map(p => (
           <div key={p.label} className="flex items-center gap-2 text-xs">
             <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: p.color }}></div>
-            <span className="text-ink truncate flex-1">{p.label}</span>
-            <span className="text-ink-muted font-medium">{p.pct}%</span>
+            <span className="text-navy truncate flex-1">{p.label}</span>
+            <span className="text-[#6b7385] font-medium">{p.pct}%</span>
           </div>
         ))}
       </div>
@@ -154,8 +155,9 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("Todos");
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [tab, setTab] = useState<string>("lista");
+  const [tab, setTab] = useState<string>("tablero");
   const [statsSection, setStatsSection] = useState<"general" | "perfil" | "tendencia">("general");
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const supabase = createClient();
 
   const statuses = ["Todos", ...Array.from(new Set(initialLeads.map((l: any) => l.status)))];
@@ -317,6 +319,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   }).sort((a, b) => Number(b.pct) - Number(a.pct));
 
   const tabs = [
+    { id: "tablero", label: "Tablero" },
     { id: "lista", label: "Lista" },
     ...(isAdmin ? [{ id: "stats", label: "Estadísticas" }] : []),
   ] as const;
@@ -330,14 +333,22 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   return (
     <div className="space-y-4">
       {/* Tabs principales */}
-      <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-stone p-1 rounded-full w-fit">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${tab === t.id ? "bg-navy text-white" : "text-navy hover:bg-cream"}`}>
             {t.label}
           </button>
         ))}
       </div>
+
+      {/* ── TABLERO ── */}
+      {tab === "tablero" && (
+        <>
+          <p className="text-sm text-[#6b7385]">Arrastra una tarjeta para cambiar su etapa</p>
+          <LeadsKanban leads={leads} setLeads={setLeads} />
+        </>
+      )}
 
       {/* ── LISTA ── */}
       {tab === "lista" && (
@@ -345,51 +356,64 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
           <div className="flex flex-wrap items-center gap-3">
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nombre, teléfono, interés..."
-              className="flex-1 min-w-[220px] px-4 py-2.5 bg-white border border-ink-line rounded-full text-sm focus:outline-none focus:border-brand-300" />
-            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-              className="bg-white border border-ink-line rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-brand-300">
-              {statuses.map(s => <option key={s}>{s}</option>)}
-            </select>
+              className="flex-1 min-w-[220px] px-5 py-3 bg-white rounded-full text-sm text-navy focus:outline-none focus:ring-1 focus:ring-gold/40 placeholder:text-[#6b7385]" />
+            <div className="relative">
+              <button type="button" onClick={() => setStatusMenuOpen(o => !o)}
+                className="bg-white rounded-full px-5 py-3 text-sm font-medium text-navy flex items-center gap-2">
+                {filterStatus === "Todos" ? "Todos los estados" : filterStatus}
+                <svg className="w-3 h-3 text-navy/50" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              {statusMenuOpen && (
+                <div className="absolute left-0 top-full mt-2 w-[220px] bg-white rounded-[24px] shadow-float z-50 overflow-hidden py-2 px-2 max-h-72 overflow-y-auto">
+                  {statuses.map(s => (
+                    <button key={s} type="button" onClick={() => { setFilterStatus(s); setStatusMenuOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 rounded-[18px] text-sm transition-colors ${filterStatus === s ? "text-gold bg-cream font-medium" : "text-navy hover:bg-cream"}`}>
+                      {s === "Todos" ? "Todos los estados" : s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {(search || filterStatus !== "Todos") && (
               <button onClick={() => { setSearch(""); setFilterStatus("Todos"); }}
-                className="text-xs text-ink-muted hover:text-ink border border-ink-line rounded-full px-3 py-2 bg-white">
+                className="text-xs text-[#6b7385] hover:text-navy bg-white rounded-full px-4 py-3">
                 Limpiar ×
               </button>
             )}
           </div>
-          <div className="text-xs text-ink-muted px-1">{filtered.length} de {leads.length} clientes</div>
+          <div className="text-xs text-[#6b7385] px-1">{filtered.length} de {leads.length} clientes</div>
 
           {filtered.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-ink-line p-16 text-center">
-              <h3 className="font-semibold text-ink">Sin resultados</h3>
+            <div className="bg-white rounded-[28px] p-16 text-center">
+              <h3 className="font-semibold text-navy">Sin resultados</h3>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+            <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
               <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b border-ink-line bg-ink-ghost/40">
+                <thead className="border-b border-stone bg-cream">
                   <tr>{["Cliente", "Contacto", "Interés", "Estado", "Asesor", "Fecha", ""].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-5 py-3">{h}</th>
+                    <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-5 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
                   {filtered.map((l: any) => (
-                    <tr key={l.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                    <tr key={l.id} className="border-b border-stone last:border-0 hover:bg-cream">
                       <td className="px-5 py-4">
-                        <Link href={`/admin/leads/${l.id}`} className="font-medium text-sm text-ink hover:text-brand-600">{l.name}</Link>
-                        {l.source && <div className="text-xs text-ink-muted mt-0.5">{l.source}</div>}
+                        <Link href={`/admin/leads/${l.id}`} className="font-medium text-sm text-navy hover:text-gold">{l.name}</Link>
+                        {l.source && <div className="text-xs text-[#6b7385] mt-0.5">{l.source}</div>}
                       </td>
-                      <td className="px-5 py-4 text-sm text-ink-muted">
+                      <td className="px-5 py-4 text-sm text-[#6b7385]">
                         <div>{l.phone || "—"}</div>
                         {l.email && <div className="text-xs">{l.email}</div>}
                       </td>
-                      <td className="px-5 py-4 text-xs text-ink-muted max-w-[180px] truncate">{l.interest || "—"}</td>
+                      <td className="px-5 py-4 text-xs text-[#6b7385] max-w-[180px] truncate">{l.interest || "—"}</td>
                       <td className="px-5 py-4"><StatusBadge status={l.status} /></td>
-                      <td className="px-5 py-4 text-sm text-ink-muted">{l.agent?.full_name || "Sin asignar"}</td>
-                      <td className="px-5 py-4 text-xs text-ink-muted">{fechaCorta(l.created_at)}</td>
+                      <td className="px-5 py-4 text-sm text-[#6b7385]">{l.agent?.full_name || "Sin asignar"}</td>
+                      <td className="px-5 py-4 text-xs text-[#6b7385]">{fechaCorta(l.created_at)}</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          <Link href={`/admin/leads/${l.id}`} className="text-xs text-brand-600 hover:underline">Ver →</Link>
+                          <Link href={`/admin/leads/${l.id}`} className="text-xs text-gold hover:underline">Ver →</Link>
                           <button onClick={() => deleteLead(l.id, l.name)} disabled={deleting === l.id}
                             className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40">
                             {deleting === l.id ? "..." : "Eliminar"}
@@ -410,10 +434,10 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
       {tab === "stats" && (
         <div className="space-y-6">
           {/* Sub-tabs */}
-          <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl w-fit">
+          <div className="flex gap-1 bg-stone p-1 rounded-full w-fit">
             {statsTabs.map(t => (
               <button key={t.id} onClick={() => setStatsSection(t.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${statsSection === t.id ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${statsSection === t.id ? "bg-navy text-white" : "text-[#6b7385] hover:bg-cream"}`}>
                 {t.label}
               </button>
             ))}
@@ -425,50 +449,50 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               {/* KPIs */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Total clientes",     value: total,          sub: "registrados",     color: "text-ink" },
-                  { label: "Activos en proceso",  value: activos,        sub: "sin cerrar",      color: "text-brand-600" },
+                  { label: "Total clientes",     value: total,          sub: "registrados",     color: "text-navy" },
+                  { label: "Activos en proceso",  value: activos,        sub: "sin cerrar",      color: "text-gold" },
                   { label: "Cerrados ganados",    value: cerrados,       sub: "operaciones",     color: "text-emerald-600" },
                   { label: "Tasa de conversión",  value: `${conversion}%`, sub: "ganados/total",  color: "text-amber-600" },
                 ].map(k => (
-                  <div key={k.label} className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
-                    <div className="text-xs text-ink-muted">{k.label}</div>
+                  <div key={k.label} className="bg-white rounded-[28px] shadow-float p-5">
+                    <div className="text-xs text-[#6b7385]">{k.label}</div>
                     <div className={`text-3xl font-semibold mt-2 ${k.color}`}>{k.value}</div>
-                    <div className="text-xs text-ink-muted mt-1">{k.sub}</div>
+                    <div className="text-xs text-[#6b7385] mt-1">{k.sub}</div>
                   </div>
                 ))}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Donut por estado */}
-                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                  <h3 className="font-semibold text-ink mb-5">Distribución por estado</h3>
+                <div className="bg-white rounded-[28px] shadow-float p-6">
+                  <h3 className="font-semibold text-navy mb-5">Distribución por estado</h3>
                   <DonutChart slices={statusSlices} />
                 </div>
 
                 {/* Origen */}
-                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                  <h3 className="font-semibold text-ink mb-5">Origen de clientes</h3>
+                <div className="bg-white rounded-[28px] shadow-float p-6">
+                  <h3 className="font-semibold text-navy mb-5">Origen de clientes</h3>
                   {bySource.length === 0
-                    ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de origen</div>
+                    ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de origen</div>
                     : <HBarChart data={bySource} max={maxSource} />}
                 </div>
               </div>
 
               {/* Operación y tipo buscado */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                  <h3 className="font-semibold text-ink mb-5">Operación buscada</h3>
+                <div className="bg-white rounded-[28px] shadow-float p-6">
+                  <h3 className="font-semibold text-navy mb-5">Operación buscada</h3>
                   {byOperation.every(x => x.label === "Sin definir") ? (
-                    <div className="text-sm text-ink-muted text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
+                    <div className="text-sm text-[#6b7385] text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
                   ) : (
                     <div className="space-y-3">
                       {byOperation.map(op => (
                         <div key={op.label}>
                           <div className="flex justify-between text-sm mb-1">
-                            <span className="text-ink">{op.label}</span>
-                            <span className="text-ink-muted font-medium">{op.value} clientes</span>
+                            <span className="text-navy">{op.label}</span>
+                            <span className="text-[#6b7385] font-medium">{op.value} clientes</span>
                           </div>
-                          <div className="h-2.5 bg-ink-ghost rounded-full overflow-hidden">
+                          <div className="h-2.5 bg-stone rounded-full overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${(op.value / total) * 100}%`, backgroundColor: op.color }} />
                           </div>
                         </div>
@@ -477,10 +501,10 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                   )}
                 </div>
 
-                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                  <h3 className="font-semibold text-ink mb-5">Tipo de inmueble buscado</h3>
+                <div className="bg-white rounded-[28px] shadow-float p-6">
+                  <h3 className="font-semibold text-navy mb-5">Tipo de inmueble buscado</h3>
                   {bySearchType.length === 0 || (bySearchType.length === 1 && bySearchType[0][0] === "Sin definir") ? (
-                    <div className="text-sm text-ink-muted text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
+                    <div className="text-sm text-[#6b7385] text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
                   ) : (
                     <HBarChart data={bySearchType.filter(([k]) => k !== "Sin definir")} max={maxSearchType} />
                   )}
@@ -488,30 +512,30 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               </div>
 
               {/* Conversión por fuente */}
-              <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                <h3 className="font-semibold text-ink mb-5">Tasa de conversión por origen</h3>
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-semibold text-navy mb-5">Tasa de conversión por origen</h3>
                 {convBySource.length === 0
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos suficientes</div>
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos suficientes</div>
                   : (
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead><tr className="border-b border-ink-line">
+                        <thead><tr className="border-b border-stone">
                           {["Origen", "Leads", "Cerrados", "Conversión"].map(h => (
-                            <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-3 py-2">{h}</th>
+                            <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-3 py-2">{h}</th>
                           ))}
                         </tr></thead>
                         <tbody>
                           {convBySource.map(r => (
-                            <tr key={r.label} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                              <td className="px-3 py-3 text-sm text-ink">{r.label}</td>
-                              <td className="px-3 py-3 text-sm text-ink-muted">{r.total}</td>
+                            <tr key={r.label} className="border-b border-stone last:border-0 hover:bg-cream">
+                              <td className="px-3 py-3 text-sm text-navy">{r.label}</td>
+                              <td className="px-3 py-3 text-sm text-[#6b7385]">{r.total}</td>
                               <td className="px-3 py-3 text-sm text-emerald-600">{r.cerr}</td>
                               <td className="px-3 py-3">
                                 <div className="flex items-center gap-2">
-                                  <div className="flex-1 h-1.5 bg-ink-ghost rounded-full overflow-hidden">
+                                  <div className="flex-1 h-1.5 bg-stone rounded-full overflow-hidden">
                                     <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${r.pct}%` }} />
                                   </div>
-                                  <span className="text-xs font-medium text-ink">{r.pct}%</span>
+                                  <span className="text-xs font-medium text-navy">{r.pct}%</span>
                                 </div>
                               </td>
                             </tr>
@@ -527,26 +551,26 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
           {/* ── TENDENCIA ── */}
           {statsSection === "tendencia" && (
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                <h3 className="font-semibold text-ink mb-6">Nuevos clientes vs cerrados — últimos 6 meses</h3>
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-semibold text-navy mb-6">Nuevos clientes vs cerrados — últimos 6 meses</h3>
                 <div className="flex items-end gap-3 h-48">
                   {meses.map(m => (
                     <div key={m.label} className="flex-1 flex flex-col items-center gap-1 group">
                       <div className="w-full flex flex-col items-center gap-0.5">
-                        <div className="text-xs text-ink-muted text-center">{m.value || ""}</div>
+                        <div className="text-xs text-[#6b7385] text-center">{m.value || ""}</div>
                         <div className="w-full flex gap-0.5 items-end" style={{ height: "160px" }}>
-                          <div className="flex-1 bg-brand-400 rounded-t-sm hover:bg-brand-500 transition"
+                          <div className="flex-1 bg-gold rounded-t-sm hover:bg-navy transition"
                             style={{ height: `${(m.value / Math.max(...meses.map(x => x.value), 1)) * 100}%`, minHeight: m.value > 0 ? 4 : 1 }} />
                           <div className="flex-1 bg-emerald-400 rounded-t-sm hover:bg-emerald-500 transition"
                             style={{ height: `${(m.cerr / Math.max(...meses.map(x => x.cerr), 1)) * 100}%`, minHeight: m.cerr > 0 ? 4 : 1 }} />
                         </div>
                       </div>
-                      <span className="text-xs text-ink-muted capitalize">{m.label}</span>
+                      <span className="text-xs text-[#6b7385] capitalize">{m.label}</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center gap-6 mt-4 text-xs text-ink-muted">
-                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-brand-400"></div><span>Nuevos leads</span></div>
+                <div className="flex items-center gap-6 mt-4 text-xs text-[#6b7385]">
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-gold"></div><span>Nuevos leads</span></div>
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-emerald-400"></div><span>Cerrados ganados</span></div>
                 </div>
               </div>
@@ -564,48 +588,48 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Por edad */}
-                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+                <div className="bg-white rounded-[28px] shadow-float p-6">
                   <div className="flex items-center justify-between mb-5">
-                    <h3 className="font-semibold text-ink">Edad</h3>
-                    {avgAge && <span className="text-xs text-ink-muted">Promedio: <span className="font-semibold text-ink">{avgAge} años</span></span>}
+                    <h3 className="font-semibold text-navy">Edad</h3>
+                    {avgAge && <span className="text-xs text-[#6b7385]">Promedio: <span className="font-semibold text-navy">{avgAge} años</span></span>}
                   </div>
                   {leadsWithAge === 0
-                    ? <div className="text-sm text-ink-muted text-center py-8">Sin datos de edad</div>
+                    ? <div className="text-sm text-[#6b7385] text-center py-8">Sin datos de edad</div>
                     : <VBarChart data={byAge} color="#5E4B8E" height={120} />}
-                  {leadsWithAge > 0 && <div className="text-xs text-ink-muted mt-2">{leadsWithAge} de {total} clientes con edad registrada</div>}
+                  {leadsWithAge > 0 && <div className="text-xs text-[#6b7385] mt-2">{leadsWithAge} de {total} clientes con edad registrada</div>}
                 </div>
 
                 {/* Por género */}
-                <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                  <h3 className="font-semibold text-ink mb-5">Género</h3>
+                <div className="bg-white rounded-[28px] shadow-float p-6">
+                  <h3 className="font-semibold text-navy mb-5">Género</h3>
                   {genderSlices.length === 0
-                    ? <div className="text-sm text-ink-muted text-center py-8">Sin datos de género</div>
+                    ? <div className="text-sm text-[#6b7385] text-center py-8">Sin datos de género</div>
                     : <DonutChart slices={genderSlices} />}
                 </div>
               </div>
 
               {/* Por presupuesto */}
-              <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                <h3 className="font-semibold text-ink mb-5">Distribución por presupuesto</h3>
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-semibold text-navy mb-5">Distribución por presupuesto</h3>
                 {byBudget.every(b => b.value === 0)
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
                   : <VBarChart data={byBudget} color="#5E4B8E" height={140} />}
               </div>
 
               {/* Por estado geográfico */}
-              <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                <h3 className="font-semibold text-ink mb-5">Clientes por estado (geografía)</h3>
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-semibold text-navy mb-5">Clientes por estado (geografía)</h3>
                 {byClientState.length === 0
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos geográficos del cliente.</div>
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos geográficos del cliente.</div>
                   : <HBarChart data={byClientState} max={maxState} />}
               </div>
 
 
               {/* Zonas de interés */}
-              <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-                <h3 className="font-semibold text-ink mb-5">Zonas de interés</h3>
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-semibold text-navy mb-5">Zonas de interés</h3>
                 {byZona.length === 0
-                  ? <div className="text-sm text-ink-muted text-center py-4">Sin datos de zona. Llena el campo “Zonas de interés” en el perfil de cada cliente.</div>
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de zona. Llena el campo “Zonas de interés” en el perfil de cada cliente.</div>
                   : <HBarChart data={byZona} max={maxZona} colorFn={() => "#5E4B8E"} />}
               </div>
 

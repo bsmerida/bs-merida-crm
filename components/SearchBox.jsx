@@ -4,13 +4,8 @@ import { useRouter } from "next/navigation";
 import { Icon } from "./Icon";
 
 const TYPES = ["Casa", "Departamento", "Terreno", "Oficina", "Local", "Bodega"];
-const PRESUPUESTOS = [
-  { v: "2000000", l: "Hasta $2,000,000" },
-  { v: "3500000", l: "Hasta $3,500,000" },
-  { v: "5000000", l: "Hasta $5,000,000" },
-  { v: "8000000", l: "Hasta $8,000,000" },
-  { v: "none",    l: "Sin límite" },
-];
+
+const fmtMoney = (n) => "$" + Number(n).toLocaleString("es-MX");
 
 export function SearchBox({ zones }) {
   const router = useRouter();
@@ -18,6 +13,7 @@ export function SearchBox({ zones }) {
   const [type, setType]         = useState("");
   const [query, setQuery]       = useState("");
   const [selected, setSelected] = useState("");
+  const [min, setMin]           = useState("");
   const [max, setMax]           = useState("");
   const [activeField, setActiveField] = useState(null); // "ubicacion" | "tipo" | "presupuesto" | null
   const inputRef                = useRef(null);
@@ -51,13 +47,17 @@ export function SearchBox({ zones }) {
     const p = new URLSearchParams();
     if (type) p.set("type", type);
     if (selected) p.set("zone", selected);
-    if (max && max !== "none") p.set("max", max);
+    if (min) p.set("min", min);
+    if (max) p.set("max", max);
     router.push((op === "Venta" ? "/comprar" : "/rentar") + (p.toString() ? "?" + p.toString() : ""));
   }
 
   const label    = "font-dmsans font-semibold text-[#6b7385] text-[11px] tracking-[1.1px] uppercase mb-1";
   const field    = "w-full bg-transparent font-dmsans font-medium text-[#1c2b4b] text-[17px] focus:outline-none appearance-none cursor-pointer placeholder:text-[#1c2b4b]/50 placeholder:font-medium truncate";
-  const presupuestoLabel = max === "" ? "Hasta $5,000,000" : (PRESUPUESTOS.find(p => p.v === max)?.l || "Hasta $5,000,000");
+  const presupuestoLabel = min && max ? `${fmtMoney(min)} – ${fmtMoney(max)}`
+    : min ? `Desde ${fmtMoney(min)}`
+    : max ? `Hasta ${fmtMoney(max)}`
+    : "Cualquier presupuesto";
 
   return (
     <div ref={boxRef} className="bg-white rounded-[28px] sm:rounded-[100px] flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-0 p-2.5 w-full font-dmsans relative">
@@ -159,13 +159,31 @@ export function SearchBox({ zones }) {
           <p className="font-dmsans font-medium text-[#1c2b4b] text-[17px] truncate">{presupuestoLabel}</p>
         </button>
         {activeField === "presupuesto" && (
-          <div className="absolute left-0 sm:left-[-8px] top-full mt-2 w-full sm:w-[260px] bg-white rounded-[28px] shadow-float z-50 overflow-hidden py-2 px-2">
-            {PRESUPUESTOS.map(p => (
-              <button key={p.l} type="button" onClick={() => { setMax(p.v); setActiveField(null); }}
-                className={"w-full text-left px-4 py-2.5 rounded-[20px] text-[15px] transition-colors " + (max === p.v ? "text-gold bg-cream font-medium" : "text-navy hover:bg-cream")}>
-                {p.l}
+          <div className="absolute left-0 sm:left-[-8px] top-full mt-2 w-full sm:w-[300px] bg-white rounded-[28px] shadow-float z-50 overflow-hidden p-4 flex flex-col gap-3">
+            <div className="flex gap-2">
+              <div className="flex-1 min-w-0 bg-cream rounded-[20px] px-4 py-2.5">
+                <p className="text-[#6b7385] text-[10px] font-semibold tracking-[1px] uppercase">Desde</p>
+                <input type="number" min="0" inputMode="numeric" value={min}
+                  onChange={e => setMin(e.target.value)} placeholder="$0"
+                  className="w-full bg-transparent text-navy text-[15px] font-medium focus:outline-none placeholder:text-navy/40" />
+              </div>
+              <div className="flex-1 min-w-0 bg-cream rounded-[20px] px-4 py-2.5">
+                <p className="text-[#6b7385] text-[10px] font-semibold tracking-[1px] uppercase">Hasta</p>
+                <input type="number" min="0" inputMode="numeric" value={max}
+                  onChange={e => setMax(e.target.value)} placeholder="Sin límite"
+                  className="w-full bg-transparent text-navy text-[15px] font-medium focus:outline-none placeholder:text-navy/40" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              {(min || max) ? (
+                <button type="button" onClick={() => { setMin(""); setMax(""); }} className="text-navy/50 hover:text-navy text-xs font-medium transition-colors">
+                  Quitar
+                </button>
+              ) : <span />}
+              <button type="button" onClick={() => setActiveField(null)} className="bg-navy hover:bg-navy-mid text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors ml-auto">
+                Aplicar
               </button>
-            ))}
+            </div>
           </div>
         )}
       </div>

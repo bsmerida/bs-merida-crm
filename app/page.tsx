@@ -17,10 +17,24 @@ export default async function HomePage() {
     supabase.from("properties").select(PUBLIC_PROPERTY_COLUMNS)
       .eq("is_published", true).eq("status", "Disponible")
       .order("featured", { ascending: false }).limit(3),
-    supabase.from("properties").select("zone, city")
+    supabase.from("properties").select("zone, city, state")
       .eq("is_published", true).eq("status", "Disponible"),
   ]);
-  const zones = [...new Set((zonesData || []).flatMap((p: any) => [p.zone, p.city].filter(Boolean)))].sort() as string[];
+  const zoneCounts: Record<string, number> = {};
+  const cityNames = new Set<string>();
+  const cityOf: Record<string, string> = {};
+  const stateOf: Record<string, string> = {};
+  for (const p of (zonesData || []) as any[]) {
+    for (const z of [p.zone, p.city].filter(Boolean)) zoneCounts[z] = (zoneCounts[z] || 0) + 1;
+    if (p.city) { cityNames.add(p.city); if (p.state) stateOf[p.city] = p.state; }
+    if (p.zone && p.city && !cityOf[p.zone]) cityOf[p.zone] = p.city;
+  }
+  const zones = Object.keys(zoneCounts).sort().map(name => ({
+    name,
+    count: zoneCounts[name],
+    isCity: cityNames.has(name),
+    subtitle: cityNames.has(name) ? (stateOf[name] || "") : [cityOf[name], stateOf[cityOf[name]]].filter(Boolean).join(", "),
+  }));
   const destacadas = (properties || []).map(conPortada);
 
   return (
@@ -47,7 +61,7 @@ export default async function HomePage() {
 
         <div className="mt-10 md:mt-20 flex flex-col gap-5 md:gap-7">
           <h1 className="font-serif font-medium text-white text-5xl md:text-[132px] leading-[1.05] md:leading-[0.97] tracking-tight md:tracking-[-2.64px] max-w-[1100px] min-w-0">
-            Inversiones que <em className="italic text-gold not-italic font-serif">trascienden</em>.
+            Inversiones que <em className="italic text-gold font-serif">trascienden</em>.
           </h1>
           <p className="text-white/80 text-lg md:text-[22px] max-w-[640px] min-w-0">
             Propiedades en Yucatán y Nuevo León.
@@ -117,7 +131,7 @@ export default async function HomePage() {
       <section className="rounded-[32px] md:rounded-[48px] bg-navy px-6 md:px-20 py-10 md:py-24 flex flex-col md:flex-row gap-10 md:gap-16 items-center">
         <div className="flex-1 min-w-0 flex flex-col gap-6 text-white">
           <h2 className="font-serif text-3xl md:text-[68px] md:leading-[70px] leading-tight min-w-0">
-            Encuentra tu zona, <em className="italic text-gold not-italic">no solo tu casa.</em>
+            Encuentra tu zona, <em className="italic text-gold">no solo tu casa.</em>
           </h2>
           <p className="text-white/75 text-lg md:text-[19px] min-w-0">Explora el inventario en el mapa y filtra por precio.</p>
           <Link href="/mapa" className="self-start bg-white text-navy font-semibold px-8 py-4 rounded-full hover:bg-stone transition-colors mt-1">
@@ -140,7 +154,7 @@ export default async function HomePage() {
       {/* Todo sobre la mesa */}
       <section className="rounded-[32px] md:rounded-[48px] bg-stone px-6 md:px-16 py-14 md:py-[130px] flex flex-col items-center gap-10 md:gap-16">
         <div className="text-center">
-          <h2 className="font-serif text-navy text-4xl md:text-[112px] md:leading-[108px] min-w-0">Todo sobre la <em className="italic not-italic font-serif text-navy">mesa</em>.</h2>
+          <h2 className="font-serif text-navy text-4xl md:text-[112px] md:leading-[108px] min-w-0">Todo sobre la <em className="italic font-serif text-navy">mesa</em>.</h2>
           <p className="text-[#6b7385] text-xl md:text-[22px] mt-4">Costos, plazos y riesgos, antes de que firmes.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12 w-full">
@@ -163,7 +177,7 @@ export default async function HomePage() {
       <SofiaTeaser>
         <section className="px-5 md:px-8 py-14 md:py-[120px] flex flex-col items-center gap-8 md:gap-12">
           <div className="text-center">
-            <h2 className="font-serif text-navy text-4xl md:text-[80px] md:leading-[80px] min-w-0">Cuéntale lo que <em className="italic not-italic font-serif">buscas.</em></h2>
+            <h2 className="font-serif text-navy text-4xl md:text-[80px] md:leading-[80px] min-w-0">Cuéntale lo que <em className="italic font-serif">buscas.</em></h2>
             <p className="text-[#6b7385] text-lg md:text-[20px] mt-3">Sofía filtra el inventario real de Duclaud por ti.</p>
           </div>
           <div className="bg-white rounded-[32px] p-6 w-full max-w-[680px] flex flex-col gap-3.5 shadow-card">
@@ -201,7 +215,7 @@ export default async function HomePage() {
         <div className="flex-1 min-w-0 flex flex-col gap-6">
           <p className="text-gold text-xs font-semibold tracking-[2.64px]">QUIÉN ESTÁ DETRÁS</p>
           <h2 className="font-serif text-navy text-3xl md:text-[64px] md:leading-[66px] leading-tight min-w-0">
-            Cada inversión es la decisión de <em className="italic not-italic font-serif">una familia.</em>
+            Cada inversión es la decisión de <em className="italic font-serif">una familia.</em>
           </h2>
           <div>
             <p className="font-semibold text-navy text-lg md:text-[19px]">Bertha Duclaud</p>

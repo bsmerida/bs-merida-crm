@@ -40,7 +40,7 @@ export default async function CitaElegirPage({ searchParams }: { searchParams: {
           <>
             <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Algo salió mal</p>
             <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-              Enlace no <em className="italic not-italic font-serif text-gold">válido.</em>
+              Enlace no <em className="italic font-serif text-gold">válido.</em>
             </h1>
             <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
               Este enlace no es válido o ya expiró. Contacta directamente con tu asesor.
@@ -59,7 +59,7 @@ export default async function CitaElegirPage({ searchParams }: { searchParams: {
           <>
             <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Cita</p>
             <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-              Esta visita ya fue <em className="italic not-italic font-serif text-gold">atendida.</em>
+              Esta visita ya fue <em className="italic font-serif text-gold">atendida.</em>
             </h1>
             <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
               Revisa tu correo con los detalles o contacta a tu asesor si necesitas cambiarla.
@@ -80,7 +80,7 @@ export default async function CitaElegirPage({ searchParams }: { searchParams: {
               Visita{request.property_title ? ` · ${request.property_title}` : ""}
             </p>
             <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-              Confirma tu <em className="italic not-italic font-serif text-gold">visita.</em>
+              Confirma tu <em className="italic font-serif text-gold">visita.</em>
             </h1>
             <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
               {agentName} te propuso {opciones.length === 1 ? "un horario" : opciones.length === 3 ? "tres horarios" : `${opciones.length} horarios`}. Elige el que mejor te acomode.

@@ -58,7 +58,7 @@ export default async function TableroPage({ params }: { params: { slug: string }
       <section className="px-5 md:px-16 pt-10 md:pt-24 pb-10 md:pb-16 flex flex-col gap-5 md:gap-7">
         <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Selección preparada para ti</p>
         <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-          Tu <em className="italic not-italic font-serif text-gold">selección.</em>
+          Tu <em className="italic font-serif text-gold">selección.</em>
         </h1>
         <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
           {board.lead?.name ? `Hola, ${board.lead.name.split(" ")[0]}. ` : ""}{subtitulo}

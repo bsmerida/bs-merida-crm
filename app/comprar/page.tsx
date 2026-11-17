@@ -25,7 +25,7 @@ export default async function ComprarPage({ searchParams }: { searchParams: { ty
 
       <section className="pt-10 md:pt-[72px] pb-6 md:pb-10 px-5 md:px-8 flex flex-col items-center text-center gap-3 md:gap-4">
         <h1 className="font-serif text-navy text-4xl md:text-[112px] md:leading-[108px] tracking-tight md:tracking-[-1.12px] min-w-0">
-          Propiedades en <em className="italic not-italic font-serif text-gold">venta.</em>
+          Propiedades en <em className="italic font-serif text-gold">venta.</em>
         </h1>
         <p className="text-[#6b7385] text-base md:text-[20px] min-w-0">
           {props.length} propiedades verificadas en Yucatán y Nuevo León.
@@ -39,7 +39,7 @@ export default async function ComprarPage({ searchParams }: { searchParams: { ty
 
       <section className="rounded-[32px] md:rounded-[48px] bg-navy px-6 md:px-16 py-14 md:py-24 flex flex-col items-center gap-4 md:gap-5 text-center">
         <p className="font-serif text-white text-3xl md:text-[72px] md:leading-[74px] min-w-0">
-          ¿No encuentras lo que <em className="italic not-italic font-serif text-gold">buscas?</em>
+          ¿No encuentras lo que <em className="italic font-serif text-gold">buscas?</em>
         </p>
         <p className="text-white/75 text-base md:text-[20px] min-w-0">Cuéntanos qué necesitas. Buscamos por ti, incluso antes de que se publique.</p>
         <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"

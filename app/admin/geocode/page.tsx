@@ -1,97 +1,63 @@
-"use client";
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createAdminClient } from "@/lib/supabase/server";
+import { GeocodeRunner } from "@/components/GeocodeRunner";
 
-export default function GeocodeBatchPage() {
-  const [running, setRunning] = useState(false);
-  const [log, setLog] = useState<string[]>([]);
-  const [done, setDone] = useState(false);
-  const supabase = createClient();
+export const dynamic = "force-dynamic";
 
-  const addLog = (msg: string) => setLog(prev => [...prev, msg]);
+export default async function GeocodeBatchPage() {
+  const supabase = createAdminClient();
 
-  const run = async () => {
-    setRunning(true);
-    setDone(false);
-    setLog([]);
+  const [{ count: total }, { count: sinCoordsTotal }, { data: sinCoords }] = await Promise.all([
+    supabase.from("properties").select("*", { count: "exact", head: true }),
+    supabase.from("properties").select("*", { count: "exact", head: true }).is("lat", null),
+    // Solo las primeras 50 para la lista "Pendientes" — el conteo real usa sinCoordsTotal, no esta lista.
+    supabase.from("properties").select("id, title, address, zone, city, state").is("lat", null).order("title").limit(50),
+  ]);
 
-    // 1. Traer todas las propiedades sin coordenadas
-    const { data: props, error } = await supabase
-      .from("properties")
-      .select("id, title, address, zone, city, state")
-      .is("lat", null);
-
-    if (error || !props) {
-      addLog("❌ Error al cargar propiedades: " + error?.message);
-      setRunning(false);
-      return;
-    }
-
-    addLog(`${props.length} propiedades sin coordenadas. Iniciando...`);
-
-    let ok = 0, fail = 0;
-
-    for (const p of props) {
-      const q = [p.address, p.zone, p.city, p.state, "México"].filter(Boolean).join(", ");
-      if (!q.trim()) {
-        addLog(`⚠️ Sin dirección: ${p.title}`);
-        fail++;
-        continue;
-      }
-
-      try {
-        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-
-        if (res.ok && data.lat) {
-          const { data: saved } = await supabase.from("properties").update({ lat: data.lat, lng: data.lng }).eq("id", p.id).select("id");
-          if (saved?.length) { addLog(`✓ ${p.title}`); ok++; }
-          else { addLog(`✗ No se pudo guardar: ${p.title}`); fail++; }
-        } else {
-          addLog(`✗ Sin resultado: ${p.title} (${q})`);
-          fail++;
-        }
-      } catch {
-        addLog(`✗ Error: ${p.title}`);
-        fail++;
-      }
-
-      // 200ms entre requests para no sobrepasar rate limit
-      await new Promise(r => setTimeout(r, 200));
-    }
-
-    addLog(`\n🏁 Listo. ✓ ${ok} actualizadas · ✗ ${fail} sin resultado.`);
-    setDone(true);
-    setRunning(false);
-  };
+  const pendientes = sinCoords || [];
+  const sinUbicacion = sinCoordsTotal || 0;
+  const conUbicacion = (total || 0) - sinUbicacion;
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl font-dmsans">
-      <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
-          Geocodificar<em className="italic font-serif text-gold">.</em>
-        </h1>
-      <p className="text-[#6b7385] text-[15px] mt-2 mb-6">
-        Busca automáticamente las coordenadas de todas las propiedades que no tienen mapa todavía.
-        Solo se procesan las que no tienen lat/lng — las que ya tienen coordenadas no se tocan.
-      </p>
-
-      <button
-        onClick={run}
-        disabled={running}
-        className="px-6 py-3 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full font-medium"
-      >
-        {running ? "Procesando..." : "Iniciar geocodificación"}
-      </button>
-
-      {done && (
-        <div className="mt-4 text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-          ✓ Proceso terminado. Recarga la página de propiedades para ver los mapas.
+    <div className="p-4 md:p-6 space-y-5 font-dmsans">
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Geocodificar <em className="italic font-serif text-gold">propiedades.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">Calcula la ubicación en el mapa de cada propiedad</p>
         </div>
-      )}
+        <GeocodeRunner />
+      </div>
 
-      {log.length > 0 && (
-        <div className="mt-6 bg-stone rounded-2xl p-4 h-96 overflow-y-auto font-mono text-xs text-navy space-y-1">
-          {log.map((l, i) => <div key={i}>{l}</div>)}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="bg-white rounded-[28px] px-[26px] py-6">
+          <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Con ubicación</p>
+          <p className="text-navy text-[32px] font-semibold tracking-[-0.64px] mt-1">{conUbicacion}</p>
+          <p className="text-[#6b7385] text-xs mt-1">de {total || 0} propiedades</p>
+        </div>
+        <div className="bg-white rounded-[28px] px-[26px] py-6">
+          <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Sin ubicación</p>
+          <p className="text-navy text-[32px] font-semibold tracking-[-0.64px] mt-1">{sinUbicacion}</p>
+          <p className="text-[#6b7385] text-xs mt-1">Necesitan dirección o zona</p>
+        </div>
+      </div>
+
+      {pendientes.length > 0 && (
+        <div className="bg-white rounded-[28px] px-[26px] py-6">
+          <h3 className="font-serif text-navy text-[28px] mb-3">
+            Pendientes{sinUbicacion > pendientes.length ? ` (mostrando ${pendientes.length} de ${sinUbicacion})` : ""}
+          </h3>
+          <div className="divide-y divide-stone">
+            {pendientes.map(p => {
+              const tieneDireccion = !!(p.address || p.zone || (p.city && p.state));
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-4 py-3">
+                  <p className="text-navy text-sm font-medium truncate">{p.title}</p>
+                  <p className="text-[#6b7385] text-xs shrink-0">{tieneDireccion ? "Pendiente de verificar" : "Sin dirección"}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

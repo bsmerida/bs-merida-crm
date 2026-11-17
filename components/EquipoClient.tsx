@@ -151,10 +151,10 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-stone shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
         <div className="px-6 py-5 border-b border-stone flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-navy">Equipo</h3>
+            <h3 className="font-serif text-navy text-[28px]">Equipo</h3>
             <p className="text-xs text-[#6b7385] mt-0.5">{profiles.length} usuario{profiles.length !== 1 ? "s" : ""}</p>
           </div>
           <button onClick={() => setShowModal(true)}

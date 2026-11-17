@@ -16,7 +16,7 @@ export default async function EditarPropiedadPage({ params }: { params: { id: st
   const property = data as Property;
 
   return (
-    <div className="p-10 max-w-4xl">
+    <div className="p-4 md:p-6 max-w-4xl">
       <div className="flex items-start justify-between mb-8 flex-wrap gap-3">
         <div>
           <h1 className="font-serif text-navy text-2xl tracking-tight">Editar propiedad</h1>

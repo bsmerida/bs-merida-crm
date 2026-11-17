@@ -465,13 +465,13 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Donut por estado */}
                 <div className="bg-white rounded-[28px] shadow-float p-6">
-                  <h3 className="font-semibold text-navy mb-5">Distribución por estado</h3>
+                  <h3 className="font-serif text-navy text-[28px] mb-5">Distribución por estado</h3>
                   <DonutChart slices={statusSlices} />
                 </div>
 
                 {/* Origen */}
                 <div className="bg-white rounded-[28px] shadow-float p-6">
-                  <h3 className="font-semibold text-navy mb-5">Origen de clientes</h3>
+                  <h3 className="font-serif text-navy text-[28px] mb-5">Origen de clientes</h3>
                   {bySource.length === 0
                     ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de origen</div>
                     : <HBarChart data={bySource} max={maxSource} />}
@@ -481,7 +481,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               {/* Operación y tipo buscado */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-[28px] shadow-float p-6">
-                  <h3 className="font-semibold text-navy mb-5">Operación buscada</h3>
+                  <h3 className="font-serif text-navy text-[28px] mb-5">Operación buscada</h3>
                   {byOperation.every(x => x.label === "Sin definir") ? (
                     <div className="text-sm text-[#6b7385] text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
                   ) : (
@@ -502,7 +502,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                 </div>
 
                 <div className="bg-white rounded-[28px] shadow-float p-6">
-                  <h3 className="font-semibold text-navy mb-5">Tipo de inmueble buscado</h3>
+                  <h3 className="font-serif text-navy text-[28px] mb-5">Tipo de inmueble buscado</h3>
                   {bySearchType.length === 0 || (bySearchType.length === 1 && bySearchType[0][0] === "Sin definir") ? (
                     <div className="text-sm text-[#6b7385] text-center py-4">Aún no hay datos — llena el campo en cada cliente</div>
                   ) : (
@@ -513,7 +513,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
               {/* Conversión por fuente */}
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-semibold text-navy mb-5">Tasa de conversión por origen</h3>
+                <h3 className="font-serif text-navy text-[28px] mb-5">Tasa de conversión por origen</h3>
                 {convBySource.length === 0
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos suficientes</div>
                   : (
@@ -552,7 +552,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
           {statsSection === "tendencia" && (
             <div className="space-y-6">
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-semibold text-navy mb-6">Nuevos clientes vs cerrados — últimos 6 meses</h3>
+                <h3 className="font-serif text-navy text-[28px] mb-6">Nuevos clientes vs cerrados — últimos 6 meses</h3>
                 <div className="flex items-end gap-3 h-48">
                   {meses.map(m => (
                     <div key={m.label} className="flex-1 flex flex-col items-center gap-1 group">
@@ -590,7 +590,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                 {/* Por edad */}
                 <div className="bg-white rounded-[28px] shadow-float p-6">
                   <div className="flex items-center justify-between mb-5">
-                    <h3 className="font-semibold text-navy">Edad</h3>
+                    <h3 className="font-serif text-navy text-[28px]">Edad</h3>
                     {avgAge && <span className="text-xs text-[#6b7385]">Promedio: <span className="font-semibold text-navy">{avgAge} años</span></span>}
                   </div>
                   {leadsWithAge === 0
@@ -601,7 +601,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
                 {/* Por género */}
                 <div className="bg-white rounded-[28px] shadow-float p-6">
-                  <h3 className="font-semibold text-navy mb-5">Género</h3>
+                  <h3 className="font-serif text-navy text-[28px] mb-5">Género</h3>
                   {genderSlices.length === 0
                     ? <div className="text-sm text-[#6b7385] text-center py-8">Sin datos de género</div>
                     : <DonutChart slices={genderSlices} />}
@@ -610,7 +610,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
               {/* Por presupuesto */}
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-semibold text-navy mb-5">Distribución por presupuesto</h3>
+                <h3 className="font-serif text-navy text-[28px] mb-5">Distribución por presupuesto</h3>
                 {byBudget.every(b => b.value === 0)
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
                   : <VBarChart data={byBudget} color="#5E4B8E" height={140} />}
@@ -618,7 +618,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
               {/* Por estado geográfico */}
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-semibold text-navy mb-5">Clientes por estado (geografía)</h3>
+                <h3 className="font-serif text-navy text-[28px] mb-5">Clientes por estado (geografía)</h3>
                 {byClientState.length === 0
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos geográficos del cliente.</div>
                   : <HBarChart data={byClientState} max={maxState} />}
@@ -627,7 +627,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
               {/* Zonas de interés */}
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-semibold text-navy mb-5">Zonas de interés</h3>
+                <h3 className="font-serif text-navy text-[28px] mb-5">Zonas de interés</h3>
                 {byZona.length === 0
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de zona. Llena el campo “Zonas de interés” en el perfil de cada cliente.</div>
                   : <HBarChart data={byZona} max={maxZona} colorFn={() => "#5E4B8E"} />}

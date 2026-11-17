@@ -5,12 +5,14 @@ export default function TokkoSyncPage() {
   const apiKeyConfigured = !!process.env.TOKKO_API_KEY;
 
   return (
-    <div className="p-10 max-w-3xl space-y-6">
+    <div className="p-4 md:p-6 max-w-3xl space-y-6 font-dmsans">
       <Link href="/admin/propiedades" className="text-sm text-[#6b7385] hover:text-navy inline-flex items-center gap-1">← Volver a propiedades</Link>
 
       <div>
-        <h1 className="font-serif text-navy text-2xl tracking-tight mt-2">Sincronizar con Tokko</h1>
-        <p className="text-sm text-[#6b7385] mt-1">Trae todas las propiedades de tu cuenta Tokko, con imágenes incluidas.</p>
+        <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px] mt-2">
+          Sincronizar con <em className="italic font-serif text-gold">Tokko.</em>
+        </h1>
+        <p className="text-[#6b7385] text-[15px] mt-1">Trae todas las propiedades de tu cuenta Tokko, con imágenes incluidas.</p>
       </div>
 
       {!apiKeyConfigured && (

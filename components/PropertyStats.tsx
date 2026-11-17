@@ -41,7 +41,7 @@ export function PropertyStats({ propertyId }: { propertyId: string }) {
   }, [propertyId]);
 
   if (!stats) return (
-    <div className="bg-white rounded-2xl border border-stone shadow-card p-6 animate-pulse">
+    <div className="bg-white rounded-[28px] shadow-float p-6 animate-pulse">
       <div className="h-4 bg-stone rounded w-32 mb-4"></div>
       <div className="grid grid-cols-3 gap-4">
         {[1,2,3].map(i => <div key={i} className="h-16 bg-stone rounded-xl"></div>)}
@@ -54,8 +54,8 @@ export function PropertyStats({ propertyId }: { propertyId: string }) {
     : "0";
 
   return (
-    <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
-      <h3 className="font-semibold text-navy">📊 Estadísticas</h3>
+    <div className="bg-white rounded-[28px] shadow-float p-6 space-y-4">
+      <h3 className="font-serif text-navy text-[28px]">📊 Estadísticas</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-stone rounded-xl p-4 text-center">
           <div className="text-2xl font-semibold text-navy">{stats.views_total}</div>

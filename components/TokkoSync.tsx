@@ -28,7 +28,7 @@ export function TokkoSync({ apiKeyConfigured }: { apiKeyConfigured: boolean }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-stone shadow-card p-8">
+    <div className="bg-white rounded-[28px] shadow-float p-8">
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-2xl bg-cream text-gold flex items-center justify-center text-2xl">🔄</div>
         <div className="flex-1">

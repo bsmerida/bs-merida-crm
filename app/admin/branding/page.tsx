@@ -15,7 +15,7 @@ export default async function BrandingPage() {
       </div>
 
       <div className="mt-8 bg-white rounded-[28px] shadow-float p-8">
-        <h3 className="font-semibold text-navy">Logo de la empresa</h3>
+        <h3 className="font-serif text-navy text-[28px]">Logo de la empresa</h3>
         <p className="text-sm text-[#6b7385] mt-1">
           Sube tu logo en formato PNG, JPG o SVG. Se va a usar en el header del sitio público y en el admin. Recomendación: usa fondo transparente (PNG o SVG).
         </p>

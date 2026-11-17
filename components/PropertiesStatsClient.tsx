@@ -239,7 +239,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
           { label: "Vistas totales",    value: totalViews,      sub: "en el sitio",     color: "text-gold" },
           { label: "Conversión",        value: `${convProp}%`,  sub: "vistas→solicitud",color: "text-amber-600" },
         ].map(k => (
-          <div key={k.label} className="bg-white rounded-2xl border border-stone shadow-card p-5">
+          <div key={k.label} className="bg-white rounded-[28px] shadow-float p-5">
             <div className="text-xs text-[#6b7385]">{k.label}</div>
             <div className={`text-3xl font-semibold mt-2 ${k.color}`}>{k.value}</div>
             <div className="text-xs text-[#6b7385] mt-1">{k.sub}</div>
@@ -271,27 +271,27 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
       {section === "inventario" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-              <h3 className="font-semibold text-navy mb-5">Por tipo</h3>
+            <div className="bg-white rounded-[28px] shadow-float p-6">
+              <h3 className="font-serif text-navy text-[28px] mb-5">Por tipo</h3>
               <DonutChart slices={byType.map(([label, value]) => ({ label, value, color: TYPE_COLORS[label] || "#9CA3AF" }))} />
             </div>
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-              <h3 className="font-semibold text-navy mb-5">Por operación</h3>
+            <div className="bg-white rounded-[28px] shadow-float p-6">
+              <h3 className="font-serif text-navy text-[28px] mb-5">Por operación</h3>
               <DonutChart slices={byOp.map(([label, value]) => ({ label, value, color: label === "Venta" ? "#5E4B8E" : "#10B981" }))} />
             </div>
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-              <h3 className="font-semibold text-navy mb-5">Por estado</h3>
+            <div className="bg-white rounded-[28px] shadow-float p-6">
+              <h3 className="font-serif text-navy text-[28px] mb-5">Por estado</h3>
               <DonutChart slices={byStatus.map(([label, value]) => ({ label, value, color: STATUS_COLORS[label] || "#9CA3AF" }))} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-              <h3 className="font-semibold text-navy mb-5">Distribución por precio</h3>
+            <div className="bg-white rounded-[28px] shadow-float p-6">
+              <h3 className="font-serif text-navy text-[28px] mb-5">Distribución por precio</h3>
               <VBar data={byPrice} color="#5E4B8E" chartHeight={140} />
             </div>
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-              <h3 className="font-semibold text-navy mb-5">Por estado</h3>
+            <div className="bg-white rounded-[28px] shadow-float p-6">
+              <h3 className="font-serif text-navy text-[28px] mb-5">Por estado</h3>
               <HBar data={byState} max={maxState} />
             </div>
           </div>
@@ -301,8 +301,8 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
       {/* ── TRÁFICO ── */}
       {section === "trafico" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-            <h3 className="font-semibold text-navy mb-6">Vistas del sitio — últimos 30 días</h3>
+          <div className="bg-white rounded-[28px] shadow-float p-6">
+            <h3 className="font-serif text-navy text-[28px] mb-6">Vistas del sitio — últimos 30 días</h3>
             {totalViews === 0 ? (
               <div className="h-24 flex items-center justify-center text-sm text-[#6b7385] bg-stone rounded-xl">
                 Sin vistas registradas aún. Las vistas se registran automáticamente cuando alguien visita una propiedad.
@@ -337,8 +337,8 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
       {section === "top" && (
         <div className="space-y-6">
           {/* Top vistas */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-            <h3 className="font-semibold text-navy mb-5">Top 10 — más vistas</h3>
+          <div className="bg-white rounded-[28px] shadow-float p-6">
+            <h3 className="font-serif text-navy text-[28px] mb-5">Top 10 — más vistas</h3>
             {topViews.every(p => p.views_count === 0) ? (
               <div className="text-sm text-[#6b7385] text-center py-4">Sin vistas registradas aún.</div>
             ) : (
@@ -363,8 +363,8 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
           </div>
 
           {/* Top solicitudes */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-            <h3 className="font-semibold text-navy mb-5">Top 10 — más solicitudes</h3>
+          <div className="bg-white rounded-[28px] shadow-float p-6">
+            <h3 className="font-serif text-navy text-[28px] mb-5">Top 10 — más solicitudes</h3>
             {topInq.length === 0 ? (
               <div className="text-sm text-[#6b7385] text-center py-4">Sin solicitudes registradas aún.</div>
             ) : (

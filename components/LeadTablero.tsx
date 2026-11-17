@@ -189,7 +189,7 @@ export function LeadTablero({ lead }: { lead: any }) {
 
   // ── Sin tablero ────────────────────────────────────────────
   if (!board) return (
-    <div className="bg-white rounded-2xl border border-stone shadow-card p-10 text-center space-y-4">
+    <div className="bg-white rounded-[28px] shadow-float p-10 text-center space-y-4">
       <div><svg className="w-12 h-12 text-stone-dk" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
       <h3 className="font-semibold text-navy text-lg">Crea un tablero para {lead.name}</h3>
       <p className="text-sm text-[#6b7385] max-w-md mx-auto">
@@ -262,7 +262,7 @@ export function LeadTablero({ lead }: { lead: any }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {boardProps.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden group">
+            <div key={p.id} className="bg-white rounded-[28px] shadow-float overflow-hidden group">
               <div className="relative">
                 {p.cover ? (
                   <img src={p.cover} alt={p.title} className="w-full h-40 object-cover" />
@@ -296,9 +296,9 @@ export function LeadTablero({ lead }: { lead: any }) {
 
       {/* Picker de propiedades manuales */}
       {showPicker && (
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-5 space-y-4">
+        <div className="bg-white rounded-[28px] shadow-float p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-navy">Agregar del inventario</h4>
+            <h4 className="font-serif text-navy text-xl">Agregar del inventario</h4>
             <button onClick={() => setShowPicker(false)} className="text-[#6b7385] hover:text-navy text-sm">Cerrar</button>
           </div>
           <input value={search} onChange={e => setSearch(e.target.value)}

@@ -167,37 +167,45 @@ export function LeadEditor({
   const inp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
 
   return (
+    <div className="space-y-5">
+      {/* Barra superior */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            {isNew ? <>Nuevo cliente<em className="italic font-serif text-gold">.</em></> : (form.name || "Cliente")}
+          </h1>
+          {!isNew ? (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[form.status] || "bg-stone text-[#6b7385]"}`}>
+                {form.status}
+              </span>
+              <span className="text-xs text-[#6b7385]">Origen: {lead.source || "—"}</span>
+              {lead.utm_data && (
+                <span className="text-xs text-gold bg-cream px-2 py-0.5 rounded-full">
+                  📊 {lead.utm_data.utm_source || lead.utm_data.ref || "UTM"}
+                </span>
+              )}
+            </div>
+          ) : (
+            <p className="text-[#6b7385] text-[15px] mt-1">Registra a un cliente y asígnalo a un asesor</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {savedAt && <span className="text-xs text-emerald-600">✓ Guardado a las {savedAt}</span>}
+          <button onClick={save} disabled={saving}
+            className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white text-sm font-medium px-5 py-2.5 rounded-full">
+            {saving ? "Guardando..." : isNew ? "Crear cliente" : "Guardar cambios"}
+          </button>
+        </div>
+      </div>
+
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Columna principal */}
       <div className="lg:col-span-2 space-y-6">
 
         {/* Info principal */}
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-          <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold text-navy tracking-tight">
-                {isNew ? "Nuevo cliente" : form.name || "Cliente"}
-              </h1>
-              {!isNew && (
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[form.status] || "bg-stone text-[#6b7385]"}`}>
-                    {form.status}
-                  </span>
-                  <span className="text-xs text-[#6b7385]">Origen: {lead.source || "—"}</span>
-                  {lead.utm_data && (
-                    <span className="text-xs text-gold bg-cream px-2 py-0.5 rounded-full">
-                      📊 {lead.utm_data.utm_source || lead.utm_data.ref || "UTM"}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            <button onClick={save} disabled={saving}
-              className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white text-sm font-medium px-5 py-2.5 rounded-full">
-              {saving ? "Guardando..." : isNew ? "Crear cliente" : "Guardar cambios"}
-            </button>
-          </div>
-          {savedAt && <div className="text-xs text-emerald-600 mb-4">✓ Guardado a las {savedAt}</div>}
+        <div className="bg-white rounded-[28px] shadow-float p-6">
+          <h3 className="font-serif text-navy text-[28px] mb-4">Datos del registro</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label className="text-xs text-[#6b7385]">Nombre *</label><div className="mt-1.5"><input value={form.name} onChange={e => set("name", e.target.value)} placeholder="Nombre completo" className={inp} /></div></div>
@@ -325,9 +333,9 @@ export function LeadEditor({
         </div>
 
         {/* Perfil */}
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+        <div className="bg-white rounded-[28px] shadow-float p-6">
           <div className="flex items-center gap-2 mb-4">
-            <h3 className="font-semibold text-navy">Perfil del cliente</h3>
+            <h3 className="font-serif text-navy text-[28px]">Perfil del cliente</h3>
             <span className="text-[10px] text-[#6b7385] bg-stone px-2 py-0.5 rounded-full">Opcional · para estadísticas</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -350,8 +358,8 @@ export function LeadEditor({
 
         {/* Bitácora — solo en edición */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-            <h3 className="font-semibold text-navy mb-4">Bitácora de actividades</h3>
+          <div className="bg-white rounded-[28px] shadow-float p-6">
+            <h3 className="font-serif text-navy text-[28px] mb-4">Bitácora de actividades</h3>
             <div className="flex gap-2 mb-4 flex-wrap">
               <Select value={actType} onChange={setActType}
                 options={TIPOS_ACTIVIDAD.map(t => ({value:t,label:t}))}
@@ -389,8 +397,8 @@ export function LeadEditor({
       <div className="space-y-6">
         {/* Cambio rápido de estado */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-            <h3 className="font-semibold text-navy mb-4">Cambio rápido de estado</h3>
+          <div className="bg-white rounded-[28px] shadow-float p-6">
+            <h3 className="font-serif text-navy text-[28px] mb-4">Cambio rápido de estado</h3>
             <div className="space-y-1.5">
               {ESTADOS_LEAD.map(s => (
                 <button key={s}
@@ -410,8 +418,8 @@ export function LeadEditor({
 
         {/* Info del registro */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-3">
-            <h3 className="font-semibold text-navy mb-1">Datos del registro</h3>
+          <div className="bg-white rounded-[28px] shadow-float p-6 space-y-3">
+            <h3 className="font-serif text-navy text-[28px] mb-1">Resumen del registro</h3>
             <div className="text-xs text-[#6b7385] space-y-2">
               <div className="flex justify-between"><span>Origen</span><span className="text-navy font-medium">{lead.source || "—"}</span></div>
               <div className="flex justify-between"><span>Registrado</span><span className="text-navy">{new Date(lead.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span></div>
@@ -443,6 +451,7 @@ export function LeadEditor({
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

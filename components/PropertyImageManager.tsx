@@ -58,7 +58,7 @@ export function PropertyImageManager({ propertyId }: { propertyId: string }) {
 
   return (
     <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
-      <h3 className="font-semibold text-navy mb-4">Imágenes</h3>
+      <h3 className="font-serif text-navy text-[28px] mb-4">Imágenes</h3>
       <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
         onChange={e => e.target.files && handleFiles(e.target.files)} />
       <button onClick={() => fileRef.current?.click()} disabled={uploading}

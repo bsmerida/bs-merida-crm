@@ -34,7 +34,7 @@ export default async function NuevoLeadPage() {
   };
 
   return (
-    <div className="p-10 max-w-5xl space-y-6">
+    <div className="p-4 md:p-6 max-w-5xl space-y-6">
       <Link href="/admin/leads" className="text-sm text-[#6b7385] hover:text-navy inline-flex items-center gap-1">
         ← Volver a clientes
       </Link>

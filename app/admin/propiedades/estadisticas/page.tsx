@@ -48,14 +48,16 @@ export default async function PropiedadesEstadisticasPage() {
   const viewsTrend = Object.entries(viewsByDay).map(([date, count]) => ({ date, count }));
 
   return (
-    <div className="p-10 space-y-6">
+    <div className="p-4 md:p-6 space-y-6 font-dmsans">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <Link href="/admin/propiedades" className="text-sm text-[#6b7385] hover:text-navy inline-flex items-center gap-1 mb-2">
             ← Volver a propiedades
           </Link>
-          <h1 className="font-serif text-navy text-2xl tracking-tight">Estadísticas de propiedades</h1>
-          <p className="text-sm text-[#6b7385] mt-0.5">{props.length} propiedades en el inventario</p>
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Estadísticas de <em className="italic font-serif text-gold">propiedades.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">{props.length} propiedades en el inventario</p>
         </div>
       </div>
       <PropertiesStatsClient

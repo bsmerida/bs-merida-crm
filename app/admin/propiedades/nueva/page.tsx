@@ -8,10 +8,12 @@ export default async function NuevaPropiedadPage() {
   const { data: { user } } = await authClient.auth.getUser();
 
   return (
-    <div className="p-10 max-w-4xl space-y-6">
+    <div className="p-4 md:p-6 max-w-4xl space-y-6 font-dmsans">
       <div>
-        <h1 className="font-serif text-navy text-2xl tracking-tight">Nueva propiedad</h1>
-        <p className="text-sm text-[#6b7385] mt-0.5">Completa la información y publica en el sitio.</p>
+        <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+          Nueva propiedad<em className="italic font-serif text-gold">.</em>
+        </h1>
+        <p className="text-[#6b7385] text-[15px] mt-1">Completa la información y publica en el sitio.</p>
       </div>
 
       {/* Formulario principal — al guardar redirige a /admin/propiedades/[id] donde están las notas */}

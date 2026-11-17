@@ -19,14 +19,14 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
   if (!lead || !auth || !canManage(auth, lead.agent_id)) notFound();
 
   return (
-    <div className="p-10 max-w-5xl space-y-8">
+    <div className="p-4 md:p-6 max-w-5xl space-y-8">
       <Link href="/admin/leads" className="text-sm text-[#6b7385] hover:text-navy inline-flex items-center gap-1">← Volver a clientes</Link>
       <LeadEditor lead={lead} agentes={agentes || []} activities={activities || []} />
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-navy">Tablero de propiedades</h2>
-          <p className="text-sm text-[#6b7385] mt-0.5">Selección personalizada para compartir con el cliente</p>
+          <h2 className="font-serif text-navy text-[28px]">Tablero de propiedades</h2>
+          <p className="text-[#6b7385] text-[15px] mt-0.5">Selección personalizada para compartir con el cliente</p>
         </div>
         <LeadTablero lead={lead} />
       </div>

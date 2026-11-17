@@ -87,7 +87,7 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-stone flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="font-semibold text-navy text-lg">{isEditing ? "Editar gasto" : "Registrar gasto"}</h2>
+          <h2 className="font-serif text-navy text-xl">{isEditing ? "Editar gasto" : "Registrar gasto"}</h2>
           <button onClick={onClose} className="text-[#6b7385] hover:text-navy text-xl">×</button>
         </div>
 

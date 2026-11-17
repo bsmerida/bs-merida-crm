@@ -21,7 +21,7 @@ export default async function AjustesPage() {
       </div>
 
       <div className="bg-white rounded-[28px] shadow-float p-6">
-        <h3 className="font-semibold text-navy mb-5">Datos de la empresa</h3>
+        <h3 className="font-serif text-navy text-[28px] mb-5">Datos de la empresa</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           {[
             ["Nombre comercial", "Duclaud Bienes Raíces"],
@@ -48,7 +48,7 @@ export default async function AjustesPage() {
 
       <div className="bg-white rounded-[28px] shadow-float p-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h3 className="font-semibold text-navy">Google Calendar</h3>
+          <h3 className="font-serif text-navy text-[28px]">Google Calendar</h3>
           <p className="text-xs text-[#6b7385] mt-1">Conecta tu calendario para que las visitas confirmadas se agenden solas.</p>
         </div>
         <a href="/api/citas/google-connect"
@@ -58,7 +58,7 @@ export default async function AjustesPage() {
       </div>
 
       <div className="bg-white rounded-[28px] shadow-float p-6">
-        <h3 className="font-semibold text-navy mb-1">Cumplimiento legal · México</h3>
+        <h3 className="font-serif text-navy text-[28px] mb-1">Cumplimiento legal · México</h3>
         <p className="text-xs text-[#6b7385] mb-5">Configurado para cumplir con LFPDPPP (protección de datos) y normativa PLD.</p>
         <div className="space-y-3 text-sm text-navy">
           {[

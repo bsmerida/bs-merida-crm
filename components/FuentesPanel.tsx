@@ -85,7 +85,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
       <section className="space-y-3">
         <div className="flex items-end justify-between flex-wrap gap-2">
           <div>
-            <h2 className="font-semibold text-navy">Carpetas de proveedores</h2>
+            <h2 className="font-serif text-navy text-[28px]">Carpetas de proveedores</h2>
             <p className="text-xs text-[#6b7385] mt-0.5">
               Última revisión: {fecha(ultima?.inicio || null)}
               {ultima?.resumen?.borradores != null && ` · ${ultima.resumen.borradores} borradores nuevos`}
@@ -150,7 +150,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
       {/* Cambios de archivos */}
       <section className="space-y-3">
         <div>
-          <h2 className="font-semibold text-navy">Cambios en archivos</h2>
+          <h2 className="font-serif text-navy text-[28px]">Cambios en archivos</h2>
           <p className="text-xs text-[#6b7385] mt-0.5">
             {totalCambios ? `${totalCambios} sin revisar${totalCambios > pendientes.length ? ` (se muestran los ${pendientes.length} más recientes)` : ""}` : "Todo revisado"}
             {" "}· “Eliminado” significa que ya no está en la carpeta, no que se vendió.
@@ -192,7 +192,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
       {/* Lecciones */}
       <section className="space-y-3">
         <div>
-          <h2 className="font-semibold text-navy">Lo que el agente ha aprendido</h2>
+          <h2 className="font-serif text-navy text-[28px]">Lo que el agente ha aprendido</h2>
           <p className="text-xs text-[#6b7385] mt-0.5">Sale de tus comentarios al rechazar. Cada lección solo la usa el paso que se equivocó.</p>
         </div>
         {activas.length === 0 ? (

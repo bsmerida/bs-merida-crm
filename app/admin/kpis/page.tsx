@@ -229,7 +229,7 @@ export default async function KPIsPage() {
         {/* Embudo */}
         <div className="lg:col-span-2 bg-white rounded-[28px] shadow-float p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-navy">Embudo de conversión</h3>
+            <h3 className="font-serif text-navy text-[28px]">Embudo de conversión</h3>
             <span className="text-xs text-[#6b7385]">{leads.length} leads totales</span>
           </div>
           {leads.length === 0 ? (
@@ -259,7 +259,7 @@ export default async function KPIsPage() {
 
         {/* Ranking asesores */}
         <div className="bg-white rounded-[28px] shadow-float p-6">
-          <h3 className="font-semibold text-navy mb-5">Ranking asesores</h3>
+          <h3 className="font-serif text-navy text-[28px] mb-5">Ranking asesores</h3>
           <p className="text-xs text-[#6b7385] mb-4">Por comisiones cerradas este mes</p>
           {ranking.length === 0 ? (
             <div className="text-sm text-[#6b7385] text-center py-8">Sin asesores activos.</div>

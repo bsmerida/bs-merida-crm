@@ -298,7 +298,7 @@ export function LeadTablero({ lead }: { lead: any }) {
       {showPicker && (
         <div className="bg-white rounded-2xl border border-stone shadow-card p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-navy">Agregar del inventario</h4>
+            <h4 className="font-serif text-navy text-xl">Agregar del inventario</h4>
             <button onClick={() => setShowPicker(false)} className="text-[#6b7385] hover:text-navy text-sm">Cerrar</button>
           </div>
           <input value={search} onChange={e => setSearch(e.target.value)}

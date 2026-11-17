@@ -229,7 +229,7 @@ export function PropertyForm({ property }: Props) {
     <form onSubmit={submit} className="space-y-6">
 
       <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-navy">Información básica</h3>
+        <h3 className="font-serif text-navy text-[28px]">Información básica</h3>
         <Field label="Título *">
           <input required value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ej. Casa en Provincia Residencial" className={inp} />
         </Field>
@@ -280,7 +280,7 @@ export function PropertyForm({ property }: Props) {
       </div>
 
       <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-navy">Precio</h3>
+        <h3 className="font-serif text-navy text-[28px]">Precio</h3>
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xs text-[#6b7385]">Tipo:</span>
@@ -316,7 +316,7 @@ export function PropertyForm({ property }: Props) {
       </div>
 
       <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-navy">Ubicación</h3>
+        <h3 className="font-serif text-navy text-[28px]">Ubicación</h3>
         <Field label="Dirección">
           <input value={form.address} onChange={e => set("address", e.target.value)} placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
         </Field>
@@ -346,7 +346,7 @@ export function PropertyForm({ property }: Props) {
       </div>
 
       <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-navy">Características</h3>
+        <h3 className="font-serif text-navy text-[28px]">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Field label="Recámaras"><input type="number" min="0" value={form.bedrooms} onChange={e => set("bedrooms", e.target.value)} className={inp} /></Field>
           <Field label="Baños"><input type="number" min="0" step="0.5" value={form.bathrooms} onChange={e => set("bathrooms", e.target.value)} className={inp} /></Field>
@@ -361,7 +361,7 @@ export function PropertyForm({ property }: Props) {
 
       {!property && (
         <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
-          <h3 className="font-semibold text-navy">Imágenes</h3>
+          <h3 className="font-serif text-navy text-[28px]">Imágenes</h3>
           <p className="text-xs text-[#6b7385]">La primera imagen será la portada.</p>
           <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
             onChange={e => e.target.files && handleFileSelect(e.target.files)} />
@@ -385,7 +385,7 @@ export function PropertyForm({ property }: Props) {
       )}
 
       <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-3">
-        <h3 className="font-semibold text-navy">Publicación</h3>
+        <h3 className="font-serif text-navy text-[28px]">Publicación</h3>
         <label className="flex items-center gap-3 text-sm text-navy cursor-pointer">
           <input type="checkbox" checked={form.is_published} onChange={e => set("is_published", e.target.checked)} className="w-4 h-4 accent-navy" />
           Publicar en el sitio web

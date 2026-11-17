@@ -144,7 +144,7 @@ export default function HistoricosPage() {
   const inp = "w-full bg-stone border border-transparent rounded-xl px-3 py-2 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
 
   return (
-    <div className="p-10 max-w-5xl space-y-6">
+    <div className="p-4 md:p-6 max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <a href="/admin/finanzas" className="text-sm text-[#6b7385] hover:text-navy mb-2 inline-flex items-center gap-1">← Finanzas</a>
@@ -169,7 +169,7 @@ export default function HistoricosPage() {
           {records.length === 0 ? (
             <div className="p-16 text-center">
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="font-semibold text-navy">Sin históricos cargados</h3>
+              <h3 className="font-serif text-navy text-[28px]">Sin históricos cargados</h3>
               <p className="text-sm text-[#6b7385] mt-2 max-w-sm mx-auto">Carga datos históricos para que la IA pueda analizar tendencias y comparar vs períodos anteriores.</p>
               <button onClick={() => setTab("importar")}
                 className="mt-4 px-5 py-2.5 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium">
@@ -216,7 +216,7 @@ export default function HistoricosPage() {
       {/* Captura manual */}
       {tab === "manual" && (
         <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-5">
-          <h3 className="font-semibold text-navy">Capturar mes histórico</h3>
+          <h3 className="font-serif text-navy text-[28px]">Capturar mes histórico</h3>
 
           <div className="grid grid-cols-2 gap-4">
             <div><label className="text-xs text-[#6b7385]">Año</label><div className="mt-1.5">
@@ -273,7 +273,7 @@ export default function HistoricosPage() {
       {/* Importar Excel */}
       {tab === "importar" && (
         <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-5">
-          <h3 className="font-semibold text-navy">Importar desde Excel</h3>
+          <h3 className="font-serif text-navy text-[28px]">Importar desde Excel</h3>
 
           <div className="bg-cream border border-gold/30 rounded-2xl p-4 text-sm text-navy space-y-2">
             <div className="font-semibold">Formato esperado del Excel:</div>

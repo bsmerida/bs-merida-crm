@@ -40,7 +40,7 @@ export function PropertyNotes({ propertyId, userId }: { propertyId: string; user
   return (
     <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
       <div className="flex items-center gap-2">
-        <h3 className="font-semibold text-navy">🔒 Notas internas</h3>
+        <h3 className="font-serif text-navy text-[28px]">🔒 Notas internas</h3>
         <span className="text-[10px] text-[#6b7385] bg-stone px-2 py-0.5 rounded-full">Solo visible para el equipo</span>
       </div>
       <div className="flex gap-2">

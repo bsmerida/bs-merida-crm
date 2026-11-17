@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { Select } from "@/components/Select";
 
 const DAYS   = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const MONTHS = ["enero","febrero","marzo","abril","mayo","junio",
@@ -65,11 +66,9 @@ function RejectForm({ requestId, onDone }: { requestId: string; onDone: (r: any)
           <input type="date" value={o.date} min={toYMD(today)}
             onChange={e=>updateOpt(i,"date",e.target.value)}
             className="flex-1 border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none focus:border-navy"/>
-          <select value={o.time} onChange={e=>updateOpt(i,"time",e.target.value)}
-            className="border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none focus:border-navy">
-            <option value="">Hora</option>
-            {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
+          <Select value={o.time} onChange={v=>updateOpt(i,"time",v)}
+            options={[{value:"",label:"Hora"}, ...HOURS.map(h => ({value:h,label:h}))]}
+            className="border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none focus:border-navy text-left"/>
         </div>
       ))}
       <textarea value={message} onChange={e=>setMessage(e.target.value)}

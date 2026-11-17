@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { TIPOS_PROPIEDAD, OPERACIONES, ESTADOS_PROPIEDAD } from "@/lib/utils";
 import type { Property } from "@/lib/supabase/types";
 import { PORTALES } from "@/lib/portales";
+import { Select } from "@/components/Select";
 
 const SIN_PERMISO = "No se guardó: tu usuario no tiene permiso para editar propiedades. Avisa a un administrador.";
 
@@ -252,19 +253,16 @@ export function PropertyForm({ property }: Props) {
         </Field>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Field label="Tipo *">
-            <select value={form.type} onChange={e => set("type", e.target.value)} className={inp}>
-              {TIPOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
-            </select>
+            <Select value={form.type} onChange={v => set("type", v)}
+              options={TIPOS_PROPIEDAD.map(t => ({value:t,label:t}))} className={`${inp} text-left`} />
           </Field>
           <Field label="Operación *">
-            <select value={form.operation} onChange={e => set("operation", e.target.value)} className={inp}>
-              {OPERACIONES.map(t => <option key={t}>{t}</option>)}
-            </select>
+            <Select value={form.operation} onChange={v => set("operation", v)}
+              options={OPERACIONES.map(t => ({value:t,label:t}))} className={`${inp} text-left`} />
           </Field>
           <Field label="Estado *">
-            <select value={form.status} onChange={e => set("status", e.target.value)} className={inp}>
-              {ESTADOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
-            </select>
+            <Select value={form.status} onChange={v => set("status", v)}
+              options={ESTADOS_PROPIEDAD.map(t => ({value:t,label:t}))} className={`${inp} text-left`} />
           </Field>
         </div>
         <Field label="Desarrollador / Proyecto">

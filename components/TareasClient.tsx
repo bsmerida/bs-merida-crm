@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { meridaParts } from "@/lib/time";
+import { Select } from "@/components/Select";
 
 type Task = {
   id: string;
@@ -131,23 +132,16 @@ function TaskModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Prioridad</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as "low"|"normal"|"high"|"urgent")}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
-                <option value="low">Baja</option>
-                <option value="normal">Normal</option>
-                <option value="high">Alta</option>
-                <option value="urgent">Urgente</option>
-              </select>
+              <Select value={priority} onChange={v => setPriority(v as "low"|"normal"|"high"|"urgent")}
+                options={[{value:"low",label:"Baja"},{value:"normal",label:"Normal"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}]}
+                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
             </div>
 
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Estado</label>
-              <select value={status} onChange={e => setStatus(e.target.value as Task["status"])}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
-                <option value="todo">Por hacer</option>
-                <option value="in_progress">En progreso</option>
-                <option value="done">Completado</option>
-              </select>
+              <Select value={status} onChange={v => setStatus(v as Task["status"])}
+                options={[{value:"todo",label:"Por hacer"},{value:"in_progress",label:"En progreso"},{value:"done",label:"Completado"}]}
+                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
             </div>
 
             <div>
@@ -165,20 +159,17 @@ function TaskModal({
 
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Categoría</label>
-            <select value={category} onChange={e => setCategory(e.target.value)}
-              className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
-              <option value="">Sin categoría</option>
-              {CATEGORY_OPTIONS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
-            </select>
+            <Select value={category} onChange={setCategory}
+              options={[{value:"",label:"Sin categoría"}, ...CATEGORY_OPTIONS.map(c => ({value:c.toLowerCase(),label:c}))]}
+              className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
           </div>
 
           {profiles.length > 0 && (
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Asignado a</label>
-              <select value={assignedTo} onChange={e => setAssignedTo(e.target.value)}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
-                {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name || "Sin nombre"}</option>)}
-              </select>
+              <Select value={assignedTo} onChange={setAssignedTo}
+                options={profiles.map(p => ({value:p.id,label:p.full_name || "Sin nombre"}))}
+                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
             </div>
           )}
 
@@ -398,20 +389,13 @@ export function TareasClient({
           placeholder="Buscar tarea..."
           className="border border-stone rounded-full px-4 py-2 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy flex-1 min-w-[160px]"/>
 
-        <select value={filterPrio} onChange={e => setFilterPrio(e.target.value)}
-          className="border border-stone rounded-full px-3 py-2 text-sm text-navy focus:outline-none">
-          <option value="all">Todas las prioridades</option>
-          <option value="urgent">Urgente</option>
-          <option value="high">Alta</option>
-          <option value="normal">Normal</option>
-          <option value="low">Baja</option>
-        </select>
+        <Select value={filterPrio} onChange={setFilterPrio}
+          options={[{value:"all",label:"Todas las prioridades"},{value:"urgent",label:"Urgente"},{value:"high",label:"Alta"},{value:"normal",label:"Normal"},{value:"low",label:"Baja"}]}
+          className="border border-stone rounded-full px-4 py-2 text-sm text-navy text-left focus:outline-none"/>
 
-        <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          className="border border-stone rounded-full px-3 py-2 text-sm text-navy focus:outline-none">
-          <option value="all">Todas las categorías</option>
-          {CATEGORY_OPTIONS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
-        </select>
+        <Select value={filterCat} onChange={setFilterCat}
+          options={[{value:"all",label:"Todas las categorías"}, ...CATEGORY_OPTIONS.map(c => ({value:c.toLowerCase(),label:c}))]}
+          className="border border-stone rounded-full px-4 py-2 text-sm text-navy text-left focus:outline-none"/>
       </div>
 
       {view === "kanban"

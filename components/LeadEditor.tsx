@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESTADOS_LEAD } from "@/lib/utils";
+import { Select } from "@/components/Select";
 
 const TIPOS_ACTIVIDAD = ["llamada", "whatsapp", "email", "visita", "nota"];
 const TIPOS_INMUEBLE = ["Casa", "Departamento", "Terreno", "Local", "Oficina", "Bodega"];
@@ -201,48 +202,42 @@ export function LeadEditor({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label className="text-xs text-[#6b7385]">Nombre *</label><div className="mt-1.5"><input value={form.name} onChange={e => set("name", e.target.value)} placeholder="Nombre completo" className={inp} /></div></div>
             <div><label className="text-xs text-[#6b7385]">Estado</label><div className="mt-1.5">
-              <select value={form.status} onChange={e => set("status", e.target.value)} className={inp}>
-                {ESTADOS_LEAD.map(s => <option key={s}>{s}</option>)}
-              </select>
+              <Select value={form.status} onChange={v => set("status", v)}
+                options={ESTADOS_LEAD.map(s => ({value:s,label:s}))} className={`${inp} text-left`} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Teléfono / WhatsApp</label><div className="mt-1.5"><input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="Ej. 9991234567" className={inp} /></div></div>
             <div><label className="text-xs text-[#6b7385]">Correo</label><div className="mt-1.5"><input value={form.email} onChange={e => set("email", e.target.value)} placeholder="correo@ejemplo.com" className={inp} /></div></div>
             <div><label className="text-xs text-[#6b7385]">Asesor asignado</label><div className="mt-1.5">
-              <select value={form.agent_id} onChange={e => set("agent_id", e.target.value)} className={inp}>
-                <option value="">Sin asignar</option>
-                {agentes.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
-              </select>
+              <Select value={form.agent_id} onChange={v => set("agent_id", v)}
+                options={[{value:"",label:"Sin asignar"}, ...agentes.map(a => ({value:a.id,label:a.full_name}))]}
+                className={`${inp} text-left`} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Origen</label><div className="mt-1.5">
-              <select value={form.source} onChange={e => set("source", e.target.value)} className={inp}>
-                <option value="Manual">Manual</option>
-                <option value="Referido">Referido</option>
-                <optgroup label="Redes sociales">
-                  <option value="Facebook">Facebook</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="TikTok">TikTok</option>
-                  <option value="WhatsApp directo">WhatsApp directo</option>
-                  <option value="Google">Google</option>
-                </optgroup>
-                <optgroup label="Portales activos">
-                  <option value="Tokko">Tokko</option>
-                  <option value="EasyBroker">EasyBroker</option>
-                  <option value="Inmuebles24">Inmuebles24</option>
-                  <option value="Lamudi by Proppit">Lamudi by Proppit</option>
-                  <option value="Mercado Libre">Mercado Libre</option>
-                  <option value="Propiedades.com">Propiedades.com</option>
-                  <option value="TuPortalOnline">TuPortalOnline</option>
-                  <option value="InmoExperts">InmoExperts</option>
-                  <option value="Properstar">Properstar</option>
-                  <option value="Pincali">Pincali</option>
-                  <option value="Clasco">Clasco</option>
-                </optgroup>
-                <optgroup label="Sitio propio">
-                  <option value="Chatbot IA">Chatbot IA — Sofía</option>
-                  <option value="Formulario web">Formulario web</option>
-                </optgroup>
-                <option value="Otro">Otro</option>
-              </select>
+              <Select value={form.source} onChange={v => set("source", v)}
+                className={`${inp} text-left`}
+                options={[
+                  { value: "Manual", label: "Manual" },
+                  { value: "Referido", label: "Referido" },
+                  { value: "Facebook", label: "Facebook", group: "Redes sociales" },
+                  { value: "Instagram", label: "Instagram", group: "Redes sociales" },
+                  { value: "TikTok", label: "TikTok", group: "Redes sociales" },
+                  { value: "WhatsApp directo", label: "WhatsApp directo", group: "Redes sociales" },
+                  { value: "Google", label: "Google", group: "Redes sociales" },
+                  { value: "Tokko", label: "Tokko", group: "Portales activos" },
+                  { value: "EasyBroker", label: "EasyBroker", group: "Portales activos" },
+                  { value: "Inmuebles24", label: "Inmuebles24", group: "Portales activos" },
+                  { value: "Lamudi by Proppit", label: "Lamudi by Proppit", group: "Portales activos" },
+                  { value: "Mercado Libre", label: "Mercado Libre", group: "Portales activos" },
+                  { value: "Propiedades.com", label: "Propiedades.com", group: "Portales activos" },
+                  { value: "TuPortalOnline", label: "TuPortalOnline", group: "Portales activos" },
+                  { value: "InmoExperts", label: "InmoExperts", group: "Portales activos" },
+                  { value: "Properstar", label: "Properstar", group: "Portales activos" },
+                  { value: "Pincali", label: "Pincali", group: "Portales activos" },
+                  { value: "Clasco", label: "Clasco", group: "Portales activos" },
+                  { value: "Chatbot IA", label: "Chatbot IA — Sofía", group: "Sitio propio" },
+                  { value: "Formulario web", label: "Formulario web", group: "Sitio propio" },
+                  { value: "Otro", label: "Otro" },
+                ]} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Presupuesto (texto)</label><div className="mt-1.5"><input value={form.budget_text} onChange={e => set("budget_text", e.target.value)} placeholder="Ej. 3-5M" className={inp} /></div></div>
           </div>
@@ -340,10 +335,9 @@ export function LeadEditor({
               <input type="number" min="18" max="99" value={form.age} onChange={e => set("age", e.target.value)} placeholder="Ej. 34" className={inp} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Género</label><div className="mt-1.5">
-              <select value={form.gender} onChange={e => set("gender", e.target.value)} className={inp}>
-                <option value="">— Sin especificar</option>
-                <option>Hombre</option><option>Mujer</option><option>Otro</option>
-              </select>
+              <Select value={form.gender} onChange={v => set("gender", v)}
+                options={[{value:"",label:"— Sin especificar"},{value:"Hombre",label:"Hombre"},{value:"Mujer",label:"Mujer"},{value:"Otro",label:"Otro"}]}
+                className={`${inp} text-left`} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Ciudad</label><div className="mt-1.5">
               <input value={form.client_city} onChange={e => set("client_city", e.target.value)} placeholder="Ej. Monterrey" className={inp} />
@@ -359,9 +353,9 @@ export function LeadEditor({
           <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
             <h3 className="font-semibold text-navy mb-4">Bitácora de actividades</h3>
             <div className="flex gap-2 mb-4 flex-wrap">
-              <select value={actType} onChange={e => setActType(e.target.value)} className="bg-stone rounded-xl px-3 py-2 text-sm focus:outline-none">
-                {TIPOS_ACTIVIDAD.map(t => <option key={t}>{t}</option>)}
-              </select>
+              <Select value={actType} onChange={setActType}
+                options={TIPOS_ACTIVIDAD.map(t => ({value:t,label:t}))}
+                className="bg-stone rounded-xl px-3.5 py-2.5 text-sm text-left focus:outline-none"/>
               <input value={actDesc} onChange={e => setActDesc(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addActivity()}
                 placeholder="¿Qué pasó? Ej. Llamé, agendamos visita el viernes"

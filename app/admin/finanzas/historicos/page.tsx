@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Select } from "@/components/Select";
 
 const MONTHS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -222,9 +223,8 @@ export default function HistoricosPage() {
               <input type="number" value={form.year} onChange={e => setForm({ ...form, year: Number(e.target.value) })} className={inp} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Mes</label><div className="mt-1.5">
-              <select value={form.month} onChange={e => setForm({ ...form, month: Number(e.target.value) })} className={inp}>
-                {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
-              </select>
+              <Select value={String(form.month)} onChange={v => setForm({ ...form, month: Number(v) })}
+                options={MONTHS.map((m, i) => ({value:String(i+1),label:m}))} className={`${inp} text-left`} />
             </div></div>
           </div>
 

@@ -12,7 +12,7 @@ export default function AvisoPrivacidadPage() {
 
       <section className="pt-10 md:pt-[72px] pb-6 md:pb-10 px-5 md:px-8 flex flex-col items-center text-center gap-2.5 md:gap-3.5">
         <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[92px] tracking-tight md:tracking-[-0.96px] min-w-0">
-          Aviso de <em className="italic not-italic font-serif text-gold">privacidad.</em>
+          Aviso de <em className="italic font-serif text-gold">privacidad.</em>
         </h1>
         <p className="text-[#6b7385] text-sm md:text-base">
           Última actualización: {new Date().toLocaleDateString("es-MX", { month: "long", year: "numeric" })}

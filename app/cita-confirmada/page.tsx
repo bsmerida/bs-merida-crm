@@ -23,7 +23,7 @@ export default function CitaConfirmadaPage({
           <>
             <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Algo salió mal</p>
             <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-              Enlace no <em className="italic not-italic font-serif text-gold">válido.</em>
+              Enlace no <em className="italic font-serif text-gold">válido.</em>
             </h1>
             <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
               Este enlace no es válido o ya expiró. Contacta directamente con tu asesor.
@@ -34,7 +34,7 @@ export default function CitaConfirmadaPage({
           <>
             <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Cita</p>
             <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-              Ya está <em className="italic not-italic font-serif text-gold">confirmada.</em>
+              Ya está <em className="italic font-serif text-gold">confirmada.</em>
             </h1>
             <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
               Tu visita ya fue confirmada anteriormente. Revisa tu correo con los detalles.
@@ -47,7 +47,7 @@ export default function CitaConfirmadaPage({
               <svg className="w-7 h-7 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
-              ¡Visita <em className="italic not-italic font-serif text-gold">confirmada!</em>
+              ¡Visita <em className="italic font-serif text-gold">confirmada!</em>
             </h1>
             <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
               Te enviamos los detalles por correo. Tu asesor te espera.

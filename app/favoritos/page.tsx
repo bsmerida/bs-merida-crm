@@ -38,7 +38,7 @@ export default function FavoritosPage() {
 
       <section className="pt-10 md:pt-[72px] pb-6 md:pb-10 px-5 md:px-8 flex flex-col items-center text-center gap-3 md:gap-4">
         <h1 className="font-serif text-navy text-4xl md:text-[112px] md:leading-[108px] tracking-tight md:tracking-[-1.12px] min-w-0">
-          Tus <em className="italic not-italic font-serif text-gold">favoritos.</em>
+          Tus <em className="italic font-serif text-gold">favoritos.</em>
         </h1>
         <p className="text-[#6b7385] text-base md:text-[20px] min-w-0">
           {props === null ? "Cargando…" : props.length === 0
@@ -67,7 +67,7 @@ export default function FavoritosPage() {
         <section className="rounded-[32px] md:rounded-[48px] bg-navy px-6 md:px-16 py-10 md:py-14 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col gap-2 text-center md:text-left">
             <p className="font-serif text-white text-3xl md:text-[56px] md:leading-[58px]">
-              Un día. <em className="italic not-italic font-serif text-gold">{props.length} propiedades.</em>
+              Un día. <em className="italic font-serif text-gold">{props.length} propiedades.</em>
             </p>
             <p className="text-white/75 text-base md:text-[18px]">Organizamos la ruta y te acompañamos en cada visita.</p>
           </div>

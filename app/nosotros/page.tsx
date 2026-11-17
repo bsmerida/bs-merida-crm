@@ -33,7 +33,7 @@ export default async function NosotrosPage() {
       <section className="pt-10 md:pt-24 pb-8 md:pb-20 px-5 md:px-16 flex flex-col items-center text-center gap-5 md:gap-7">
         <p className="text-gold text-[13px] font-semibold tracking-[3.12px]">ACERCA DE NOSOTROS</p>
         <h1 className="font-serif text-navy text-4xl md:text-[120px] md:leading-[112px] tracking-tight md:tracking-[-2.4px] max-w-[800px] min-w-0">
-          Respaldo legal. <em className="italic not-italic font-serif text-gold">Visión financiera.</em>
+          Respaldo legal. <em className="italic font-serif text-gold">Visión financiera.</em>
         </h1>
         <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[32px] max-w-[760px] min-w-0">
           Somos una firma inmobiliaria boutique. Cada operación pasa por un equipo legal y un análisis financiero antes de que tomes la decisión.
@@ -51,7 +51,7 @@ export default async function NosotrosPage() {
       {/* Pilares */}
       <section className="px-5 md:px-12 py-10 md:py-[120px] flex flex-col items-center gap-10 md:gap-16">
         <h2 className="font-serif text-navy text-4xl md:text-[80px] md:leading-[80px] text-center min-w-0">
-          Tres cosas que <em className="italic not-italic font-serif">no negociamos.</em>
+          Tres cosas que <em className="italic font-serif">no negociamos.</em>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           {PILARES.map(p => (
@@ -73,7 +73,7 @@ export default async function NosotrosPage() {
         <div className="flex-1 min-w-0 flex flex-col gap-5 md:gap-6">
           <p className="text-gold text-xs font-semibold tracking-[2.64px]">FUNDADORA</p>
           <h2 className="font-serif text-navy text-3xl md:text-[64px] md:leading-[66px] min-w-0">
-            Cada inversión es la decisión de <em className="italic not-italic font-serif">una familia.</em>
+            Cada inversión es la decisión de <em className="italic font-serif">una familia.</em>
           </h2>
           <p className="text-[#6b7385] text-base md:text-[18px] md:leading-[28px] min-w-0">
             Bertha Duclaud lidera Duclaud Bienes Raíces desde Mérida. Socia AMPI.
@@ -120,7 +120,7 @@ export default async function NosotrosPage() {
       <section className="px-5 md:px-12 py-10 md:py-16 flex flex-col gap-5 md:gap-6">
         <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Licencias y registros</p>
         <h2 className="font-serif text-navy text-3xl md:text-[84px] md:leading-[84px] tracking-tight md:tracking-[-1.68px] min-w-0">
-          Operamos con <em className="italic not-italic font-serif text-gold">licencia.</em>
+          Operamos con <em className="italic font-serif text-gold">licencia.</em>
         </h2>
         <p className="text-[#6b7385] text-base md:text-[20px] md:leading-[30px] max-w-[900px] min-w-0">
           Contamos con licencia inmobiliaria tipo A, a nombre de Bertha Duclaud. La licencia tipo B, de la persona moral, está en trámite. Cada contrato, certificación y licencia tiene su número de registro o identificación.

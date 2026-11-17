@@ -8,7 +8,7 @@ export default function NotFound() {
       <div className="pt-16 md:pt-24 px-5 md:px-16 flex flex-col items-center text-center gap-4 md:gap-5">
         <p className="font-medium text-stone-dk text-7xl md:text-[187px] tracking-tight md:tracking-[-5.61px]">404</p>
         <h1 className="font-serif text-navy text-3xl md:text-[80px] md:leading-[80px] -mt-6 md:-mt-10">
-          Esta página <em className="italic not-italic font-serif text-gold">no existe.</em>
+          Esta página <em className="italic font-serif text-gold">no existe.</em>
         </h1>
         <p className="text-[#6b7385] text-base md:text-[20px]">
           Puede que la propiedad ya se haya vendido o que el enlace haya cambiado.

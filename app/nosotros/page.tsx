@@ -11,10 +11,11 @@ const PILARES = [
   { n: "03", t: "Largo plazo", d: "Pensamos en el patrimonio de tu familia, no en la comisión de hoy." },
 ];
 
-const CREDENCIALES = [
-  { t: "AMPI Mérida", d: "Asociación Mexicana de Profesionales Inmobiliarios · Socio activo" },
-  { t: "ECO 110.02",  d: "Certificación nacional de competencias profesionales" },
-  { t: "PROFECO",     d: "Contrato de adhesión registrado · 5589-2022" },
+const REGISTROS = [
+  { t: "Licencia inmobiliaria tipo A", d: "Bertha Duclaud · persona física",         n: "No. de licencia: por asignar", estado: "Vigente",    color: "bg-emerald-500" },
+  { t: "Licencia inmobiliaria tipo B", d: "Duclaud Bienes Raíces · persona moral",   n: "No. de licencia: por asignar", estado: "En trámite", color: "bg-gold" },
+  { t: "Contrato de adhesión",         d: "Registrado ante PROFECO",                  n: "No. 5589-2022",                estado: "Registrado", color: "bg-emerald-500" },
+  { t: "Certificación AMPI",           d: "Asociación Mexicana de Profesionales Inmobiliarios", n: "No. de socio: por asignar", estado: "Socia", color: "bg-emerald-500" },
 ];
 
 export default async function NosotrosPage() {
@@ -115,17 +116,32 @@ export default async function NosotrosPage() {
         </section>
       )}
 
-      {/* Credenciales */}
-      <section className="rounded-[32px] md:rounded-[48px] bg-navy px-6 md:px-12 py-10 md:py-16">
-        <p className="text-gold text-xs font-semibold tracking-[2.64px] mb-6 md:mb-10 text-center md:text-left">CREDENCIALES</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {CREDENCIALES.map(c => (
-            <div key={c.t} className="bg-white/5 rounded-2xl p-6">
-              <p className="font-serif text-white text-xl">{c.t}</p>
-              <p className="text-white/40 text-xs mt-1.5">{c.d}</p>
+      {/* Licencias y registros */}
+      <section className="px-5 md:px-12 py-10 md:py-16 flex flex-col gap-5 md:gap-6">
+        <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Licencias y registros</p>
+        <h2 className="font-serif text-navy text-3xl md:text-[84px] md:leading-[84px] tracking-tight md:tracking-[-1.68px] min-w-0">
+          Operamos con <em className="italic not-italic font-serif text-gold">licencia.</em>
+        </h2>
+        <p className="text-[#6b7385] text-base md:text-[20px] md:leading-[30px] max-w-[900px] min-w-0">
+          Contamos con licencia inmobiliaria tipo A, a nombre de Bertha Duclaud. La licencia tipo B, de la persona moral, está en trámite. Cada contrato, certificación y licencia tiene su número de registro o identificación.
+        </p>
+        <div className="bg-stone rounded-[28px] md:rounded-[40px] px-5 md:px-7 py-1 md:py-3">
+          {REGISTROS.map((r, i) => (
+            <div key={r.t} className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-5 py-5 ${i > 0 ? "border-t border-navy/10" : ""}`}>
+              <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <p className="font-semibold text-navy text-lg md:text-[22px]">{r.t}</p>
+                <p className="text-[#6b7385] text-sm md:text-[15px]">{r.d}</p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <p className="text-navy text-sm md:text-[15px] font-medium whitespace-nowrap">{r.n}</p>
+                <span className="bg-white text-navy text-xs font-medium px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shrink-0">
+                  <span className={`w-[6px] h-[6px] rounded-full ${r.color}`} />{r.estado}
+                </span>
+              </div>
             </div>
           ))}
         </div>
+        <p className="text-[#6b7385] text-xs">Los números de licencia se muestran tal como los emiten las autoridades y las asociaciones.</p>
       </section>
 
       {/* Contacto */}

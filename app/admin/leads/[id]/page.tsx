@@ -20,13 +20,13 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
   return (
     <div className="p-10 max-w-5xl space-y-8">
-      <Link href="/admin/leads" className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1">← Volver a clientes</Link>
+      <Link href="/admin/leads" className="text-sm text-[#6b7385] hover:text-navy inline-flex items-center gap-1">← Volver a clientes</Link>
       <LeadEditor lead={lead} agentes={agentes || []} activities={activities || []} />
 
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold text-ink">Tablero de propiedades</h2>
-          <p className="text-sm text-ink-muted mt-0.5">Selección personalizada para compartir con el cliente</p>
+          <h2 className="text-lg font-semibold text-navy">Tablero de propiedades</h2>
+          <p className="text-sm text-[#6b7385] mt-0.5">Selección personalizada para compartir con el cliente</p>
         </div>
         <LeadTablero lead={lead} />
       </div>

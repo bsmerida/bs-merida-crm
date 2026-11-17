@@ -206,7 +206,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
         {Object.entries(OP_COLOR).map(([op, color]) => (
           <div key={op} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }}/>
-            <span className="text-[11px] text-ink-muted">{OP_LABEL[op]}</span>
+            <span className="text-[11px] text-[#6b7385]">{OP_LABEL[op]}</span>
           </div>
         ))}
       </div>
@@ -220,9 +220,9 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-navy line-clamp-1">{selected.title}</p>
-                  {selected.zone && <p className="text-xs text-ink-muted mt-0.5">{selected.zone}</p>}
+                  {selected.zone && <p className="text-xs text-[#6b7385] mt-0.5">{selected.zone}</p>}
                 </div>
-                <button onClick={() => setSelected(null)} className="text-ink-soft hover:text-navy p-1 shrink-0">
+                <button onClick={() => setSelected(null)} className="text-[#6b7385] hover:text-navy p-1 shrink-0">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M18 6L6 18M6 6l12 12"/>
                   </svg>

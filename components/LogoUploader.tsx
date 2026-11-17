@@ -68,11 +68,11 @@ export function LogoUploader({ currentLogoUrl }: { currentLogoUrl: string | null
   return (
     <div>
       <div className="flex items-center gap-6">
-        <div className="w-32 h-32 rounded-2xl bg-ink-ghost border border-ink-line flex items-center justify-center overflow-hidden">
+        <div className="w-32 h-32 rounded-2xl bg-stone border border-stone flex items-center justify-center overflow-hidden">
           {preview ? (
             <img src={preview} alt="Vista previa" className="w-full h-full object-contain p-2" />
           ) : (
-            <Icon name="building" className="w-10 h-10 text-ink-soft" />
+            <Icon name="building" className="w-10 h-10 text-[#6b7385]" />
           )}
         </div>
         <div className="flex-1">
@@ -86,17 +86,17 @@ export function LogoUploader({ currentLogoUrl }: { currentLogoUrl: string | null
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white text-sm font-medium px-5 py-2.5 rounded-full"
+            className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white text-sm font-medium px-5 py-2.5 rounded-full"
           >
             {uploading ? "Subiendo..." : preview ? "Cambiar logo" : "Subir logo"}
           </button>
           {preview && (
             <button onClick={remove} disabled={uploading}
-              className="ml-2 text-sm text-ink-muted hover:text-red-600">
+              className="ml-2 text-sm text-[#6b7385] hover:text-red-600">
               Quitar
             </button>
           )}
-          <p className="text-xs text-ink-muted mt-2">PNG, JPG, SVG o WebP. Máximo 5MB.</p>
+          <p className="text-xs text-[#6b7385] mt-2">PNG, JPG, SVG o WebP. Máximo 5MB.</p>
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
           {success && <p className="text-xs text-emerald-600 mt-2">✓ Logo actualizado. Refresca para verlo en todo el sitio.</p>}
         </div>

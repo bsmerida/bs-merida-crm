@@ -65,10 +65,10 @@ export function PushPermission() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-navy">Activa las notificaciones</p>
-          <p className="text-xs text-ink-muted mt-0.5">Recibe alertas de nuevas solicitudes de cita y clientes aunque no tengas el CRM abierto.</p>
+          <p className="text-xs text-[#6b7385] mt-0.5">Recibe alertas de nuevas solicitudes de cita y clientes aunque no tengas el CRM abierto.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={dismiss} className="text-xs text-ink-soft hover:text-ink px-3 py-1.5 rounded-lg hover:bg-white transition">
+          <button onClick={dismiss} className="text-xs text-[#6b7385] hover:text-navy px-3 py-1.5 rounded-lg hover:bg-white transition">
             Ahora no
           </button>
           <button onClick={requestPermission} disabled={loading}

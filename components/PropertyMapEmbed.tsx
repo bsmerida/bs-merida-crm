@@ -83,9 +83,9 @@ export function PropertyMapEmbed({ lat, lng, title }: Props) {
 
   return (
     <div className="space-y-2">
-      <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-ink-line" style={{ height: "320px" }} />
+      <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-stone" style={{ height: "320px" }} />
       <a href={`https://maps.google.com/?q=${lat},${lng}`} target="_blank" rel="noopener noreferrer"
-        className="text-xs text-ink-muted hover:text-brand-600 flex items-center gap-1">
+        className="text-xs text-[#6b7385] hover:text-gold flex items-center gap-1">
         ↗ Abrir en Google Maps
       </a>
     </div>

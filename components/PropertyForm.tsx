@@ -13,7 +13,7 @@ type Props = { property?: Property };
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs text-ink-muted">{label}</label>
+      <label className="text-xs text-[#6b7385]">{label}</label>
       <div className="mt-1.5">{children}</div>
     </div>
   );
@@ -221,14 +221,14 @@ export function PropertyForm({ property }: Props) {
     }
   }
 
-  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+  const inp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
   const priceLabel = form.price_type === "m2" ? `Precio por m² ${form.currency} *` : form.price_type === "lineal" ? `Precio por metro lineal ${form.currency} *` : `Precio total ${form.currency} *`;
 
   return (
     <form onSubmit={submit} className="space-y-6">
 
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-ink">Información básica</h3>
+      <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+        <h3 className="font-semibold text-navy">Información básica</h3>
         <Field label="Título *">
           <input required value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ej. Casa en Provincia Residencial" className={inp} />
         </Field>
@@ -240,7 +240,7 @@ export function PropertyForm({ property }: Props) {
                 type="button"
                 onClick={generateDescription}
                 disabled={generando}
-                className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 text-xs font-medium text-brand-600 border border-brand-200 bg-white rounded-full px-3 py-1.5 hover:bg-brand-50 disabled:opacity-40 transition shadow-sm"
+                className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 text-xs font-medium text-gold border border-gold/30 bg-white rounded-full px-3 py-1.5 hover:bg-cream disabled:opacity-40 transition shadow-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"/>
@@ -274,33 +274,33 @@ export function PropertyForm({ property }: Props) {
           <div className="flex gap-2">
             <input value={form.reference} onChange={e => set("reference", e.target.value)} placeholder="Ej. DLC-2505-001" className={`${inp} flex-1`} />
             <button type="button" onClick={generateReference}
-              className="px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm whitespace-nowrap">
+              className="px-4 py-2.5 bg-cream hover:bg-cream border border-gold/30 text-navy rounded-xl text-sm whitespace-nowrap">
               Generar
             </button>
           </div>
         </Field>
       </div>
 
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-ink">Precio</h3>
+      <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+        <h3 className="font-semibold text-navy">Precio</h3>
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-ink-muted">Tipo:</span>
+            <span className="text-xs text-[#6b7385]">Tipo:</span>
             {(["total", "m2", "lineal"] as const).map(t => (
               <button key={t} type="button" onClick={() => set("price_type", t)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                  form.price_type === t ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"
+                  form.price_type === t ? "bg-navy text-white border-navy" : "bg-white text-navy border-stone hover:border-navy/30"
                 }`}>
                 {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-ink-muted">Moneda:</span>
+            <span className="text-xs text-[#6b7385]">Moneda:</span>
             {(["MXN", "USD"] as const).map(c => (
               <button key={c} type="button" onClick={() => set("currency", c)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                  form.currency === c ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-ink border-ink-line hover:border-emerald-300"
+                  form.currency === c ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-navy border-stone hover:border-emerald-300"
                 }`}>
                 {c === "MXN" ? "🇲🇽 MXN" : "🇺🇸 USD"}
               </button>
@@ -311,14 +311,14 @@ export function PropertyForm({ property }: Props) {
           <input required type="number" min="0" value={form.price} onChange={e => set("price", e.target.value)} className={inp} />
         </Field>
         {form.price_type !== "total" && form.price && (
-          <p className="text-xs text-ink-muted bg-ink-ghost rounded-lg px-3 py-2">
+          <p className="text-xs text-[#6b7385] bg-stone rounded-lg px-3 py-2">
             Se mostrará como <strong>{fmtPrice(form.price, form.price_type, form.currency)}</strong> en el sitio y la ficha.
           </p>
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-ink">Ubicación</h3>
+      <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+        <h3 className="font-semibold text-navy">Ubicación</h3>
         <Field label="Dirección">
           <input value={form.address} onChange={e => set("address", e.target.value)} placeholder="Ej. Calle 20 #123, Col. García Ginerés" className={inp} />
         </Field>
@@ -334,7 +334,7 @@ export function PropertyForm({ property }: Props) {
           </Field>
         </div>
         <button type="button" onClick={geocode} disabled={geocoding}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-sm disabled:opacity-50">
+          className="flex items-center gap-2 px-4 py-2.5 bg-cream hover:bg-cream border border-gold/30 text-navy rounded-xl text-sm disabled:opacity-50">
           {geocoding ? "⏳ Buscando..." : "📍 Ubicar en el mapa"}
         </button>
         {form.lat && form.lng && (
@@ -347,8 +347,8 @@ export function PropertyForm({ property }: Props) {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-        <h3 className="font-semibold text-ink">Características</h3>
+      <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+        <h3 className="font-semibold text-navy">Características</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Field label="Recámaras"><input type="number" min="0" value={form.bedrooms} onChange={e => set("bedrooms", e.target.value)} className={inp} /></Field>
           <Field label="Baños"><input type="number" min="0" step="0.5" value={form.bathrooms} onChange={e => set("bathrooms", e.target.value)} className={inp} /></Field>
@@ -362,21 +362,21 @@ export function PropertyForm({ property }: Props) {
       </div>
 
       {!property && (
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-          <h3 className="font-semibold text-ink">Imágenes</h3>
-          <p className="text-xs text-ink-muted">La primera imagen será la portada.</p>
+        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+          <h3 className="font-semibold text-navy">Imágenes</h3>
+          <p className="text-xs text-[#6b7385]">La primera imagen será la portada.</p>
           <input ref={fileRef} type="file" accept="image/*" multiple className="hidden"
             onChange={e => e.target.files && handleFileSelect(e.target.files)} />
           <button type="button" onClick={() => fileRef.current?.click()}
-            className="w-full border-2 border-dashed border-ink-line rounded-xl py-8 text-center hover:border-brand-300 hover:bg-brand-50/30 transition text-sm text-ink-muted">
+            className="w-full border-2 border-dashed border-stone rounded-xl py-8 text-center hover:border-navy/30 hover:bg-cream/30 transition text-sm text-[#6b7385]">
             + Seleccionar imágenes
           </button>
           {previews.length > 0 && (
             <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
               {previews.map((src, i) => (
-                <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-ink-ghost">
+                <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden bg-stone">
                   <img src={src} alt="" className="w-full h-full object-cover" />
-                  {i === 0 && <span className="absolute top-1 left-1 bg-brand-500 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Portada</span>}
+                  {i === 0 && <span className="absolute top-1 left-1 bg-navy text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Portada</span>}
                   <button type="button" onClick={() => removePending(i)}
                     className="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-xs hover:bg-red-500 flex items-center justify-center">×</button>
                 </div>
@@ -386,104 +386,104 @@ export function PropertyForm({ property }: Props) {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-3">
-        <h3 className="font-semibold text-ink">Publicación</h3>
-        <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={form.is_published} onChange={e => set("is_published", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+      <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-3">
+        <h3 className="font-semibold text-navy">Publicación</h3>
+        <label className="flex items-center gap-3 text-sm text-navy cursor-pointer">
+          <input type="checkbox" checked={form.is_published} onChange={e => set("is_published", e.target.checked)} className="w-4 h-4 accent-navy" />
           Publicar en el sitio web
         </label>
-        <label className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-          <input type="checkbox" checked={form.featured} onChange={e => set("featured", e.target.checked)} className="w-4 h-4 accent-brand-500" />
+        <label className="flex items-center gap-3 text-sm text-navy cursor-pointer">
+          <input type="checkbox" checked={form.featured} onChange={e => set("featured", e.target.checked)} className="w-4 h-4 accent-navy" />
           Destacada (aparece primero)
         </label>
-        <div className="border-t border-ink-line pt-3 mt-1">
-          <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-2">Portales inmobiliarios</p>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Inmuebles24</span>
+        <div className="border-t border-stone pt-3 mt-1">
+          <p className="text-xs font-semibold text-[#6b7385] uppercase tracking-wide mb-2">Portales inmobiliarios</p>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Inmuebles24</span>
             <button type="button" onClick={() => set("publicar_inmuebles24", !form.publicar_inmuebles24)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmuebles24 ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmuebles24 ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Mercado Libre</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Mercado Libre</span>
             <button type="button" onClick={() => set("publicar_mercadolibre", !form.publicar_mercadolibre)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_mercadolibre ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_mercadolibre ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">TuPortalOnline</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">TuPortalOnline</span>
             <button type="button" onClick={() => set("publicar_tuportalonline", !form.publicar_tuportalonline)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_tuportalonline ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_tuportalonline ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Proppit</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Proppit</span>
             <button type="button" onClick={() => set("publicar_proppit", !form.publicar_proppit)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_proppit ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_proppit ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Inmoxperts</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Inmoxperts</span>
             <button type="button" onClick={() => set("publicar_inmoxperts", !form.publicar_inmoxperts)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_inmoxperts ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_inmoxperts ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Properstar</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Properstar</span>
             <button type="button" onClick={() => set("publicar_properstar", !form.publicar_properstar)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_properstar ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_properstar ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Beleta</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Beleta</span>
             <button type="button" onClick={() => set("publicar_beleta", !form.publicar_beleta)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_beleta ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_beleta ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Clasco</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Clasco</span>
             <button type="button" onClick={() => set("publicar_clasco", !form.publicar_clasco)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_clasco ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_clasco ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Pincali</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Pincali</span>
             <button type="button" onClick={() => set("publicar_pincali", !form.publicar_pincali)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_pincali ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_pincali ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Portal Terreno</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Portal Terreno</span>
             <button type="button" onClick={() => set("publicar_portalterreno", !form.publicar_portalterreno)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_portalterreno ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_portalterreno ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Propiedades.com</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Propiedades.com</span>
             <button type="button" onClick={() => set("publicar_propiedades", !form.publicar_propiedades)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_propiedades ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_propiedades ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Valores AMPI</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Valores AMPI</span>
             <button type="button" onClick={() => set("publicar_valoresampi", !form.publicar_valoresampi)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_valoresampi ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_valoresampi ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
             </button>
           </div>
-          <div className="flex items-center justify-between py-2 border-b border-ink-line/50 last:border-0">
-            <span className="text-sm text-ink">Casas y Terrenos</span>
+          <div className="flex items-center justify-between py-2 border-b border-stone/50 last:border-0">
+            <span className="text-sm text-navy">Casas y Terrenos</span>
             <button type="button" onClick={() => set("publicar_casasyterrenos", !form.publicar_casasyterrenos)}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${form.publicar_casasyterrenos ? "bg-emerald-500" : "bg-stone-200"}`}>
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${form.publicar_casasyterrenos ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
@@ -502,11 +502,11 @@ export function PropertyForm({ property }: Props) {
         )}
         <div className="flex gap-2 ml-auto">
           <button type="button" onClick={() => router.back()}
-            className="px-5 py-2.5 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
+            className="px-5 py-2.5 bg-white border border-stone text-navy rounded-full text-sm hover:border-stone">
             Cancelar
           </button>
           <button type="submit" disabled={submitting || uploading}
-            className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full text-sm font-medium">
+            className="px-5 py-2.5 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full text-sm font-medium">
             {uploading ? "Subiendo imágenes..." : submitting ? "Guardando..." : property ? "Guardar cambios" : "Crear propiedad"}
           </button>
         </div>

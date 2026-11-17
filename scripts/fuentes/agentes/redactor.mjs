@@ -21,10 +21,11 @@ Descripción:
 - Español, tono formal pero cálido y aspiracional.
 - 2 a 4 párrafos, máximo 220 palabras.
 - Empieza destacando la ubicación y el estilo de vida que ofrece.
-- Menciona recámaras, baños, m², amenidades y entrega cuando estén en los datos.
+- Menciona recámaras, baños, m², amenidades, fecha de entrega y con qué se entrega (carpintería, cancelería, cisterna, biodigestor, etc.) cuando estén en los datos.
 - NO inventes datos que no estén en la información.
 - NO uses listas ni viñetas, solo párrafos continuos. NO uses emojis ni símbolos especiales.
 - NO incluyas el precio.
+- NO menciones el nombre de la empresa desarrolladora o constructora: ese dato es interno, igual que quién comercializa la propiedad.
 - Adopta el tono y vocabulario de los ejemplos reales.`;
 
 export function pedidoRedactar({ desarrollo, modelos, ejemplosTitulos = [], ejemplosDescripciones = [], lecciones = [], correcciones = [] }) {
@@ -35,10 +36,12 @@ export function pedidoRedactar({ desarrollo, modelos, ejemplosTitulos = [], ejem
     m.m2_construction ? `M² construcción: ${m.m2_construction}` : "", m.m2_land ? `M² terreno: ${m.m2_land}` : "",
     m.parking ? `Estacionamientos: ${m.parking}` : "",
     m.caracteristicas?.length ? `Características: ${m.caracteristicas.join(", ")}` : "",
+    m.acabados_entrega?.length ? `Se entrega con: ${m.acabados_entrega.join(", ")}` : "",
   ].filter(Boolean).join("\n")).join("\n\n");
 
   const texto = [
-    `DESARROLLO: ${desarrollo.nombre}${desarrollo.desarrolladora ? ` (${desarrollo.desarrolladora})` : ""}`,
+    // No se pasa desarrollo.desarrolladora: es un dato interno, no debe llegar al texto público.
+    `DESARROLLO: ${desarrollo.nombre}`,
     [desarrollo.zona, desarrollo.ciudad, desarrollo.estado].filter(Boolean).join(", "),
     desarrollo.entrega ? `Entrega: ${desarrollo.entrega}` : "",
     desarrollo.amenidades?.length ? `Amenidades: ${desarrollo.amenidades.join(", ")}` : "",

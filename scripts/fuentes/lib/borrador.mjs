@@ -28,7 +28,7 @@ const numero = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 
 
 // Convierte la salida del extractor (+ texto del redactor) en los campos de properties.
 export function datosPropiedad(desarrollo, modelo, texto = {}) {
-  const amenidades = [...new Set([...(desarrollo.amenidades || []), ...(modelo.caracteristicas || [])]
+  const amenidades = [...new Set([...(desarrollo.amenidades || []), ...(modelo.caracteristicas || []), ...(modelo.acabados_entrega || [])]
     .map(a => String(a).trim()).filter(Boolean))].slice(0, 30);
   return {
     title: texto.title || null,

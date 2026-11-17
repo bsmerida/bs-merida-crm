@@ -11,15 +11,15 @@ const SCHEMA = S.obj({
   documentos: S.arr(S.obj({
     i: S.int("Número del archivo"),
     tipo: S.enum(["lista_precios", "disponibilidad", "ficha_tecnica", "brochure", "memoria_descriptiva", "otro"]),
-  }), "Máximo 5, en orden de importancia: precios/disponibilidad primero, luego ficha técnica y brochure."),
+  }), "Máximo 6, en orden de importancia: precios/disponibilidad primero, luego ficha técnica, brochure y memoria descriptiva."),
   fotos: S.arr(S.int(), "Números de imágenes que pueden servir como fotos de venta (máximo 40)."),
   operacion: S.enum(["Venta", "Renta", "Venta y renta"]),
 });
 
 const SYSTEM = `Clasificas los archivos de un desarrollo inmobiliario de Mérida para el equipo de D.UCLAUD.
 Elige:
-1. documentos: los que contienen los datos de venta. Prioridad: lista de precios vigente y disponibilidad (si hay varias, la más reciente), ficha técnica o resumen, brochure, memoria descriptiva. Ignora datos bancarios, formatos, reglamentos, avisos de privacidad, procesos de venta, KMZ, videos y documentos marcados como "sin datos" cuando exista la versión completa.
-2. fotos: imágenes que un comprador vería en un anuncio: renders y fotos reales de fachadas, interiores, amenidades, áreas comunes, vistas, casa muestra. NO elijas planos, masterplans, mapas, flyers con texto o precios, logos, capturas de pantalla, cuentas bancarias, ni fotos de avance de obra (salvo que sea lo único que haya).
+1. documentos: los que contienen los datos de venta. Prioridad: lista de precios vigente y disponibilidad (si hay varias, la más reciente), ficha técnica o resumen, brochure, memoria descriptiva. Incluye SIEMPRE la memoria descriptiva si existe: ahí suele venir cómo se entrega la propiedad (carpintería, cancelería, cisterna, biodigestor, acabados). Ignora datos bancarios, formatos, reglamentos, avisos de privacidad, procesos de venta, KMZ, videos y documentos marcados como "sin datos" cuando exista la versión completa.
+2. fotos: imágenes que un comprador vería en un anuncio: renders y fotos reales de fachadas, interiores, amenidades, áreas comunes, vistas, casa muestra. Si el brochure no se pudo leer o no trae fotos aprovechables, busca con más cuidado en carpetas llamadas "Fotos", "Material de marketing", "Redes" o similares — ahí suele estar el material fotográfico real. NO elijas planos, masterplans, mapas, flyers con texto o precios, logos, capturas de pantalla, cuentas bancarias, ni fotos de avance de obra (salvo que sea lo único que haya).
 3. operacion: si se vende, se renta o ambas.`;
 
 // Lista numerada y acotada para no gastar de más con carpetas enormes.
@@ -65,7 +65,7 @@ export function leerClasificar(data, lista) {
   return {
     // Una imagen solo cuenta como documento si es la lista de precios (algunos la mandan en JPG).
     documentos: (data.documentos || [])
-      .filter(d => valido(d.i) && (!esImagen(lista[d.i]) || d.tipo === "lista_precios")).slice(0, 5),
+      .filter(d => valido(d.i) && (!esImagen(lista[d.i]) || d.tipo === "lista_precios")).slice(0, 6),
     fotos: [...new Set((data.fotos || []).filter(i => valido(i) && esImagen(lista[i])))].slice(0, 40),
     operacion: data.operacion,
     lista,

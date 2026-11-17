@@ -52,7 +52,7 @@ export type Borrador = {
   id: string; fuente_id: string; desarrollo_id: string | null; clave_modelo: string;
   accion: "Nueva" | "Actualizar"; property_id: string | null; estado: string;
   datos: Record<string, unknown>; cambios: Record<string, { antes: unknown; despues: unknown }> | null;
-  fotos: Foto[];
+  fotos: Foto[]; extra?: { creditos_aceptados?: string[] | null } | null;
 };
 
 export class ErrorBorrador extends Error {
@@ -118,6 +118,14 @@ export async function aprobarBorrador(
     // La propiedad ya existe: lo demás no revierte el borrador (evita duplicarla al reintentar).
     if (fotos.length) {
       await db.from("property_images").insert(fotos.map((f, i) => ({ property_id: prop.id, url: f.url, position: i, is_cover: i === 0 })));
+    }
+    // Créditos aceptados: dato interno para ventas, nunca en la descripción pública.
+    const creditos = borrador.extra?.creditos_aceptados;
+    if (Array.isArray(creditos) && creditos.length) {
+      await db.from("property_notes").insert({
+        property_id: prop.id, user_id: userId,
+        content: `Créditos aceptados (según el agente de fuentes): ${creditos.join(", ")}.`,
+      });
     }
     await db.from("propiedad_fuentes").upsert({ property_id: prop.id, fuente_id: borrador.fuente_id, clave_modelo: borrador.clave_modelo });
     await db.from("propiedad_borradores").update({ property_id: prop.id, datos_finales: final, fotos }).eq("id", borrador.id);

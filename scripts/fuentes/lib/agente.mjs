@@ -303,6 +303,16 @@ async function guardarBorradores(db, t, ctx, cacheFotos, costoTrabajo, log) {
     const m = t.modelos[i];
     const { prop } = t.plan[i];
     const datos = datosPropiedad(t.dev, m, t.textos[i]);
+
+    // Sin precio, un modelo nuevo no se sube: indica que no está disponible.
+    // Las propiedades existentes sí se actualizan aunque el precio no se haya
+    // podido confirmar en esta corrida (cambiosPropuestos nunca borra un precio
+    // que ya tenía la propiedad).
+    if (!prop && !datos.price) {
+      log(`  · omitido (sin precio): ${m.modelo}`);
+      continue;
+    }
+
     const cambios = prop ? cambiosPropuestos(prop, datos) : null;
 
     const fotos = [];
@@ -326,6 +336,7 @@ async function guardarBorradores(db, t, ctx, cacheFotos, costoTrabajo, log) {
       extra: {
         desarrollo: t.dev.nombre, desarrolladora: t.dev.desarrolladora || null, modelo: m.modelo,
         entrega: t.dev.entrega || null, precio_hasta: m.price_hasta || null,
+        creditos_aceptados: t.dev.creditos_aceptados?.length ? t.dev.creditos_aceptados : null,
         unidades_disponibles: m.unidades_disponibles >= 0 ? m.unidades_disponibles : null,
         fotos_descartadas: t.descartadas.slice(0, 20), proveedor: t.fuente.proveedor,
         propiedad_actual: prop ? { title: prop.title, fotos: ctx.fotosPorPropiedad.get(prop.id) || 0 } : null,

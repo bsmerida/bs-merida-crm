@@ -14,6 +14,7 @@ const SCHEMA = S.obj({
     direccion: S.strV("Calle o referencia de ubicación."),
     entrega: S.strV("Fecha o etapa de entrega (ej. 'Diciembre 2027', 'Entrega inmediata')."),
     amenidades: S.arr(S.str(), "Amenidades del desarrollo, cada una corta y con mayúscula inicial (ej. 'Alberca', 'Gimnasio', 'Seguridad 24/7')."),
+    creditos_aceptados: S.arr(S.str(), "Tipos de crédito o forma de pago que acepta el desarrollo, tal como lo digan los documentos (ej. 'Infonavit', 'Fovissste', 'Crédito bancario', 'Contado'). Vacío si no se menciona — NO lo inventes."),
   }),
   modelos: S.arr(S.obj({
     modelo: S.str("Nombre del modelo o tipología tal como lo usa el desarrollador (ej. 'Tipo C', 'Modelo Iris', 'Lote residencial')."),
@@ -31,6 +32,7 @@ const SCHEMA = S.obj({
     unidades_disponibles: S.int("Unidades disponibles de este modelo según la lista; -1 si no se sabe."),
     todas_vendidas: S.enum(["si", "no", "no_se"], "'si' solo si la lista de precios muestra explícitamente todas las unidades de este modelo como vendidas."),
     caracteristicas: S.arr(S.str(), "Características propias del modelo (ej. 'Cuarto de servicio', 'Roof garden privado'), cortas y con mayúscula inicial."),
+    acabados_entrega: S.arr(S.str(), "Con qué se entrega la propiedad, tal como lo dice la memoria descriptiva o ficha técnica: carpintería (closets, cocina integral), cancelería/canceles de baño, cisterna, biodigestor o fosa séptica, tinaco, calentador, pisos, acabados de baño y cocina, etc. Cada uno corto y con mayúscula inicial (ej. 'Closets de madera', 'Cancelería de baño en temperado', 'Cisterna de 5000 L', 'Biodigestor'). Vacío si la memoria descriptiva no está entre los documentos."),
     evidencia: S.arr(S.obj({
       campo: S.str("price, bedrooms, m2_construction…"),
       documento: S.int("Número del documento [n]"),
@@ -51,7 +53,9 @@ Reglas:
 - Cada precio, recámaras y m² debe llevar evidencia: número de documento, página y la cita breve.
 - type debe ser uno de: ${TIPOS.join(", ")}. Town houses y villas son "Casa"; lotes y macrolotes son "Terreno"; consultorios y locales comerciales son "Local".
 - Usa mayúscula inicial en nombres y amenidades (no todo en mayúsculas).
-- Si los documentos dicen que el desarrollo está agotado, devuelve los modelos con todas_vendidas = "si".`;
+- Si los documentos dicen que el desarrollo está agotado, devuelve los modelos con todas_vendidas = "si".
+- Si hay memoria descriptiva o ficha técnica con el detalle de con qué se entrega la propiedad (carpintería, cancelería, cisterna, biodigestor, tinaco, calentador, acabados), captúralo en acabados_entrega. No lo confundas con amenidades del desarrollo (alberca, gimnasio): acabados_entrega es específico de cómo se entrega cada unidad.
+- Si algún documento dice qué créditos o formas de pago acepta el desarrollo, captúralo en creditos_aceptados. Es un dato interno para el equipo de ventas, no para el anuncio público.`;
 
 export function pedidoExtraer({ fuente, desarrollo, bloques, lecciones = [], correcciones = [] }) {
   const contexto = [

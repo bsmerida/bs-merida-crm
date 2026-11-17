@@ -8,14 +8,14 @@ export const metadata = { title: "Acerca de nosotros — Duclaud" };
 const PILARES = [
   { n: "01", t: "Claridad",    d: "Costos, plazos y riesgos sobre la mesa desde la primera conversación." },
   { n: "02", t: "Rigor",       d: "Documentación revisada por nuestro equipo legal antes de publicar." },
-  { n: "03", t: "Largo plazo", d: "Pensamos en el patrimonio de tu familia, no en la comisión de hoy." },
+  { n: "03", t: "Largo plazo", d: "Pensamos en el patrimonio de tu familia." },
 ];
 
+// Sin "licencia tipo B": todavía no se tiene. Se agrega cuando esté lista.
 const REGISTROS = [
-  { t: "Licencia inmobiliaria tipo A", d: "Bertha Duclaud · persona física",         n: "No. de licencia: por asignar", estado: "Vigente",    color: "bg-emerald-500" },
-  { t: "Licencia inmobiliaria tipo B", d: "Duclaud Bienes Raíces · persona moral",   n: "No. de licencia: por asignar", estado: "En trámite", color: "bg-gold" },
-  { t: "Contrato de adhesión",         d: "Registrado ante PROFECO",                  n: "No. 5589-2022",                estado: "Registrado", color: "bg-emerald-500" },
-  { t: "Certificación AMPI",           d: "Asociación Mexicana de Profesionales Inmobiliarios", n: "No. de socio: por asignar", estado: "Socia", color: "bg-emerald-500" },
+  { t: "Licencia inmobiliaria tipo A", d: "Bertha Duclaud · persona física",                    n: "REAI-INSEJUPY-A-00263" },
+  { t: "Contrato de adhesión",         d: "Registrado ante PROFECO",                              n: "No. 5589-2022" },
+  { t: "Certificación AMPI",           d: "Asociación Mexicana de Profesionales Inmobiliarios",  n: null },
 ];
 
 export default async function NosotrosPage() {
@@ -32,26 +32,19 @@ export default async function NosotrosPage() {
       {/* Título */}
       <section className="pt-10 md:pt-24 pb-8 md:pb-20 px-5 md:px-16 flex flex-col items-center text-center gap-5 md:gap-7">
         <p className="text-gold text-[13px] font-semibold tracking-[3.12px]">ACERCA DE NOSOTROS</p>
-        <h1 className="font-serif text-navy text-4xl md:text-[120px] md:leading-[112px] tracking-tight md:tracking-[-2.4px] max-w-[800px] min-w-0">
-          Respaldo legal. <em className="italic font-serif text-gold">Visión financiera.</em>
+        <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[1.25] tracking-tight md:tracking-[-1.92px] max-w-[800px] min-w-0">
+          <span className="block">Respaldo legal.</span>
+          <span className="block italic font-serif text-gold">Visión financiera.</span>
         </h1>
         <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[32px] max-w-[760px] min-w-0">
           Somos una firma inmobiliaria boutique. Cada operación pasa por un equipo legal y un análisis financiero antes de que tomes la decisión.
         </p>
       </section>
 
-      {/* Foto equipo */}
-      <section className="px-5 md:px-8 pb-10 md:pb-16">
-        <div className="rounded-[32px] md:rounded-[48px] h-[220px] md:h-[400px] flex items-center justify-center"
-          style={{ backgroundImage: "linear-gradient(135deg, #2B3F68 0%, #1C2B4B 71%)" }}>
-          <p className="text-white/55 text-[13px] tracking-[1.04px] uppercase">Foto del equipo Duclaud</p>
-        </div>
-      </section>
-
       {/* Pilares */}
       <section className="px-5 md:px-12 py-10 md:py-[120px] flex flex-col items-center gap-10 md:gap-16">
         <h2 className="font-serif text-navy text-4xl md:text-[80px] md:leading-[80px] text-center min-w-0">
-          Tres cosas que <em className="italic font-serif">no negociamos.</em>
+          Así <em className="italic font-serif text-gold">trabajamos.</em>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           {PILARES.map(p => (
@@ -123,21 +116,14 @@ export default async function NosotrosPage() {
           Operamos con <em className="italic font-serif text-gold">licencia.</em>
         </h2>
         <p className="text-[#6b7385] text-base md:text-[20px] md:leading-[30px] max-w-[900px] min-w-0">
-          Contamos con licencia inmobiliaria tipo A, a nombre de Bertha Duclaud. La licencia tipo B, de la persona moral, está en trámite. Cada contrato, certificación y licencia tiene su número de registro o identificación.
+          Contamos con licencia inmobiliaria tipo A, a nombre de Bertha Duclaud. Cada contrato, certificación y licencia tiene su número de registro o identificación.
         </p>
-        <div className="bg-stone rounded-[28px] md:rounded-[40px] px-5 md:px-7 py-1 md:py-3">
-          {REGISTROS.map((r, i) => (
-            <div key={r.t} className={`flex flex-col md:flex-row md:items-center gap-2 md:gap-5 py-5 ${i > 0 ? "border-t border-navy/10" : ""}`}>
-              <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                <p className="font-semibold text-navy text-lg md:text-[22px]">{r.t}</p>
-                <p className="text-[#6b7385] text-sm md:text-[15px]">{r.d}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <p className="text-navy text-sm md:text-[15px] font-medium whitespace-nowrap">{r.n}</p>
-                <span className="bg-white text-navy text-xs font-medium px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shrink-0">
-                  <span className={`w-[6px] h-[6px] rounded-full ${r.color}`} />{r.estado}
-                </span>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {REGISTROS.map(r => (
+            <div key={r.t} className="bg-white rounded-[28px] shadow-float p-6 flex flex-col gap-2">
+              <p className="font-serif text-navy text-xl md:text-2xl">{r.t}</p>
+              <p className="text-[#6b7385] text-sm md:text-[15px]">{r.d}</p>
+              {r.n && <p className="text-gold text-sm font-semibold tracking-wide mt-1">{r.n}</p>}
             </div>
           ))}
         </div>

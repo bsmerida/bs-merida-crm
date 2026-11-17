@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PUBLIC_PROPERTY_COLUMNS, conPortada } from "@/lib/public-property";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { SearchBox } from "@/components/SearchBox";
+import { CountUpStat } from "@/components/CountUpStat";
 import { SofiaTeaser } from "@/components/SofiaTeaser";
 import { PropertyCardV3 } from "@/components/PropertyCardV3";
 import { NAV_V3 } from "@/components/PublicHeaderV3";
@@ -77,11 +78,11 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 text-center">
           {[
             { n: "600+", l: "propiedades gestionadas" },
-            { n: "2",    l: "estados donde operamos" },
-            { n: "100%", l: "con revisión legal" },
+            { n: "250+", l: "operaciones cerradas" },
+            { n: "10+",  l: "años de experiencia" },
           ].map(s => (
             <div key={s.n} className="flex flex-col items-center gap-2.5">
-              <p className="font-dmsans font-medium text-navy text-6xl md:text-[92px] tracking-tight md:tracking-[-2.76px]">{s.n}</p>
+              <CountUpStat value={s.n} />
               <p className="text-[#6b7385] text-base md:text-[18px]">{s.l}</p>
             </div>
           ))}

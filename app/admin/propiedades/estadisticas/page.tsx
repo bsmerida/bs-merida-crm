@@ -51,11 +51,11 @@ export default async function PropiedadesEstadisticasPage() {
     <div className="p-10 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <Link href="/admin/propiedades" className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1 mb-2">
+          <Link href="/admin/propiedades" className="text-sm text-[#6b7385] hover:text-navy inline-flex items-center gap-1 mb-2">
             ← Volver a propiedades
           </Link>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Estadísticas de propiedades</h1>
-          <p className="text-sm text-ink-muted mt-0.5">{props.length} propiedades en el inventario</p>
+          <h1 className="font-serif text-navy text-2xl tracking-tight">Estadísticas de propiedades</h1>
+          <p className="text-sm text-[#6b7385] mt-0.5">{props.length} propiedades en el inventario</p>
         </div>
       </div>
       <PropertiesStatsClient

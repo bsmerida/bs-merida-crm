@@ -101,16 +101,31 @@ function FieldDropdown({ label, value, options, onChange, active, onToggle }: {
   );
 }
 
+// Recuerda filtros, "ver más" y scroll por operación (Venta/Renta) para que
+// al volver con el botón "atrás" del navegador se quede donde estaba, en vez
+// de reiniciar todo y mandar hasta arriba.
+type ListaGuardada = {
+  filterType: string; filterZone: string; filterBeds: string; filterBaths: string;
+  priceMin: string; priceMax: string; sortBy: string; visibles: number; scrollY: number;
+};
+const storageKey = (operation: string) => `lista:${operation}`;
+function leerGuardado(operation: string): ListaGuardada | null {
+  if (typeof window === "undefined") return null;
+  try { return JSON.parse(sessionStorage.getItem(storageKey(operation)) || "null"); } catch { return null; }
+}
+
 export function PropertyListWithFilters({ props, operation, initialType, initialZone, initialMin, initialMax }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; initialMin?: string; initialMax?: string; }) {
-  const [filterType, setFilterType] = useState(initialType || "Todos");
-  const [filterZone, setFilterZone] = useState(initialZone || "Todas");
-  const [filterBeds, setFilterBeds] = useState("0");
-  const [filterBaths, setFilterBaths] = useState("0");
-  const [priceMin, setPriceMin]   = useState(initialMin || "");
-  const [priceMax, setPriceMax]   = useState(initialMax || "");
-  const [sortBy, setSortBy]       = useState("recent");
+  const guardado = useRef(leerGuardado(operation)).current;
+  const [filterType, setFilterType] = useState(guardado?.filterType ?? (initialType || "Todos"));
+  const [filterZone, setFilterZone] = useState(guardado?.filterZone ?? (initialZone || "Todas"));
+  const [filterBeds, setFilterBeds] = useState(guardado?.filterBeds ?? "0");
+  const [filterBaths, setFilterBaths] = useState(guardado?.filterBaths ?? "0");
+  const [priceMin, setPriceMin]   = useState(guardado?.priceMin ?? (initialMin || ""));
+  const [priceMax, setPriceMax]   = useState(guardado?.priceMax ?? (initialMax || ""));
+  const [sortBy, setSortBy]       = useState(guardado?.sortBy ?? "recent");
   const [activeField, setActiveField] = useState<null | "beds" | "baths" | "sort">(null);
   const filtersRef = useRef<HTMLDivElement>(null);
+  const primerRender = useRef(true);
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -121,7 +136,7 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   }, []);
   // Se dibujan de POR_PAGINA en POR_PAGINA: con las 400+ tarjetas de golpe la
   // página pesaba ~1 MB por visita (transferencia de Vercel).
-  const [visibles, setVisibles]   = useState(POR_PAGINA);
+  const [visibles, setVisibles]   = useState(guardado?.visibles ?? POR_PAGINA);
 
   const types = ["Todos", ...Array.from(new Set(props.map((p: Prop) => p.type)))];
   const zones = Array.from(new Set(props.map((p: Prop) => p.zone || p.city).filter(Boolean))) as string[];
@@ -141,7 +156,36 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     return result;
   }, [props, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
 
-  useEffect(() => { setVisibles(POR_PAGINA); }, [filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
+  useEffect(() => {
+    // No reiniciar al restaurar desde sessionStorage al montar: solo cuando
+    // la persona de verdad cambia un filtro.
+    if (primerRender.current) { primerRender.current = false; return; }
+    setVisibles(POR_PAGINA);
+  }, [filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
+
+  // Guarda filtros + "ver más" en cada cambio, y la posición del scroll antes
+  // de salir de la página (al hacer clic en una propiedad, por ejemplo).
+  useEffect(() => {
+    const guardar = () => {
+      const datos: ListaGuardada = {
+        filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, visibles,
+        scrollY: window.scrollY,
+      };
+      try { sessionStorage.setItem(storageKey(operation), JSON.stringify(datos)); } catch { /* ignorar: modo privado u otro bloqueo */ }
+    };
+    guardar();
+    window.addEventListener("pagehide", guardar);
+    return () => window.removeEventListener("pagehide", guardar);
+  }, [operation, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, visibles]);
+
+  // Al volver (atrás del navegador), restaura el scroll una sola vez, después
+  // de que ya se dibujaron las tarjetas restauradas (si no, no hay a dónde bajar).
+  useEffect(() => {
+    if (!guardado?.scrollY) return;
+    const id = requestAnimationFrame(() => window.scrollTo(0, guardado.scrollY));
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
+  }, []);
 
   const hasFilters = filterType !== "Todos" || filterZone !== "Todas" || filterBeds !== "0" || filterBaths !== "0" || priceMin || priceMax;
   const clear = () => { setFilterType("Todos"); setFilterZone("Todas"); setFilterBeds("0"); setFilterBaths("0"); setPriceMin(""); setPriceMax(""); };
@@ -163,14 +207,10 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
 
       <div ref={filtersRef} className="bg-white rounded-[28px] shadow-float p-3 flex flex-wrap gap-2 items-stretch">
         <ZoneAutocomplete zones={zones} value={filterZone} onChange={setFilterZone} />
-        {operation === "Venta" && (
-          <>
-            <FieldDropdown label="Recámaras" value={filterBeds} options={BEDS_OPTIONS} onChange={v => { setFilterBeds(v); setActiveField(null); }}
-              active={activeField === "beds"} onToggle={() => setActiveField(activeField === "beds" ? null : "beds")} />
-            <FieldDropdown label="Baños" value={filterBaths} options={BATHS_OPTIONS} onChange={v => { setFilterBaths(v); setActiveField(null); }}
-              active={activeField === "baths"} onToggle={() => setActiveField(activeField === "baths" ? null : "baths")} />
-          </>
-        )}
+        <FieldDropdown label="Recámaras" value={filterBeds} options={BEDS_OPTIONS} onChange={v => { setFilterBeds(v); setActiveField(null); }}
+          active={activeField === "beds"} onToggle={() => setActiveField(activeField === "beds" ? null : "beds")} />
+        <FieldDropdown label="Baños" value={filterBaths} options={BATHS_OPTIONS} onChange={v => { setFilterBaths(v); setActiveField(null); }}
+          active={activeField === "baths"} onToggle={() => setActiveField(activeField === "baths" ? null : "baths")} />
         <div className={field}>
           <p className={label}>Precio mín.</p>
           <input type="number" placeholder="Sin límite" value={priceMin} onChange={e => setPriceMin(e.target.value)}

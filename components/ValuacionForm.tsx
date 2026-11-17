@@ -42,8 +42,8 @@ export function ValuacionForm() {
         <div className="w-14 h-14 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center">
           <svg className="w-5 h-5 text-gold" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <h3 className="font-serif text-navy text-3xl">Solicitud recibida</h3>
-        <p className="text-[#6b7385] max-w-xs">Un asesor Duclaud le contactará en menos de 24 horas hábiles.</p>
+        <h3 className="font-serif text-navy text-3xl">Mensaje recibido</h3>
+        <p className="text-[#6b7385] max-w-xs">Un asesor Duclaud se pondrá en contacto contigo.</p>
         <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold-dk text-sm font-semibold mt-1">
           También por WhatsApp →
         </a>
@@ -53,7 +53,7 @@ export function ValuacionForm() {
 
   return (
     <form onSubmit={submit} className="bg-white rounded-[28px] md:rounded-[44px] p-6 md:px-12 md:py-11 w-full max-w-[760px] flex flex-col gap-[18px]">
-      <h2 className="font-serif text-navy text-3xl md:text-[44px] md:leading-[44px]">Solicita tu valuación</h2>
+      <h2 className="font-serif text-navy text-3xl md:text-[44px] md:leading-[44px]">Ponte en contacto</h2>
       <div>
         <p className="text-[#6b7385] text-xs font-semibold tracking-[1.68px] uppercase mb-2.5">Tipo de propiedad</p>
         <div className="flex gap-2 flex-wrap">
@@ -84,9 +84,9 @@ export function ValuacionForm() {
       {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
       <button type="submit" disabled={busy}
         className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white font-semibold py-[19px] rounded-full transition-colors">
-        {busy ? "Enviando..." : "Solicitar valuación"}
+        {busy ? "Enviando..." : "Enviar"}
       </button>
-      <p className="text-[#6b7385] text-sm text-center">Respuesta en 24 horas hábiles. Sin costo ni compromiso.</p>
+      <p className="text-[#6b7385] text-sm text-center">Sin costo ni compromiso.</p>
     </form>
   );
 }

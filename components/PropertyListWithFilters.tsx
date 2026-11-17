@@ -71,13 +71,13 @@ function ZoneAutocomplete({ zones, value, onChange }: { zones: string[]; value: 
   );
 }
 
-export function PropertyListWithFilters({ props, operation, initialType, initialZone }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; }) {
+export function PropertyListWithFilters({ props, operation, initialType, initialZone, initialMin, initialMax }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; initialMin?: string; initialMax?: string; }) {
   const [filterType, setFilterType] = useState(initialType || "Todos");
   const [filterZone, setFilterZone] = useState(initialZone || "Todas");
   const [filterBeds, setFilterBeds] = useState("0");
   const [filterBaths, setFilterBaths] = useState("0");
-  const [priceMin, setPriceMin]   = useState("");
-  const [priceMax, setPriceMax]   = useState("");
+  const [priceMin, setPriceMin]   = useState(initialMin || "");
+  const [priceMax, setPriceMax]   = useState(initialMax || "");
   const [sortBy, setSortBy]       = useState("recent");
   // Se dibujan de POR_PAGINA en POR_PAGINA: con las 400+ tarjetas de golpe la
   // página pesaba ~1 MB por visita (transferencia de Vercel).

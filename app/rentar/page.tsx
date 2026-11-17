@@ -7,13 +7,14 @@ import { PropertyListWithFilters } from "@/components/PropertyListWithFilters";
 
 export const metadata = { title: "Propiedades en Renta — Duclaud" };
 
-export default async function RentarPage({ searchParams }: { searchParams: { type?: string; zone?: string; max?: string } }) {
+export default async function RentarPage({ searchParams }: { searchParams: { type?: string; zone?: string; min?: string; max?: string } }) {
   const supabase = createClient();
   const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
   let query = supabase.from("properties")
     .select(PUBLIC_PROPERTY_COLUMNS)
     .eq("is_published", true).eq("operation", "Renta").neq("status", "Rentada")
     .order("featured", { ascending: false }).order("created_at", { ascending: false });
+  if (searchParams.min) query = (query as any).gte("price", Number(searchParams.min));
   if (searchParams.max) query = (query as any).lte("price", Number(searchParams.max));
   const { data } = await query;
 
@@ -34,7 +35,8 @@ export default async function RentarPage({ searchParams }: { searchParams: { typ
 
       <section className="px-5 md:px-8 pb-16">
         <PropertyListWithFilters props={props} operation="Renta"
-          initialType={searchParams.type} initialZone={searchParams.zone} />
+          initialType={searchParams.type} initialZone={searchParams.zone}
+          initialMin={searchParams.min} initialMax={searchParams.max} />
       </section>
 
       <section className="rounded-[32px] md:rounded-[48px] bg-navy px-6 md:px-16 py-14 md:py-24 flex flex-col items-center gap-4 md:gap-5 text-center">

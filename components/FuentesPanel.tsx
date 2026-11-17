@@ -157,7 +157,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
           </p>
         </div>
         {porFuente.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-stone p-8 text-center text-sm text-[#6b7385]">Sin cambios pendientes.</div>
+          <div className="bg-white rounded-[28px] shadow-float p-8 text-center text-sm text-[#6b7385]">Sin cambios pendientes.</div>
         ) : porFuente.map(([fuenteId, items]) => {
           const f = lista.find(x => x.id === fuenteId);
           return (
@@ -196,7 +196,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
           <p className="text-xs text-[#6b7385] mt-0.5">Sale de tus comentarios al rechazar. Cada lección solo la usa el paso que se equivocó.</p>
         </div>
         {activas.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-stone p-8 text-center text-sm text-[#6b7385]">Todavía no hay lecciones.</div>
+          <div className="bg-white rounded-[28px] shadow-float p-8 text-center text-sm text-[#6b7385]">Todavía no hay lecciones.</div>
         ) : (
           <ul className="bg-white rounded-[28px] shadow-float divide-y divide-stone">
             {activas.map(l => (

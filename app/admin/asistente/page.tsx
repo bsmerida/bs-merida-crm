@@ -158,7 +158,7 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
       <div ref={chatRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
         {messages.length === 0 && !loading && (
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-2xl border border-stone p-8 text-center mb-8">
+            <div className="bg-white rounded-[28px] shadow-float p-8 text-center mb-8">
               <div className="w-14 h-14 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="font-serif text-2xl text-gold">A</span>
               </div>

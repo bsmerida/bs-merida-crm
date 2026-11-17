@@ -199,7 +199,7 @@ export function PropertiesImporter() {
   const invalidas = rows.length - validas;
 
   return (
-    <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+    <div className="bg-white rounded-[28px] shadow-float p-6">
       <h3 className="font-serif text-navy text-[28px] mb-4">Subir archivo</h3>
 
       <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden"

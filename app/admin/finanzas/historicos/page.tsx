@@ -165,7 +165,7 @@ export default function HistoricosPage() {
 
       {/* Ver registros */}
       {tab === "ver" && (
-        <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+        <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
           {records.length === 0 ? (
             <div className="p-16 text-center">
               <div className="text-4xl mb-4">📊</div>
@@ -215,7 +215,7 @@ export default function HistoricosPage() {
 
       {/* Captura manual */}
       {tab === "manual" && (
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-5">
+        <div className="bg-white rounded-[28px] shadow-float p-6 space-y-5">
           <h3 className="font-serif text-navy text-[28px]">Capturar mes histórico</h3>
 
           <div className="grid grid-cols-2 gap-4">
@@ -272,7 +272,7 @@ export default function HistoricosPage() {
 
       {/* Importar Excel */}
       {tab === "importar" && (
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-5">
+        <div className="bg-white rounded-[28px] shadow-float p-6 space-y-5">
           <h3 className="font-serif text-navy text-[28px]">Importar desde Excel</h3>
 
           <div className="bg-cream border border-gold/30 rounded-2xl p-4 text-sm text-navy space-y-2">

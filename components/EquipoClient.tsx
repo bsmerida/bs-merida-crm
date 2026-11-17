@@ -151,7 +151,7 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-stone shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
         <div className="px-6 py-5 border-b border-stone flex items-center justify-between">
           <div>
             <h3 className="font-serif text-navy text-[28px]">Equipo</h3>

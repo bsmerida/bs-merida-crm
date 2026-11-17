@@ -6,13 +6,16 @@ export const dynamic = "force-dynamic";
 export default async function GeocodeBatchPage() {
   const supabase = createAdminClient();
 
-  const [{ count: total }, { data: sinCoords }] = await Promise.all([
+  const [{ count: total }, { count: sinCoordsTotal }, { data: sinCoords }] = await Promise.all([
     supabase.from("properties").select("*", { count: "exact", head: true }),
+    supabase.from("properties").select("*", { count: "exact", head: true }).is("lat", null),
+    // Solo las primeras 50 para la lista "Pendientes" — el conteo real usa sinCoordsTotal, no esta lista.
     supabase.from("properties").select("id, title, address, zone, city, state").is("lat", null).order("title").limit(50),
   ]);
 
   const pendientes = sinCoords || [];
-  const conUbicacion = (total || 0) - pendientes.length;
+  const sinUbicacion = sinCoordsTotal || 0;
+  const conUbicacion = (total || 0) - sinUbicacion;
 
   return (
     <div className="p-4 md:p-6 space-y-5 font-dmsans">
@@ -34,14 +37,16 @@ export default async function GeocodeBatchPage() {
         </div>
         <div className="bg-white rounded-[28px] px-[26px] py-6">
           <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Sin ubicación</p>
-          <p className="text-navy text-[32px] font-semibold tracking-[-0.64px] mt-1">{pendientes.length}</p>
+          <p className="text-navy text-[32px] font-semibold tracking-[-0.64px] mt-1">{sinUbicacion}</p>
           <p className="text-[#6b7385] text-xs mt-1">Necesitan dirección o zona</p>
         </div>
       </div>
 
       {pendientes.length > 0 && (
         <div className="bg-white rounded-[28px] px-[26px] py-6">
-          <h3 className="font-serif text-navy text-[28px] mb-3">Pendientes</h3>
+          <h3 className="font-serif text-navy text-[28px] mb-3">
+            Pendientes{sinUbicacion > pendientes.length ? ` (mostrando ${pendientes.length} de ${sinUbicacion})` : ""}
+          </h3>
           <div className="divide-y divide-stone">
             {pendientes.map(p => {
               const tieneDireccion = !!(p.address || p.zone || (p.city && p.state));

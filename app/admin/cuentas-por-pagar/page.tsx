@@ -75,7 +75,7 @@ export default function CuentasPorPagarPage() {
           { label: "Vencido",         value: fmtMXN(totalVencido),   color: totalVencido > 0 ? "text-red-600" : "text-navy" },
           { label: "Vence este mes",  value: fmtMXN(totalMes),       color: "text-navy" },
         ].map(k => (
-          <div key={k.label} className="bg-white rounded-2xl border border-stone shadow-card p-5">
+          <div key={k.label} className="bg-white rounded-[28px] shadow-float p-5">
             <div className="text-xs text-[#6b7385]">{k.label}</div>
             <div className={"text-2xl font-semibold mt-2 tracking-tight " + k.color}>{k.value}</div>
           </div>
@@ -83,7 +83,7 @@ export default function CuentasPorPagarPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+        <div className="bg-white rounded-[28px] shadow-float p-6 space-y-4">
           <h2 className="text-sm font-semibold text-navy">Nueva cuenta por pagar</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label className="text-xs text-[#6b7385] mb-1 block">Concepto *</label>
@@ -115,11 +115,11 @@ export default function CuentasPorPagarPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-2xl border border-stone p-12 text-center text-sm text-[#6b7385]">Cargando...</div>
+        <div className="bg-white rounded-[28px] shadow-float p-12 text-center text-sm text-[#6b7385]">Cargando...</div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-stone p-12 text-center text-sm text-[#6b7385]">Sin cuentas registradas.</div>
+        <div className="bg-white rounded-[28px] shadow-float p-12 text-center text-sm text-[#6b7385]">Sin cuentas registradas.</div>
       ) : (
-        <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+        <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-stone bg-stone/40">

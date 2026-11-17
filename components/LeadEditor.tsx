@@ -204,7 +204,7 @@ export function LeadEditor({
       <div className="lg:col-span-2 space-y-6">
 
         {/* Info principal */}
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+        <div className="bg-white rounded-[28px] shadow-float p-6">
           <h3 className="font-serif text-navy text-[28px] mb-4">Datos del registro</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -333,7 +333,7 @@ export function LeadEditor({
         </div>
 
         {/* Perfil */}
-        <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+        <div className="bg-white rounded-[28px] shadow-float p-6">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-serif text-navy text-[28px]">Perfil del cliente</h3>
             <span className="text-[10px] text-[#6b7385] bg-stone px-2 py-0.5 rounded-full">Opcional · para estadísticas</span>
@@ -358,7 +358,7 @@ export function LeadEditor({
 
         {/* Bitácora — solo en edición */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+          <div className="bg-white rounded-[28px] shadow-float p-6">
             <h3 className="font-serif text-navy text-[28px] mb-4">Bitácora de actividades</h3>
             <div className="flex gap-2 mb-4 flex-wrap">
               <Select value={actType} onChange={setActType}
@@ -397,7 +397,7 @@ export function LeadEditor({
       <div className="space-y-6">
         {/* Cambio rápido de estado */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+          <div className="bg-white rounded-[28px] shadow-float p-6">
             <h3 className="font-serif text-navy text-[28px] mb-4">Cambio rápido de estado</h3>
             <div className="space-y-1.5">
               {ESTADOS_LEAD.map(s => (
@@ -418,7 +418,7 @@ export function LeadEditor({
 
         {/* Info del registro */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-3">
+          <div className="bg-white rounded-[28px] shadow-float p-6 space-y-3">
             <h3 className="font-serif text-navy text-[28px] mb-1">Resumen del registro</h3>
             <div className="text-xs text-[#6b7385] space-y-2">
               <div className="flex justify-between"><span>Origen</span><span className="text-navy font-medium">{lead.source || "—"}</span></div>

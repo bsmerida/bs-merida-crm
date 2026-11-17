@@ -51,7 +51,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 function KPICard({ label, value, sub, color = "text-navy" }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-stone shadow-card p-5">
+    <div className="bg-white rounded-[28px] shadow-float p-5">
       <div className="text-xs text-[#6b7385]">{label}</div>
       <div className={`text-2xl font-semibold mt-2 tracking-tight ${color}`}>{value}</div>
       {sub && <div className="text-xs text-[#6b7385] mt-1">{sub}</div>}
@@ -556,7 +556,7 @@ export default function FinanzasPage() {
       {tab === "pnl" && (
         <div className="space-y-6">
           {/* Semáforo de metas */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-5">
+          <div className="bg-white rounded-[28px] shadow-float p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-serif text-navy text-[28px]">Semáforo de metas</h3>
@@ -654,7 +654,7 @@ export default function FinanzasPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Estado de resultados */}
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+            <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Estado de resultados</h3>
               <div className="space-y-3">
                 {[
@@ -682,7 +682,7 @@ export default function FinanzasPage() {
             </div>
 
             {/* Desglose visual */}
-            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+            <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Estructura de ingresos y gastos</h3>
               <div className="space-y-4">
                 {ingresoTotal > 0 && (
@@ -720,7 +720,7 @@ export default function FinanzasPage() {
           </div>
 
           {/* Gráfica de barras entradas vs salidas */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+          <div className="bg-white rounded-[28px] shadow-float p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-serif text-navy text-[28px]">Entradas vs Salidas — últimos 12 meses</h3>
               <div className="flex items-center gap-4 text-xs text-[#6b7385]">
@@ -751,7 +751,7 @@ export default function FinanzasPage() {
           </div>
 
           {/* Tabla detalle mensual */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone">
               <h3 className="font-serif text-navy text-[28px]">Flujo mensual detallado</h3>
             </div>
@@ -796,7 +796,7 @@ export default function FinanzasPage() {
             <KPICard label="Por vencer" value={fmtMXN(totalCxC - vencido)} color="text-amber-600" />
           </div>
 
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone flex items-center justify-between">
               <h3 className="font-serif text-navy text-[28px]">Operaciones pendientes de cobro</h3>
               <span className="text-xs text-[#6b7385]">{dealsPendientes.length} operaciones</span>
@@ -854,7 +854,7 @@ export default function FinanzasPage() {
             <KPICard label="Vencido" value={fmtMXN(cxpTotalVenc)} color={cxpTotalVenc > 0 ? "text-red-500" : "text-navy"} />
             <KPICard label="Vence este mes" value={fmtMXN(cxpTotalMes)} color="text-navy" />
           </div>
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone flex items-center justify-between">
               <h3 className="font-serif text-navy text-[28px]">Cuentas por pagar</h3>
               <button onClick={() => setShowBillForm(!showBillForm)} className="text-xs text-gold border border-gold/30 rounded-full px-3 py-1.5 hover:bg-cream">+ Nueva cuenta</button>
@@ -929,7 +929,7 @@ export default function FinanzasPage() {
             <KPICard label="Ticket promedio" value={dealsInPeriod.length > 0 ? fmtMXN(dealsInPeriod.reduce((s: number, d: any) => s + Number(d.transaction_value), 0) / dealsInPeriod.length) : "—"} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <h3 className="font-serif text-navy text-[28px]">Detalle de operaciones</h3>
@@ -1014,7 +1014,7 @@ export default function FinanzasPage() {
       {tab === "asesores" && (
         <div className="space-y-6">
           {agentStats.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-stone p-12 text-center text-sm text-[#6b7385]">Sin asesores activos.</div>
+            <div className="bg-white rounded-[28px] shadow-float p-12 text-center text-sm text-[#6b7385]">Sin asesores activos.</div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1022,7 +1022,7 @@ export default function FinanzasPage() {
                 <KPICard label="Ingreso promedio por asesor" value={fmtMXN(agentStats.length > 0 ? agentStats.reduce((s: number, a: any) => s + a.ingresos, 0) / agentStats.length : 0)} />
                 <KPICard label="Conversión promedio" value={`${agentStats.length > 0 ? (agentStats.reduce((s: number, a: any) => s + Number(a.conv), 0) / agentStats.length).toFixed(0) : 0}%`} />
               </div>
-              <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+              <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-stone/40 border-b border-stone">
                     <tr>{["Asesor", "Leads", "Cierres", "Valor vendido", "Ingresos generados", "Comisión", "Neto empresa", "Conversión"].map(h => (
@@ -1066,7 +1066,7 @@ export default function FinanzasPage() {
             <KPICard label="Potencial total si todo cierra" value={fmtMXN(pipelineStages.reduce((s, p) => s + p.comPot, 0))} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <table className="w-full">
               <thead className="bg-stone/40 border-b border-stone">
                 <tr>{["Etapa", "Leads", "Prob.", "Valor potencial", "Com. potencial", "Com. ponderada"].map(h => (
@@ -1129,7 +1129,7 @@ export default function FinanzasPage() {
           )}
 
           {/* Tabla por canal */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone">
               <h3 className="font-serif text-navy text-[28px]">Análisis por canal</h3>
               <p className="text-xs text-[#6b7385] mt-0.5">Ingresos del período · leads históricos</p>
@@ -1213,7 +1213,7 @@ export default function FinanzasPage() {
 
           {/* Gastos diferidos activos */}
           {expenses.some(e => e.is_deferred && e.amortization_months > 1) && (
-            <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
               <div className="p-5 border-b border-stone">
                 <h3 className="font-serif text-navy text-[28px]">Gastos diferidos activos</h3>
                 <p className="text-xs text-[#6b7385] mt-0.5">Pagos únicos que se distribuyen en el P&L mensualmente</p>
@@ -1276,7 +1276,7 @@ export default function FinanzasPage() {
           )}
 
           {/* Todos los gastos del período */}
-          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone flex items-center justify-between">
               <div>
                 <h3 className="font-serif text-navy text-[28px]">Gastos del período</h3>

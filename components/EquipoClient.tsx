@@ -56,7 +56,7 @@ function NuevoUsuarioModal({ onSave, onClose }: { onSave: (p: Profile) => void; 
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-serif text-xl text-navy">Nuevo usuario</h2>
-          <button onClick={onClose} className="text-ink-soft hover:text-navy p-1">
+          <button onClick={onClose} className="text-[#6b7385] hover:text-navy p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
@@ -65,23 +65,23 @@ function NuevoUsuarioModal({ onSave, onClose }: { onSave: (p: Profile) => void; 
 
         <div className="space-y-4">
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Nombre completo *</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Nombre completo *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre y apellido"
               className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Correo *</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Correo *</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@duclaud.com.mx"
               className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Contraseña temporal *</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Contraseña temporal *</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 10 caracteres"
               autoComplete="new-password"
               className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
           </div>
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Rol *</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Rol *</label>
             <select value={role} onChange={e => setRole(e.target.value)}
               className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy">
               <option value="asesor">Asesor</option>
@@ -155,8 +155,8 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
       <div className="bg-white rounded-2xl border border-stone shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-stone flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-ink">Equipo</h3>
-            <p className="text-xs text-ink-muted mt-0.5">{profiles.length} usuario{profiles.length !== 1 ? "s" : ""}</p>
+            <h3 className="font-semibold text-navy">Equipo</h3>
+            <p className="text-xs text-[#6b7385] mt-0.5">{profiles.length} usuario{profiles.length !== 1 ? "s" : ""}</p>
           </div>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-navy text-white text-sm font-medium px-4 py-2 rounded-full hover:bg-navy/90 transition">
@@ -177,8 +177,8 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-ink truncate">{p.full_name || "Sin nombre"}</p>
-                <p className="text-xs text-ink-muted truncate">{p.email}</p>
+                <p className="text-sm font-medium text-navy truncate">{p.full_name || "Sin nombre"}</p>
+                <p className="text-xs text-[#6b7385] truncate">{p.email}</p>
               </div>
 
               {/* Rol */}
@@ -202,11 +202,11 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
               {p.id !== currentUserId && (
                 confirmDel === p.id ? (
                   <div className="flex items-center gap-1">
-                    <button onClick={() => setConfirmDel(null)} className="text-xs text-ink-soft px-2 py-1 rounded hover:bg-cream">No</button>
+                    <button onClick={() => setConfirmDel(null)} className="text-xs text-[#6b7385] px-2 py-1 rounded hover:bg-cream">No</button>
                     <button onClick={() => deleteUser(p.id)} className="text-xs text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-lg">Sí</button>
                   </div>
                 ) : (
-                  <button onClick={() => setConfirmDel(p.id)} className="text-ink-line hover:text-red-400 transition p-1">
+                  <button onClick={() => setConfirmDel(p.id)} className="text-[#6b7385] hover:text-red-400 transition p-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
                     </svg>

@@ -86,14 +86,16 @@ export default async function PortalesAdminPage() {
   const feedUrl = `${protocol}://${host}/api/feed/xml`;
 
   return (
-    <div className="p-10 space-y-6">
+    <div className="p-4 md:p-6 space-y-5 font-dmsans">
       <div>
-        <h1 className="text-2xl font-semibold text-ink tracking-tight">Portales inmobiliarios</h1>
-        <p className="text-sm text-ink-muted mt-0.5">Cómo conectar tu inventario con los portales más importantes de México</p>
+        <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+          Portales<em className="italic font-serif text-gold">.</em>
+        </h1>
+        <p className="text-[#6b7385] text-[15px] mt-1">Cómo conectar tu inventario con los portales más importantes de México</p>
       </div>
 
       {/* Feed URL */}
-      <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl p-8 text-white">
+      <div className="bg-navy rounded-2xl p-8 text-white">
         <div className="text-xs uppercase tracking-wider opacity-70">Tu URL de Feed XML</div>
         <h3 className="text-xl font-semibold tracking-tight mt-2">Esta URL es tu inventario sincronizable</h3>
         <p className="text-sm opacity-80 mt-2 leading-relaxed">
@@ -109,14 +111,14 @@ export default async function PortalesAdminPage() {
 
       {/* Cómo funciona */}
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-ink flex items-center gap-2">
+        <h3 className="font-semibold text-navy flex items-center gap-2">
           <Icon name="check" className="w-5 h-5 text-amber-700" />
           Cómo funciona realmente la sincronización
         </h3>
-        <p className="text-sm text-ink-muted mt-3 leading-relaxed">
+        <p className="text-sm text-[#6b7385] mt-3 leading-relaxed">
           <strong>Tú publicas tu inventario aquí, en este CRM.</strong> Cada portal de la lista de abajo “consume” tu feed y publica las propiedades en su sitio. Cuando agregas, editas o pausas una propiedad, los portales lo detectan en su próxima sincronización (cada 12-24 horas dependiendo del portal).
         </p>
-        <p className="text-sm text-ink-muted mt-3 leading-relaxed">
+        <p className="text-sm text-[#6b7385] mt-3 leading-relaxed">
           <strong>Lo que SÍ tienes que hacer en cada portal (una sola vez):</strong> crear cuenta de agente, contratar el plan adecuado, y darles tu URL de feed. Después olvídate, todo es automático.
         </p>
       </div>
@@ -124,26 +126,26 @@ export default async function PortalesAdminPage() {
       {/* Lista de portales */}
       <div className="space-y-4">
         {PORTALES.map(p => (
-          <div key={p.nombre} className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+          <div key={p.nombre} className="bg-white rounded-[28px] shadow-float p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-ink text-lg">{p.nombre}</h3>
-                  <a href={p.web} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 hover:underline">Sitio →</a>
+                  <h3 className="font-semibold text-navy text-lg">{p.nombre}</h3>
+                  <a href={p.web} target="_blank" rel="noopener noreferrer" className="text-xs text-gold hover:underline">Sitio →</a>
                 </div>
-                <p className="text-sm text-ink-muted mt-1">{p.descripcion}</p>
+                <p className="text-sm text-[#6b7385] mt-1">{p.descripcion}</p>
               </div>
               <div className="text-right">
-                <div className="text-xs text-ink-muted">Costo aprox.</div>
-                <div className="text-sm font-semibold text-ink">{p.precio}</div>
+                <div className="text-xs text-[#6b7385]">Costo aprox.</div>
+                <div className="text-sm font-semibold text-navy">{p.precio}</div>
               </div>
             </div>
-            <div className="mt-5 pt-5 border-t border-ink-line">
-              <div className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-3">Cómo conectarlo</div>
+            <div className="mt-5 pt-5 border-t border-stone">
+              <div className="text-xs uppercase tracking-wider text-[#6b7385] font-semibold mb-3">Cómo conectarlo</div>
               <ol className="space-y-2">
                 {p.pasos.map((paso, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-ink">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-[11px] font-semibold">{i + 1}</span>
+                  <li key={i} className="flex gap-3 text-sm text-navy">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-cream text-navy flex items-center justify-center text-[11px] font-semibold">{i + 1}</span>
                     {paso}
                   </li>
                 ))}
@@ -153,9 +155,9 @@ export default async function PortalesAdminPage() {
         ))}
       </div>
 
-      <div className="bg-ink-ghost rounded-2xl p-6">
-        <h3 className="font-semibold text-ink">¿Por dónde empezar?</h3>
-        <p className="text-sm text-ink-muted mt-2 leading-relaxed">
+      <div className="bg-stone rounded-2xl p-6">
+        <h3 className="font-semibold text-navy">¿Por dónde empezar?</h3>
+        <p className="text-sm text-[#6b7385] mt-2 leading-relaxed">
           Mi recomendación: empieza con <strong>Inmuebles24 + Vivanuncios</strong> (cubren ~70% del tráfico). Si después necesitas más alcance sin trabajo manual, evalúa <strong>EasyBroker</strong>. MercadoLibre déjalo para el final, requiere desarrollo extra.
         </p>
       </div>

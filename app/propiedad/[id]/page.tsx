@@ -243,6 +243,23 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
         </section>
       )}
 
+      {/* Leyenda legal NOM-247-SE-2021 */}
+      <section className="px-5 md:px-8 pb-8">
+        <p className="text-[11px] text-[#6b7385] leading-relaxed max-w-5xl mx-auto">
+          ** Los precios NO Incluyen gastos Notariales, impuestos, derechos, NI costos de contratos de servicios.
+          La responsabilidad y cumplimiento de garantía es a cargo de los propietarios y/o Constructoras.
+          El precio total se determinará en función de los montos variables de conceptos de crédito y notariales
+          que deben ser consultados con los promotores de conformidad con lo establecido en la NOM-247-SE-2021.
+          Las imágenes presentadas en brochure o anuncio son meramente ilustrativas y pueden cambiar sin previo
+          aviso Todas las propiedades están sujetas a cambio de precio y disponibilidad sin previo aviso.
+          El costo del avalúo es responsabilidad de la parte compradora. Los impuestos se pagarán según
+          corresponda a cada una de las partes. Los gastos administrativos corren por parte de la compradora.
+          Consulte términos, condiciones y el aviso de privacidad en nuestra página web. www.inmobiliariabs.net
+          Comentarios y/o sugerencias comuníquese al número celular 9999496562 vía mensaje de WhatsApp ó a
+          nuestra dirección de correo electrónica.- contacto@duclaud.com.mx
+        </p>
+      </section>
+
       <PublicFooterV3 />
       <PublicChatbot />
     </div>

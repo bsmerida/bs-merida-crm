@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { fmtMXN, TIPOS_PROPIEDAD, OPERACIONES } from "@/lib/utils";
 import { Icon } from "@/components/Icon";
 import { PORTALES } from "@/lib/portales";
+import { Select } from "@/components/Select";
 
 // Lo último que eligió esta persona al aprobar (solo en su navegador), para no
 // marcar lo mismo en cada propiedad.
@@ -281,15 +282,15 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs text-[#6b7385]">Tipo</label>
-                  <select value={ed.datos.type || ""} onChange={e => setDato("type", e.target.value)} className={`${inp} mt-1`}>
-                    <option value="">—</option>{TIPOS_PROPIEDAD.map(t => <option key={t}>{t}</option>)}
-                  </select>
+                  <Select value={ed.datos.type || ""} onChange={v => setDato("type", v)}
+                    options={[{value:"",label:"—"}, ...TIPOS_PROPIEDAD.map(t => ({value:t,label:t}))]}
+                    className={`${inp} mt-1 text-left`} />
                 </div>
                 <div>
                   <label className="text-xs text-[#6b7385]">Operación</label>
-                  <select value={ed.datos.operation || "Venta"} onChange={e => setDato("operation", e.target.value)} className={`${inp} mt-1`}>
-                    {OPERACIONES.map(t => <option key={t}>{t}</option>)}
-                  </select>
+                  <Select value={ed.datos.operation || "Venta"} onChange={v => setDato("operation", v)}
+                    options={OPERACIONES.map(t => ({value:t,label:t}))}
+                    className={`${inp} mt-1 text-left`} />
                 </div>
                 <div>
                   <label className="text-xs text-[#6b7385]">Precio desde ({moneda})</label>

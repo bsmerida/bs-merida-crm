@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { hoyLocal } from "@/lib/finanzas";
+import { Select } from "@/components/Select";
 
 const db = createClient();
 const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
@@ -94,8 +95,8 @@ export default function CuentasPorPagarPage() {
             <div><label className="text-xs text-[#6b7385] mb-1 block">Fecha de vencimiento *</label>
               <input type="date" value={form.fecha_vencimiento} onChange={e => setForm({...form, fecha_vencimiento: e.target.value})} className={inp} /></div>
             <div><label className="text-xs text-[#6b7385] mb-1 block">Categoría</label>
-              <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})} className={inp}>
-                {CATEGORIAS.map(c => <option key={c}>{c}</option>)}</select></div>
+              <Select value={form.categoria} onChange={v => setForm({...form, categoria: v})}
+                options={CATEGORIAS.map(c => ({value:c,label:c}))} className={`${inp} text-left`} /></div>
             <div><label className="text-xs text-[#6b7385] mb-1 block">Notas</label>
               <input value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} placeholder="Opcional" className={inp} /></div>
           </div>
@@ -108,12 +109,9 @@ export default function CuentasPorPagarPage() {
       )}
 
       <div className="flex gap-2">
-        <select value={filterEstado} onChange={e => setFilterEstado(e.target.value)} className={sel}>
-          <option value="todos">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="vencido">Vencido</option>
-          <option value="pagado">Pagado</option>
-        </select>
+        <Select value={filterEstado} onChange={setFilterEstado}
+          options={[{value:"todos",label:"Todos"},{value:"pendiente",label:"Pendiente"},{value:"vencido",label:"Vencido"},{value:"pagado",label:"Pagado"}]}
+          className={`${sel} text-left`} />
       </div>
 
       {loading ? (

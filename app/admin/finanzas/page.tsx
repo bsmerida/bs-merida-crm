@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { DealForm } from "@/components/finanzas/DealForm";
 import { ExpenseForm } from "@/components/finanzas/ExpenseForm";
 import { ReportExporterPro } from "@/components/finanzas/ReportExporterPro";
+import { Select } from "@/components/Select";
 import { cobradoDeal, cuentaEnResultados, enRango, fechaCorta, fechaLocal, gastoEnPeriodo, hoyLocal, ingresoDeal, netoDeal } from "@/lib/finanzas";
 
 const fmtMXN = (n: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n || 0);
@@ -870,8 +871,8 @@ export default function FinanzasPage() {
                   <div><label className="text-xs text-[#6b7385] mb-1 block">Vencimiento *</label>
                     <input type="date" value={billForm.fecha_vencimiento} onChange={e => setBillForm({...billForm, fecha_vencimiento: e.target.value})} className={cxpInp} /></div>
                   <div><label className="text-xs text-[#6b7385] mb-1 block">Categoría</label>
-                    <select value={billForm.categoria} onChange={e => setBillForm({...billForm, categoria: e.target.value})} className={cxpInp}>
-                      {CATS_CXP.map(cat => <option key={cat}>{cat}</option>)}</select></div>
+                    <Select value={billForm.categoria} onChange={v => setBillForm({...billForm, categoria: v})}
+                      options={CATS_CXP.map(cat => ({value:cat,label:cat}))} className={`${cxpInp} text-left`} /></div>
                   <div><label className="text-xs text-[#6b7385] mb-1 block">Notas</label>
                     <input value={billForm.notas} onChange={e => setBillForm({...billForm, notas: e.target.value})} placeholder="Opcional" className={cxpInp} /></div>
                 </div>

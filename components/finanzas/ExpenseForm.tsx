@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { hoyLocal } from "@/lib/finanzas";
+import { Select } from "@/components/Select";
 
 const CATEGORIES: { value: string; label: string; icon: string }[] = [
   { value: "nomina",                 label: "Nómina",                      icon: "👥" },
@@ -110,29 +111,27 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
               <label className="text-xs text-[#6b7385] font-medium block mb-1.5">
                 Canal específico <span className="text-[#6b7385]">(para calcular ROI, CAC y ROAS por canal)</span>
               </label>
-              <select value={form.marketing_channel} onChange={e => set("marketing_channel", e.target.value)} className={inp}>
-                <option value="">— Sin atribuir a canal específico</option>
-                <optgroup label="Redes sociales">
-                  <option value="Facebook">Facebook / Meta Ads</option>
-                  <option value="Instagram">Instagram Orgánico</option>
-                  <option value="TikTok">TikTok</option>
-                  <option value="Google">Google Ads</option>
-                  <option value="WhatsApp directo">WhatsApp</option>
-                </optgroup>
-                <optgroup label="Portales">
-                  <option value="Inmuebles24">Inmuebles24</option>
-                  <option value="Lamudi by Proppit">Lamudi by Proppit</option>
-                  <option value="Mercado Libre">Mercado Libre</option>
-                  <option value="Propiedades.com">Propiedades.com</option>
-                  <option value="EasyBroker">EasyBroker</option>
-                  <option value="Tokko">Tokko</option>
-                  <option value="TuPortalOnline">TuPortalOnline</option>
-                  <option value="InmoExperts">InmoExperts</option>
-                  <option value="Properstar">Properstar</option>
-                  <option value="Pincali">Pincali</option>
-                  <option value="Clasco">Clasco</option>
-                </optgroup>
-              </select>
+              <Select value={form.marketing_channel} onChange={v => set("marketing_channel", v)}
+                className={`${inp} text-left`}
+                options={[
+                  { value: "", label: "— Sin atribuir a canal específico" },
+                  { value: "Facebook", label: "Facebook / Meta Ads", group: "Redes sociales" },
+                  { value: "Instagram", label: "Instagram Orgánico", group: "Redes sociales" },
+                  { value: "TikTok", label: "TikTok", group: "Redes sociales" },
+                  { value: "Google", label: "Google Ads", group: "Redes sociales" },
+                  { value: "WhatsApp directo", label: "WhatsApp", group: "Redes sociales" },
+                  { value: "Inmuebles24", label: "Inmuebles24", group: "Portales" },
+                  { value: "Lamudi by Proppit", label: "Lamudi by Proppit", group: "Portales" },
+                  { value: "Mercado Libre", label: "Mercado Libre", group: "Portales" },
+                  { value: "Propiedades.com", label: "Propiedades.com", group: "Portales" },
+                  { value: "EasyBroker", label: "EasyBroker", group: "Portales" },
+                  { value: "Tokko", label: "Tokko", group: "Portales" },
+                  { value: "TuPortalOnline", label: "TuPortalOnline", group: "Portales" },
+                  { value: "InmoExperts", label: "InmoExperts", group: "Portales" },
+                  { value: "Properstar", label: "Properstar", group: "Portales" },
+                  { value: "Pincali", label: "Pincali", group: "Portales" },
+                  { value: "Clasco", label: "Clasco", group: "Portales" },
+                ]} />
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
@@ -178,9 +177,9 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
               <div className="space-y-3 pt-2 border-t border-stone">
                 <div>
                   <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Meses de cobertura</label>
-                  <select value={form.amortization_months} onChange={e => set("amortization_months", Number(e.target.value))} className={inp}>
-                    {AMORT_OPTIONS.slice(1).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                  <Select value={String(form.amortization_months)} onChange={v => set("amortization_months", Number(v))}
+                    options={AMORT_OPTIONS.slice(1).map(o => ({value:String(o.value),label:o.label}))}
+                    className={`${inp} text-left`} />
                 </div>
                 <div>
                   <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Inicio de la cobertura</label>

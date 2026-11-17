@@ -1,6 +1,7 @@
 // components/EquipoClient.tsx
 "use client";
 import { useState } from "react";
+import { Select } from "@/components/Select";
 
 type Profile = {
   id: string;
@@ -82,11 +83,9 @@ function NuevoUsuarioModal({ onSave, onClose }: { onSave: (p: Profile) => void; 
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Rol *</label>
-            <select value={role} onChange={e => setRole(e.target.value)}
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy">
-              <option value="asesor">Asesor</option>
-              <option value="admin">Admin</option>
-            </select>
+            <Select value={role} onChange={setRole}
+              options={[{value:"asesor",label:"Asesor"},{value:"admin",label:"Admin"}]}
+              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
           </div>
         </div>
 
@@ -182,12 +181,10 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
               </div>
 
               {/* Rol */}
-              <select value={p.role} onChange={e => changeRole(p, e.target.value)}
+              <Select value={p.role} onChange={v => changeRole(p, v)}
                 disabled={p.id === currentUserId || updating === p.id}
-                className="border border-stone rounded-lg px-2 py-1 text-xs text-navy focus:outline-none focus:border-navy disabled:opacity-50">
-                <option value="asesor">Asesor</option>
-                <option value="admin">Admin</option>
-              </select>
+                options={[{value:"asesor",label:"Asesor"},{value:"admin",label:"Admin"}]}
+                className="border border-stone rounded-lg px-2.5 py-1.5 text-xs text-navy text-left focus:outline-none focus:border-navy disabled:opacity-50"/>
 
               {/* Estado */}
               <button onClick={() => toggleActive(p)}

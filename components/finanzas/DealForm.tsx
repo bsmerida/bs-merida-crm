@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { calcularComision, fechaLocal, hoyLocal } from "@/lib/finanzas";
+import { Select } from "@/components/Select";
 
 type Agent    = { id: string; full_name: string };
 type Lead     = { id: string; name: string };
@@ -209,18 +210,16 @@ export function DealForm({
             <div>
               <label className="text-xs text-[#6b7385]">Tipo de operación</label>
               <div className="mt-1.5">
-                <select value={form.operation_type} onChange={e => set("operation_type", e.target.value)} className={inp}>
-                  <option value="venta">Venta</option>
-                  <option value="renta">Renta</option>
-                </select>
+                <Select value={form.operation_type} onChange={v => set("operation_type", v)}
+                  options={[{value:"venta",label:"Venta"},{value:"renta",label:"Renta"}]}
+                  className={`${inp} text-left`} />
               </div>
             </div>
             <div>
               <label className="text-xs text-[#6b7385]">Estructura del deal</label>
               <div className="mt-1.5">
-                <select value={form.deal_type} onChange={e => set("deal_type", e.target.value)} className={inp}>
-                  {DEAL_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
+                <Select value={form.deal_type} onChange={v => set("deal_type", v)}
+                  options={DEAL_TYPES} className={`${inp} text-left`} />
               </div>
             </div>
           </div>
@@ -230,23 +229,21 @@ export function DealForm({
             <div>
               <label className="text-xs text-[#6b7385]">Propiedad</label>
               <div className="mt-1.5">
-                <select value={form.property_id} onChange={e => {
-                  const p = properties.find(x => x.id === e.target.value);
-                  set("property_id", e.target.value);
+                <Select value={form.property_id} onChange={v => {
+                  const p = properties.find(x => x.id === v);
+                  set("property_id", v);
                   if (p && !form.transaction_value) set("transaction_value", String(p.price));
-                }} className={inp}>
-                  <option value="">— Sin propiedad</option>
-                  {properties.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                </select>
+                }}
+                  options={[{value:"",label:"— Sin propiedad"}, ...properties.map(p => ({value:p.id,label:p.title}))]}
+                  className={`${inp} text-left`} />
               </div>
             </div>
             <div>
               <label className="text-xs text-[#6b7385]">Cliente</label>
               <div className="mt-1.5">
-                <select value={form.lead_id} onChange={e => set("lead_id", e.target.value)} className={inp}>
-                  <option value="">— Sin cliente</option>
-                  {leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                </select>
+                <Select value={form.lead_id} onChange={v => set("lead_id", v)}
+                  options={[{value:"",label:"— Sin cliente"}, ...leads.map(l => ({value:l.id,label:l.name}))]}
+                  className={`${inp} text-left`} />
               </div>
             </div>
           </div>
@@ -322,10 +319,9 @@ export function DealForm({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-[#6b7385]">Asesor principal</label>
-                  <select value={form.agent_id} onChange={e => set("agent_id", e.target.value)} className={`${inp} mt-1.5`}>
-                    <option value="">— Seleccionar</option>
-                    {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
-                  </select>
+                  <Select value={form.agent_id} onChange={v => set("agent_id", v)}
+                    options={[{value:"",label:"— Seleccionar"}, ...agents.map(a => ({value:a.id,label:a.full_name}))]}
+                    className={`${inp} mt-1.5 text-left`} />
                 </div>
                 {pctField("% Comisión asesor principal", "agent_split_pct")}
               </div>
@@ -333,10 +329,9 @@ export function DealForm({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-[#6b7385]">Segundo asesor</label>
-                    <select value={form.agent2_id} onChange={e => set("agent2_id", e.target.value)} className={`${inp} mt-1.5`}>
-                      <option value="">— Seleccionar</option>
-                      {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
-                    </select>
+                    <Select value={form.agent2_id} onChange={v => set("agent2_id", v)}
+                      options={[{value:"",label:"— Seleccionar"}, ...agents.map(a => ({value:a.id,label:a.full_name}))]}
+                      className={`${inp} mt-1.5 text-left`} />
                   </div>
                   {pctField("% Comisión segundo asesor", "agent2_split_pct")}
                 </div>
@@ -412,12 +407,9 @@ export function DealForm({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-[#6b7385]">Estado de cobro</label>
-              <select value={form.status} onChange={e => set("status", e.target.value)} className={`${inp} mt-1.5`}>
-                <option value="pendiente">Pendiente</option>
-                <option value="parcial">Cobro parcial</option>
-                <option value="cobrado">Cobrado completo</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
+              <Select value={form.status} onChange={v => set("status", v)}
+                options={[{value:"pendiente",label:"Pendiente"},{value:"parcial",label:"Cobro parcial"},{value:"cobrado",label:"Cobrado completo"},{value:"cancelado",label:"Cancelado"}]}
+                className={`${inp} mt-1.5 text-left`} />
             </div>
             {(form.status === "parcial" || form.status === "cobrado") && (
               <div>

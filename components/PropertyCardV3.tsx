@@ -27,7 +27,7 @@ export function PropertyCardV3({ p, coverUrl }: { p: any; coverUrl?: string | nu
         <div className="flex gap-1.5 pt-2 flex-wrap">
           {p.bedrooms > 0 && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.bedrooms} rec</span>}
           {p.bathrooms > 0 && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.bathrooms} baños</span>}
-          {p.m2_construction && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.m2_construction} m²</span>}
+          {p.m2_construction > 0 && <span className="bg-stone text-navy text-[13px] font-medium px-4 py-2 rounded-full">{p.m2_construction} m²</span>}
         </div>
       </div>
     </Link>

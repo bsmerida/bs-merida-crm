@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
+import { PublicHeaderV3 } from "@/components/PublicHeaderV3";
+import { PublicFooterV3 } from "@/components/PublicFooterV3";
+import { PropertyCardV3 } from "@/components/PropertyCardV3";
 
 export const dynamic = "force-dynamic";
 
@@ -43,145 +45,68 @@ export default async function TableroPage({ params }: { params: { slug: string }
     cover: coverMap.get(row.property.id),
   }));
 
-  const biz = {
-    name: process.env.NEXT_PUBLIC_BUSINESS_NAME || "BS Mérida Inmobiliaria",
-    phone: process.env.NEXT_PUBLIC_BUSINESS_PHONE || "999 303 4815",
-    whatsapp: process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272",
-    web: process.env.NEXT_PUBLIC_BUSINESS_WEB || "bsmerida.com",
-  };
+  const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
+  const waMsg = "Hola! Vi el tablero de propiedades que me compartieron y me interesa agendar una visita.";
+  const subtitulo = board.agent?.full_name
+    ? `${board.agent.full_name} eligió estas propiedades según lo que buscas.`
+    : "Tu asesor eligió estas propiedades según lo que buscas.";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-brand-50/30">
-      {/* Header */}
-      <header className="bg-white border-b border-ink-line sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-brand-700 font-bold text-lg tracking-tight">BS | INMOBILIARIA</div>
-          <a href={`https://wa.me/${biz.whatsapp}`} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-sm font-medium">
-            📲 Contactar asesor
-          </a>
-        </div>
-      </header>
+    <div className="bg-cream p-4 font-dmsans break-words">
+      <PublicHeaderV3 active="" />
 
-      <main className="max-w-6xl mx-auto px-6 py-10 space-y-10">
-        {/* Hero personalizado */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 bg-brand-50 text-brand-700 text-xs font-medium px-3 py-1.5 rounded-full border border-brand-100">
-            ✨ Selección personalizada
-          </div>
-          <h1 className="text-3xl font-bold text-ink tracking-tight">
-            Hola, {board.lead?.name?.split(" ")[0] || "bienvenido"} 👋
-          </h1>
-          <p className="text-ink-muted max-w-lg mx-auto">
-            {board.agent?.full_name
-              ? `Tu asesor ${board.agent.full_name} preparó esta selección especialmente para ti`
-              : "Tu asesor preparó estas propiedades especialmente para ti"}
-            . Explora cada opción y cuéntanos cuál te interesa.
-          </p>
-          {board.agent?.phone && (
-            <a href={`https://wa.me/${board.agent.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-emerald-600 hover:underline mt-1">
-              💬 Escribir a {board.agent.full_name}
-            </a>
-          )}
-        </div>
+      <section className="px-5 md:px-16 pt-10 md:pt-24 pb-10 md:pb-16 flex flex-col gap-5 md:gap-7">
+        <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Selección preparada para ti</p>
+        <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
+          Tu <em className="italic not-italic font-serif text-gold">selección.</em>
+        </h1>
+        <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
+          {board.lead?.name ? `Hola, ${board.lead.name.split(" ")[0]}. ` : ""}{subtitulo}
+        </p>
 
-        {/* Stats rápidas */}
-        <div className="flex items-center justify-center gap-6 flex-wrap text-center">
-          <div>
-            <div className="text-2xl font-bold text-ink">{propsWithCovers.length}</div>
-            <div className="text-xs text-ink-muted">opciones seleccionadas</div>
-          </div>
-          <div className="w-px h-8 bg-ink-line"></div>
-          <div>
-            <div className="text-2xl font-bold text-ink">
-              {fmt(Math.min(...propsWithCovers.map(p => p.price)))}
+        {propsWithCovers.length > 0 && (
+          <div className="flex flex-col md:flex-row gap-3 w-full">
+            <div className="bg-stone rounded-[24px] md:rounded-[30px] px-6 md:px-[26px] py-[18px] md:py-[22px] flex-1">
+              <p className="font-semibold text-navy text-2xl md:text-[34px] tracking-[-0.34px]">{propsWithCovers.length}</p>
+              <p className="text-[#6b7385] text-sm">opciones seleccionadas</p>
             </div>
-            <div className="text-xs text-ink-muted">precio más bajo</div>
-          </div>
-          <div className="w-px h-8 bg-ink-line"></div>
-          <div>
-            <div className="text-2xl font-bold text-ink">
-              {fmt(Math.max(...propsWithCovers.map(p => p.price)))}
+            <div className="bg-stone rounded-[24px] md:rounded-[30px] px-6 md:px-[26px] py-[18px] md:py-[22px] flex-1">
+              <p className="font-semibold text-navy text-2xl md:text-[34px] tracking-[-0.34px]">{fmt(Math.min(...propsWithCovers.map(p => p.price)))}</p>
+              <p className="text-[#6b7385] text-sm">precio más bajo</p>
             </div>
-            <div className="text-xs text-ink-muted">precio más alto</div>
+            <div className="bg-stone rounded-[24px] md:rounded-[30px] px-6 md:px-[26px] py-[18px] md:py-[22px] flex-1">
+              <p className="font-semibold text-navy text-2xl md:text-[34px] tracking-[-0.34px]">{fmt(Math.max(...propsWithCovers.map(p => p.price)))}</p>
+              <p className="text-[#6b7385] text-sm">precio más alto</p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Grid de propiedades */}
         {propsWithCovers.length === 0 ? (
-          <div className="text-center py-16 text-ink-muted">Tu asesor está preparando tu selección. ¡Vuelve pronto!</div>
+          <div className="py-10 text-center text-[#6b7385]">Tu asesor está preparando tu selección. ¡Vuelve pronto!</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
             {propsWithCovers.map((p: any) => (
-              <Link key={p.id} href={`/propiedad/${p.id}`}
-                className="bg-white rounded-2xl border border-ink-line shadow-card hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden group">
-                {/* Foto */}
-                <div className="relative">
-                  {p.cover ? (
-                    <img src={p.cover} alt={p.title} className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-52 bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center text-5xl">🏠</div>
-                  )}
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${p.operation === "Venta" ? "bg-brand-500 text-white" : "bg-emerald-500 text-white"}`}>
-                      {p.operation}
-                    </span>
-                    {p.added_by === "ai" && (
-                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-white/90 text-brand-700 backdrop-blur-sm">
-                        ✨ {p.ai_score}/10
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Info */}
-                <div className="p-5 space-y-3">
-                  <div>
-                    <p className="font-semibold text-ink">{p.title}</p>
-                    <p className="text-ink-muted text-sm">{[p.zone, p.city].filter(Boolean).join(", ")}</p>
-                  </div>
-
-                  <p className="text-brand-600 font-bold text-xl">
-                    {fmt(p.price, p.currency)}
-                    {p.operation === "Renta" && <span className="text-sm font-normal text-ink-muted"> /mes</span>}
-                  </p>
-
-                  {/* Specs */}
-                  <div className="flex items-center gap-3 text-xs text-ink-muted pt-1 border-t border-ink-ghost">
-                    {p.bedrooms > 0 && <span>🛏 {p.bedrooms} rec</span>}
-                    {p.bathrooms > 0 && <span>🚿 {p.bathrooms} ba</span>}
-                    {p.m2_construction && <span>📐 {p.m2_construction} m²</span>}
-                    {p.parking > 0 && <span>🚗 {p.parking}</span>}
-                  </div>
-
-                  {/* Razón de la IA */}
-                  {p.ai_reason && (
-                    <p className="text-xs text-brand-600 bg-brand-50 rounded-xl px-3 py-2 leading-relaxed">
-                      ✨ {p.ai_reason}
-                    </p>
-                  )}
-                </div>
-              </Link>
+              <div key={p.id} className="flex flex-col gap-2.5">
+                <PropertyCardV3 p={p} coverUrl={p.cover} />
+                {p.ai_reason && (
+                  <p className="text-gold text-[13px] bg-gold/10 rounded-2xl px-4 py-2.5 leading-relaxed">{p.ai_reason}</p>
+                )}
+              </div>
             ))}
           </div>
         )}
 
-        {/* CTA final */}
-        <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl p-8 text-center text-white space-y-4">
-          <h2 className="text-xl font-semibold">¿Alguna te llamó la atención?</h2>
-          <p className="text-white/70">Escríbenos y agendamos una visita a la que más te guste.</p>
-          <a href={`https://wa.me/${biz.whatsapp}?text=${encodeURIComponent(`Hola! Vi el tablero de propiedades que me compartieron y me interesa agendar una visita.`)}`}
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-brand-700 hover:bg-brand-50 rounded-full font-semibold text-sm">
-            📲 Escribirnos por WhatsApp
+        <div className="bg-navy rounded-[32px] md:rounded-[44px] px-7 md:px-16 py-9 md:py-14 flex flex-col gap-3.5 w-full">
+          <p className="font-serif text-white text-3xl md:text-[64px] md:leading-[64px] md:tracking-[-0.64px] min-w-0">¿Alguna te llamó la atención?</p>
+          <p className="text-[#c9cfdb] text-base md:text-[20px] min-w-0">Escríbenos y agendamos una visita a la que más te guste.</p>
+          <a href={`https://wa.me/${wa}?text=${encodeURIComponent(waMsg)}`} target="_blank" rel="noopener noreferrer"
+            className="self-start bg-white hover:bg-stone text-navy font-semibold px-[30px] py-[17px] rounded-full transition-colors mt-2">
+            Agendar visita
           </a>
         </div>
+      </section>
 
-        <footer className="text-center text-xs text-ink-muted pt-4 border-t border-ink-ghost">
-          {biz.name} · {biz.phone} · {biz.web}
-        </footer>
-      </main>
+      <PublicFooterV3 />
     </div>
   );
 }

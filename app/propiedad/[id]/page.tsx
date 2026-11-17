@@ -152,19 +152,19 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               <div className="bg-white rounded-[32px] border border-stone p-7">
                 <p className="font-serif text-navy text-2xl md:text-[30px] mb-5">Detalles técnicos</p>
                 <div className="grid grid-cols-2 gap-5">
-                  {property.m2_land && (
+                  {(property.m2_land ?? 0) > 0 && (
                     <div>
                       <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Terreno</p>
                       <p className="text-navy font-semibold mt-1">{property.m2_land} m²</p>
                     </div>
                   )}
-                  {(property as any).floors && (
+                  {(property as any).floors > 0 && (
                     <div>
                       <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Niveles</p>
                       <p className="text-navy font-semibold mt-1">{(property as any).floors}</p>
                     </div>
                   )}
-                  {(property as any).year_built && (
+                  {(property as any).year_built > 0 && (
                     <div>
                       <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Año de construcción</p>
                       <p className="text-navy font-semibold mt-1">{(property as any).year_built}</p>

@@ -22,7 +22,7 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
   }, [lightbox, prev, next]);
 
   if (!images.length) return (
-    <div className="aspect-[2.4/1] bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl flex items-center justify-center text-9xl"><svg className="w-20 h-20 text-stone-dk" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+    <div className="aspect-[2.4/1] bg-cream rounded-3xl flex items-center justify-center text-9xl"><svg className="w-20 h-20 text-stone-dk" fill="none" stroke="currentColor" strokeWidth={1} viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
   );
 
   return (
@@ -32,7 +32,7 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
         {/* Wrapper relativo que contiene imagen Y flechas */}
         <div className="relative">
           {/* Imagen principal */}
-          <div className="aspect-[2.4/1] rounded-3xl overflow-hidden bg-ink-ghost group">
+          <div className="aspect-[2.4/1] rounded-3xl overflow-hidden bg-stone group">
             <img
               src={images[current].url}
               alt={`${title} — foto ${current + 1}`}
@@ -46,7 +46,7 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
             {/* Ver todas */}
             {images.length > 1 && (
               <button onClick={() => setLightbox(true)}
-                className="absolute bottom-4 left-4 bg-white/90 hover:bg-white text-ink text-xs px-3 py-1.5 rounded-full shadow flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                className="absolute bottom-4 left-4 bg-white/90 hover:bg-white text-navy text-xs px-3 py-1.5 rounded-full shadow flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
                 🖼 Ver todas las fotos
               </button>
             )}
@@ -56,11 +56,11 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
           {images.length > 1 && (
             <>
               <button onClick={prev}
-                className="absolute left-4 top-[50%] -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-ink text-xl font-light hover:scale-110 transition-transform">
+                className="absolute left-4 top-[50%] -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-navy text-xl font-light hover:scale-110 transition-transform">
                 ‹
               </button>
               <button onClick={next}
-                className="absolute right-4 top-[50%] -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-ink text-xl font-light hover:scale-110 transition-transform">
+                className="absolute right-4 top-[50%] -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-navy text-xl font-light hover:scale-110 transition-transform">
                 ›
               </button>
             </>
@@ -72,7 +72,7 @@ export function PropertyGallery({ images, title }: { images: Image[]; title: str
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {images.map((img, i) => (
               <button key={img.id} onClick={() => setCurrent(i)}
-                className={`shrink-0 w-20 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 ${i === current ? "border-brand-500 scale-105 shadow-md" : "border-transparent opacity-60 hover:opacity-90"}`}>
+                className={`shrink-0 w-20 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 ${i === current ? "border-navy scale-105 shadow-md" : "border-transparent opacity-60 hover:opacity-90"}`}>
                 <img src={img.url} alt="" className="w-full h-full object-cover" />
               </button>
             ))}

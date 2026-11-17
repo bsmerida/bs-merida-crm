@@ -80,24 +80,24 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
     onClose();
   };
 
-  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+  const inp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-ink-line flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="font-semibold text-ink text-lg">{isEditing ? "Editar gasto" : "Registrar gasto"}</h2>
-          <button onClick={onClose} className="text-ink-muted hover:text-ink text-xl">×</button>
+        <div className="p-6 border-b border-stone flex items-center justify-between sticky top-0 bg-white z-10">
+          <h2 className="font-semibold text-navy text-lg">{isEditing ? "Editar gasto" : "Registrar gasto"}</h2>
+          <button onClick={onClose} className="text-[#6b7385] hover:text-navy text-xl">×</button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Categoría */}
           <div>
-            <label className="text-xs text-ink-muted font-medium block mb-1.5">Categoría</label>
+            <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Categoría</label>
             <div className="grid grid-cols-2 gap-1.5">
               {CATEGORIES.map(c => (
                 <button key={c.value} type="button" onClick={() => set("category", c.value)}
-                  className={`text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 transition ${form.category === c.value ? "bg-brand-500 text-white" : "bg-ink-ghost hover:bg-ink-ghost/80 text-ink"}`}>
+                  className={`text-left px-3 py-2 rounded-xl text-xs flex items-center gap-2 transition ${form.category === c.value ? "bg-navy text-white" : "bg-stone hover:bg-stone/80 text-navy"}`}>
                   <span>{c.icon}</span>{c.label}
                 </button>
               ))}
@@ -107,8 +107,8 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
           {/* Canal de marketing — solo para gastos de marketing */}
           {["marketing_digital", "portales_inmobiliarios"].includes(form.category) && (
             <div>
-              <label className="text-xs text-ink-muted font-medium block mb-1.5">
-                Canal específico <span className="text-ink-soft">(para calcular ROI, CAC y ROAS por canal)</span>
+              <label className="text-xs text-[#6b7385] font-medium block mb-1.5">
+                Canal específico <span className="text-[#6b7385]">(para calcular ROI, CAC y ROAS por canal)</span>
               </label>
               <select value={form.marketing_channel} onChange={e => set("marketing_channel", e.target.value)} className={inp}>
                 <option value="">— Sin atribuir a canal específico</option>
@@ -137,12 +137,12 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
           )}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-ink-muted font-medium block mb-1.5">Descripción *</label>
+              <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Descripción *</label>
               <input value={form.description} onChange={e => set("description", e.target.value)}
                 placeholder="Ej. Inmuebles24 anual" className={inp} />
             </div>
             <div>
-              <label className="text-xs text-ink-muted font-medium block mb-1.5">Proveedor</label>
+              <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Proveedor</label>
               <input value={form.vendor} onChange={e => set("vendor", e.target.value)}
                 placeholder="Ej. Navent S.A." className={inp} />
             </div>
@@ -151,48 +151,48 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
           {/* Monto y fecha */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-ink-muted font-medium block mb-1.5">Monto total *</label>
+              <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Monto total *</label>
               <input type="number" min="0" value={form.amount} onChange={e => set("amount", e.target.value)}
                 placeholder="0.00" className={inp} />
             </div>
             <div>
-              <label className="text-xs text-ink-muted font-medium block mb-1.5">Fecha de pago *</label>
+              <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Fecha de pago *</label>
               <input type="date" value={form.expense_date} onChange={e => set("expense_date", e.target.value)} className={inp} />
             </div>
           </div>
 
           {/* Gasto diferido */}
-          <div className="bg-ink-ghost rounded-2xl p-4 space-y-3">
+          <div className="bg-stone rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-ink">¿Es un gasto diferido?</p>
-                <p className="text-xs text-ink-muted mt-0.5">Pagos anuales o semestrales que se amortizan mensualmente</p>
+                <p className="text-sm font-medium text-navy">¿Es un gasto diferido?</p>
+                <p className="text-xs text-[#6b7385] mt-0.5">Pagos anuales o semestrales que se amortizan mensualmente</p>
               </div>
               <button type="button" onClick={() => set("is_deferred", !form.is_deferred)}
-                className={`w-12 h-6 rounded-full transition-colors relative ${form.is_deferred ? "bg-brand-500" : "bg-ink-line"}`}>
+                className={`w-12 h-6 rounded-full transition-colors relative ${form.is_deferred ? "bg-navy" : "bg-stone"}`}>
                 <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${form.is_deferred ? "right-0.5" : "left-0.5"}`} />
               </button>
             </div>
 
             {form.is_deferred && (
-              <div className="space-y-3 pt-2 border-t border-ink-line">
+              <div className="space-y-3 pt-2 border-t border-stone">
                 <div>
-                  <label className="text-xs text-ink-muted font-medium block mb-1.5">Meses de cobertura</label>
+                  <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Meses de cobertura</label>
                   <select value={form.amortization_months} onChange={e => set("amortization_months", Number(e.target.value))} className={inp}>
                     {AMORT_OPTIONS.slice(1).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-ink-muted font-medium block mb-1.5">Inicio de la cobertura</label>
+                  <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Inicio de la cobertura</label>
                   <input type="date" value={form.deferred_start_date} onChange={e => set("deferred_start_date", e.target.value)} className={inp} />
                 </div>
                 {amount > 0 && (
-                  <div className="bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
-                    <p className="text-xs text-brand-700 font-medium">Impacto en P&L</p>
-                    <p className="text-sm text-brand-800 mt-1">
+                  <div className="bg-cream border border-gold/20 rounded-xl px-4 py-3">
+                    <p className="text-xs text-navy font-medium">Impacto en P&L</p>
+                    <p className="text-sm text-navy mt-1">
                       <span className="font-semibold">{fmtMXN(monthlyImpact)}</span> por mes durante {form.amortization_months} meses
                     </p>
-                    <p className="text-xs text-brand-600 mt-0.5">
+                    <p className="text-xs text-gold mt-0.5">
                       El Flujo de Caja refleja el pago real de {fmtMXN(amount)} en {form.expense_date}
                     </p>
                   </div>
@@ -205,30 +205,30 @@ export function ExpenseForm({ onClose, onSaved, expense }: { onClose: () => void
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.recurring} onChange={e => set("recurring", e.target.checked)}
-                className="w-4 h-4 rounded text-brand-500" />
-              <span className="text-xs text-ink-muted">Gasto recurrente</span>
+                className="w-4 h-4 rounded text-gold" />
+              <span className="text-xs text-[#6b7385]">Gasto recurrente</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.invoiced} onChange={e => set("invoiced", e.target.checked)}
-                className="w-4 h-4 rounded text-brand-500" />
-              <span className="text-xs text-ink-muted">Con factura</span>
+                className="w-4 h-4 rounded text-gold" />
+              <span className="text-xs text-[#6b7385]">Con factura</span>
             </label>
           </div>
 
           {/* Notas */}
           <div>
-            <label className="text-xs text-ink-muted font-medium block mb-1.5">Notas</label>
+            <label className="text-xs text-[#6b7385] font-medium block mb-1.5">Notas</label>
             <textarea value={form.notes} onChange={e => set("notes", e.target.value)}
               placeholder="Notas adicionales..." rows={2} className={`${inp} resize-none`} />
           </div>
         </div>
 
         <div className="p-6 pt-0 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-3 border border-ink-line rounded-full text-sm text-ink-muted hover:text-ink">
+          <button onClick={onClose} className="flex-1 py-3 border border-stone rounded-full text-sm text-[#6b7385] hover:text-navy">
             Cancelar
           </button>
           <button onClick={save} disabled={saving}
-            className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium disabled:opacity-50">
+            className="flex-1 py-3 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium disabled:opacity-50">
             {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Registrar gasto"}
           </button>
         </div>

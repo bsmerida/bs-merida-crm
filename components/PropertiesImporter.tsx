@@ -199,55 +199,55 @@ export function PropertiesImporter() {
   const invalidas = rows.length - validas;
 
   return (
-    <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-      <h3 className="font-semibold text-ink mb-4">Subir archivo</h3>
+    <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+      <h3 className="font-semibold text-navy mb-4">Subir archivo</h3>
 
       <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden"
         onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
 
       {rows.length === 0 ? (
         <button onClick={() => fileRef.current?.click()}
-          className="w-full border-2 border-dashed border-ink-line rounded-2xl py-12 text-center hover:border-brand-300 hover:bg-brand-50/30 transition">
-          <Icon name="building" className="w-10 h-10 mx-auto text-ink-soft" />
-          <div className="mt-3 text-sm font-medium text-ink">Selecciona o arrastra tu CSV</div>
-          <div className="text-xs text-ink-muted mt-1">Acepta plantilla o exportación de Tokko</div>
+          className="w-full border-2 border-dashed border-stone rounded-2xl py-12 text-center hover:border-navy/30 hover:bg-cream/30 transition">
+          <Icon name="building" className="w-10 h-10 mx-auto text-[#6b7385]" />
+          <div className="mt-3 text-sm font-medium text-navy">Selecciona o arrastra tu CSV</div>
+          <div className="text-xs text-[#6b7385] mt-1">Acepta plantilla o exportación de Tokko</div>
         </button>
       ) : (
         <div>
           {format === "tokko" && (
-            <div className="mb-4 p-3 bg-brand-50 border border-brand-200 rounded-xl text-sm text-ink">
+            <div className="mb-4 p-3 bg-cream border border-gold/30 rounded-xl text-sm text-navy">
               ✓ Detecté formato <strong>Tokko</strong>. Mapeé las 38 columnas a tu CRM. Las propiedades con el mismo <code>Id</code> se actualizan en lugar de duplicarse.
             </div>
           )}
 
           <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <span className="text-sm text-ink"><strong>{rows.length}</strong> filas</span>
+            <span className="text-sm text-navy"><strong>{rows.length}</strong> filas</span>
             <span className="text-sm text-emerald-600">✓ {validas} listas</span>
             {conWarnings > 0 && <span className="text-sm text-amber-600">⚠ {conWarnings} con avisos</span>}
             {invalidas > 0 && <span className="text-sm text-red-600">✗ {invalidas} con errores</span>}
-            <button onClick={() => { setRows([]); setDone(null); setFormat(null); }} className="ml-auto text-xs text-ink-muted hover:text-ink">Reiniciar</button>
+            <button onClick={() => { setRows([]); setDone(null); setFormat(null); }} className="ml-auto text-xs text-[#6b7385] hover:text-navy">Reiniciar</button>
           </div>
 
-          <div className="border border-ink-line rounded-xl overflow-hidden max-h-96 overflow-y-auto">
+          <div className="border border-stone rounded-xl overflow-hidden max-h-96 overflow-y-auto">
             <table className="w-full text-sm">
-              <thead className="bg-ink-ghost sticky top-0">
+              <thead className="bg-stone sticky top-0">
                 <tr>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-ink-muted">{format === "tokko" ? "Ref" : "#"}</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-ink-muted">Tipo</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-ink-muted">Operación</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-ink-muted">Zona</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-ink-muted">Precio</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-ink-muted">Estado</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-[#6b7385]">{format === "tokko" ? "Ref" : "#"}</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-[#6b7385]">Tipo</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-[#6b7385]">Operación</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-[#6b7385]">Zona</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-[#6b7385]">Precio</th>
+                  <th className="text-left px-3 py-2 text-xs font-semibold text-[#6b7385]">Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(r => (
-                  <tr key={r.rowNum} className={`border-t border-ink-line ${r.errors.length > 0 ? "bg-red-50" : r.warnings.length > 0 ? "bg-amber-50" : ""}`}>
-                    <td className="px-3 py-2 text-xs text-ink-muted">{r.ref || r.rowNum}</td>
-                    <td className="px-3 py-2 text-ink">{r.data.type || "—"}</td>
-                    <td className="px-3 py-2 text-ink-muted">{r.data.operation || "—"}</td>
-                    <td className="px-3 py-2 text-ink-muted truncate max-w-[200px]">{r.data.zone || r.data.city || "—"}</td>
-                    <td className="px-3 py-2 text-ink-muted">{r.data.price ? fmtMXN(r.data.price) : "—"}</td>
+                  <tr key={r.rowNum} className={`border-t border-stone ${r.errors.length > 0 ? "bg-red-50" : r.warnings.length > 0 ? "bg-amber-50" : ""}`}>
+                    <td className="px-3 py-2 text-xs text-[#6b7385]">{r.ref || r.rowNum}</td>
+                    <td className="px-3 py-2 text-navy">{r.data.type || "—"}</td>
+                    <td className="px-3 py-2 text-[#6b7385]">{r.data.operation || "—"}</td>
+                    <td className="px-3 py-2 text-[#6b7385] truncate max-w-[200px]">{r.data.zone || r.data.city || "—"}</td>
+                    <td className="px-3 py-2 text-[#6b7385]">{r.data.price ? fmtMXN(r.data.price) : "—"}</td>
                     <td className="px-3 py-2">
                       {r.errors.length > 0 ? (
                         <span className="text-red-600 text-xs" title={r.errors.join("; ")}>✗ {r.errors.length}</span>
@@ -267,14 +267,14 @@ export function PropertiesImporter() {
             <>
               {importing && (
                 <div className="mt-4">
-                  <div className="h-2 bg-ink-ghost rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-500 transition-all" style={{ width: `${progress}%` }}></div>
+                  <div className="h-2 bg-stone rounded-full overflow-hidden">
+                    <div className="h-full bg-navy transition-all" style={{ width: `${progress}%` }}></div>
                   </div>
-                  <div className="text-xs text-ink-muted text-center mt-2">{progress}% importado</div>
+                  <div className="text-xs text-[#6b7385] text-center mt-2">{progress}% importado</div>
                 </div>
               )}
               <button onClick={importAll} disabled={importing || validas === 0}
-                className="w-full mt-5 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white font-medium py-3 rounded-full">
+                className="w-full mt-5 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white font-medium py-3 rounded-full">
                 {importing ? `Importando... ${progress}%` : `${format === "tokko" ? "Sincronizar" : "Importar"} ${validas} propiedades`}
               </button>
             </>
@@ -282,11 +282,11 @@ export function PropertiesImporter() {
 
           {done && (
             <div className={`mt-5 p-4 rounded-xl ${done.ok > 0 ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
-              <div className="font-semibold text-ink">
+              <div className="font-semibold text-navy">
                 {done.ok > 0 ? `✓ ${done.ok} propiedades ${format === "tokko" ? "sincronizadas" : "importadas"}` : "⚠ No se importó ninguna"}
               </div>
               {done.fail > 0 && <div className="text-sm text-red-700 mt-1">{done.fail} fallaron</div>}
-              <div className="text-xs text-ink-muted mt-2">Te llevamos a tu inventario en unos segundos…</div>
+              <div className="text-xs text-[#6b7385] mt-2">Te llevamos a tu inventario en unos segundos…</div>
             </div>
           )}
         </div>

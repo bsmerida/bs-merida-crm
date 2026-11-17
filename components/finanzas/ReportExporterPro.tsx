@@ -885,7 +885,7 @@ export function ReportExporterPro({ data }: { data: ReportData }) {
         {exporting === "excel" ? "Generando..." : "Exportar Excel"}
       </button>
       <button onClick={exportPDF} disabled={exporting !== null}
-        className="flex items-center gap-1.5 px-4 py-2 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-full text-sm font-medium disabled:opacity-50">
+        className="flex items-center gap-1.5 px-4 py-2 bg-cream hover:bg-cream border border-gold/30 text-navy rounded-full text-sm font-medium disabled:opacity-50">
         {exporting === "pdf" ? (pdfStep || "Generando...") : "Reporte Ejecutivo PDF"}
       </button>
     </div>

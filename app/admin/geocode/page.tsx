@@ -66,9 +66,11 @@ export default function GeocodeBatchPage() {
   };
 
   return (
-    <div className="p-10 max-w-3xl">
-      <h1 className="text-2xl font-semibold text-ink tracking-tight">Geocodificar propiedades</h1>
-      <p className="text-sm text-ink-muted mt-2 mb-6">
+    <div className="p-4 md:p-6 max-w-3xl font-dmsans">
+      <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+          Geocodificar<em className="italic font-serif text-gold">.</em>
+        </h1>
+      <p className="text-[#6b7385] text-[15px] mt-2 mb-6">
         Busca automáticamente las coordenadas de todas las propiedades que no tienen mapa todavía.
         Solo se procesan las que no tienen lat/lng — las que ya tienen coordenadas no se tocan.
       </p>
@@ -76,7 +78,7 @@ export default function GeocodeBatchPage() {
       <button
         onClick={run}
         disabled={running}
-        className="px-6 py-3 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full font-medium"
+        className="px-6 py-3 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full font-medium"
       >
         {running ? "Procesando..." : "Iniciar geocodificación"}
       </button>
@@ -88,7 +90,7 @@ export default function GeocodeBatchPage() {
       )}
 
       {log.length > 0 && (
-        <div className="mt-6 bg-ink-ghost rounded-2xl p-4 h-96 overflow-y-auto font-mono text-xs text-ink space-y-1">
+        <div className="mt-6 bg-stone rounded-2xl p-4 h-96 overflow-y-auto font-mono text-xs text-navy space-y-1">
           {log.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       )}

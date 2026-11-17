@@ -140,23 +140,23 @@ export default function HistoricosPage() {
     load();
   };
 
-  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-3 py-2 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+  const inp = "w-full bg-stone border border-transparent rounded-xl px-3 py-2 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
 
   return (
     <div className="p-10 max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <a href="/admin/finanzas" className="text-sm text-ink-muted hover:text-ink mb-2 inline-flex items-center gap-1">← Finanzas</a>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Históricos financieros</h1>
-          <p className="text-sm text-ink-muted mt-0.5">Carga datos anteriores para análisis histórico y comparativas</p>
+          <a href="/admin/finanzas" className="text-sm text-[#6b7385] hover:text-navy mb-2 inline-flex items-center gap-1">← Finanzas</a>
+          <h1 className="font-serif text-navy text-2xl tracking-tight">Históricos financieros</h1>
+          <p className="text-sm text-[#6b7385] mt-0.5">Carga datos anteriores para análisis histórico y comparativas</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-stone p-1 rounded-xl w-fit">
         {[{ id: "ver", label: `Ver registros (${records.length})` }, { id: "manual", label: "Captura manual" }, { id: "importar", label: "Importar Excel" }].map((t: any) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-navy shadow-card" : "text-[#6b7385] hover:text-navy"}`}>
             {t.label}
           </button>
         ))}
@@ -164,29 +164,29 @@ export default function HistoricosPage() {
 
       {/* Ver registros */}
       {tab === "ver" && (
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+        <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
           {records.length === 0 ? (
             <div className="p-16 text-center">
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="font-semibold text-ink">Sin históricos cargados</h3>
-              <p className="text-sm text-ink-muted mt-2 max-w-sm mx-auto">Carga datos históricos para que la IA pueda analizar tendencias y comparar vs períodos anteriores.</p>
+              <h3 className="font-semibold text-navy">Sin históricos cargados</h3>
+              <p className="text-sm text-[#6b7385] mt-2 max-w-sm mx-auto">Carga datos históricos para que la IA pueda analizar tendencias y comparar vs períodos anteriores.</p>
               <button onClick={() => setTab("importar")}
-                className="mt-4 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium">
+                className="mt-4 px-5 py-2.5 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium">
                 Importar desde Excel
               </button>
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-ink-ghost/40 border-b border-ink-line">
+              <thead className="bg-stone/40 border-b border-stone">
                 <tr>{["Período", "Ingresos totales", "Utilidad op.", "Margen", "Operaciones", "Fuente", ""].map(h => (
-                  <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                  <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {records.map(r => (
-                  <tr key={r.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                    <td className="px-4 py-3 font-medium text-sm text-ink">{r.year}/{String(r.month).padStart(2, "0")} — {MONTHS[r.month - 1]} {r.year}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{fmt(r.ingreso_total)}</td>
+                  <tr key={r.id} className="border-b border-stone last:border-0 hover:bg-stone/30">
+                    <td className="px-4 py-3 font-medium text-sm text-navy">{r.year}/{String(r.month).padStart(2, "0")} — {MONTHS[r.month - 1]} {r.year}</td>
+                    <td className="px-4 py-3 text-sm text-navy">{fmt(r.ingreso_total)}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={r.utilidad_op >= 0 ? "text-emerald-600" : "text-red-500"}>{fmt(r.utilidad_op)}</span>
                     </td>
@@ -195,9 +195,9 @@ export default function HistoricosPage() {
                         {(r.margen_neto * 100).toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink-muted">{r.num_operaciones}</td>
+                    <td className="px-4 py-3 text-sm text-[#6b7385]">{r.num_operaciones}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${r.source === "importado" ? "bg-brand-50 text-brand-700" : "bg-ink-ghost text-ink-muted"}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${r.source === "importado" ? "bg-cream text-navy" : "bg-stone text-[#6b7385]"}`}>
                         {r.source}
                       </span>
                     </td>
@@ -214,56 +214,56 @@ export default function HistoricosPage() {
 
       {/* Captura manual */}
       {tab === "manual" && (
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-5">
-          <h3 className="font-semibold text-ink">Capturar mes histórico</h3>
+        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-5">
+          <h3 className="font-semibold text-navy">Capturar mes histórico</h3>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-xs text-ink-muted">Año</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Año</label><div className="mt-1.5">
               <input type="number" value={form.year} onChange={e => setForm({ ...form, year: Number(e.target.value) })} className={inp} />
             </div></div>
-            <div><label className="text-xs text-ink-muted">Mes</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Mes</label><div className="mt-1.5">
               <select value={form.month} onChange={e => setForm({ ...form, month: Number(e.target.value) })} className={inp}>
                 {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
               </select>
             </div></div>
           </div>
 
-          <div className="border-t border-ink-line pt-4">
-            <div className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">Ingresos</div>
+          <div className="border-t border-stone pt-4">
+            <div className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-3">Ingresos</div>
             <div className="grid grid-cols-3 gap-3">
-              <div><label className="text-xs text-ink-muted">Comisiones venta</label><div className="mt-1.5"><input type="number" value={form.ingreso_venta} onChange={e => setForm({ ...form, ingreso_venta: e.target.value })} placeholder="0" className={inp} /></div></div>
-              <div><label className="text-xs text-ink-muted">Comisiones renta</label><div className="mt-1.5"><input type="number" value={form.ingreso_renta} onChange={e => setForm({ ...form, ingreso_renta: e.target.value })} placeholder="0" className={inp} /></div></div>
-              <div><label className="text-xs text-ink-muted">Otros ingresos</label><div className="mt-1.5"><input type="number" value={form.ingreso_otro} onChange={e => setForm({ ...form, ingreso_otro: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Comisiones venta</label><div className="mt-1.5"><input type="number" value={form.ingreso_venta} onChange={e => setForm({ ...form, ingreso_venta: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Comisiones renta</label><div className="mt-1.5"><input type="number" value={form.ingreso_renta} onChange={e => setForm({ ...form, ingreso_renta: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Otros ingresos</label><div className="mt-1.5"><input type="number" value={form.ingreso_otro} onChange={e => setForm({ ...form, ingreso_otro: e.target.value })} placeholder="0" className={inp} /></div></div>
             </div>
           </div>
 
-          <div className="border-t border-ink-line pt-4">
-            <div className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">Gastos</div>
+          <div className="border-t border-stone pt-4">
+            <div className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-3">Gastos</div>
             <div className="grid grid-cols-4 gap-3">
-              <div><label className="text-xs text-ink-muted">Nómina</label><div className="mt-1.5"><input type="number" value={form.gasto_nomina} onChange={e => setForm({ ...form, gasto_nomina: e.target.value })} placeholder="0" className={inp} /></div></div>
-              <div><label className="text-xs text-ink-muted">Marketing</label><div className="mt-1.5"><input type="number" value={form.gasto_marketing} onChange={e => setForm({ ...form, gasto_marketing: e.target.value })} placeholder="0" className={inp} /></div></div>
-              <div><label className="text-xs text-ink-muted">Administrativo</label><div className="mt-1.5"><input type="number" value={form.gasto_admin} onChange={e => setForm({ ...form, gasto_admin: e.target.value })} placeholder="0" className={inp} /></div></div>
-              <div><label className="text-xs text-ink-muted">Otros gastos</label><div className="mt-1.5"><input type="number" value={form.gasto_otro} onChange={e => setForm({ ...form, gasto_otro: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Nómina</label><div className="mt-1.5"><input type="number" value={form.gasto_nomina} onChange={e => setForm({ ...form, gasto_nomina: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Marketing</label><div className="mt-1.5"><input type="number" value={form.gasto_marketing} onChange={e => setForm({ ...form, gasto_marketing: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Administrativo</label><div className="mt-1.5"><input type="number" value={form.gasto_admin} onChange={e => setForm({ ...form, gasto_admin: e.target.value })} placeholder="0" className={inp} /></div></div>
+              <div><label className="text-xs text-[#6b7385]">Otros gastos</label><div className="mt-1.5"><input type="number" value={form.gasto_otro} onChange={e => setForm({ ...form, gasto_otro: e.target.value })} placeholder="0" className={inp} /></div></div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-xs text-ink-muted">Número de operaciones cerradas</label><div className="mt-1.5"><input type="number" value={form.num_operaciones} onChange={e => setForm({ ...form, num_operaciones: e.target.value })} placeholder="0" className={inp} /></div></div>
-            <div><label className="text-xs text-ink-muted">Notas</label><div className="mt-1.5"><input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contexto del mes..." className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Número de operaciones cerradas</label><div className="mt-1.5"><input type="number" value={form.num_operaciones} onChange={e => setForm({ ...form, num_operaciones: e.target.value })} placeholder="0" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Notas</label><div className="mt-1.5"><input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Contexto del mes..." className={inp} /></div></div>
           </div>
 
           {/* Preview calculado */}
           {ingTotal() > 0 && (
-            <div className="bg-ink-ghost rounded-2xl p-4 grid grid-cols-3 gap-4 text-center">
-              <div><div className="text-xs text-ink-muted">Ingresos totales</div><div className="text-lg font-semibold text-ink mt-1">{fmt(ingTotal())}</div></div>
-              <div><div className="text-xs text-ink-muted">Utilidad operativa</div><div className={`text-lg font-semibold mt-1 ${utilOp() >= 0 ? "text-emerald-600" : "text-red-500"}`}>{fmt(utilOp())}</div></div>
-              <div><div className="text-xs text-ink-muted">Margen neto</div><div className={`text-lg font-semibold mt-1 ${margen() >= 0 ? "text-emerald-600" : "text-red-500"}`}>{(margen() * 100).toFixed(1)}%</div></div>
+            <div className="bg-stone rounded-2xl p-4 grid grid-cols-3 gap-4 text-center">
+              <div><div className="text-xs text-[#6b7385]">Ingresos totales</div><div className="text-lg font-semibold text-navy mt-1">{fmt(ingTotal())}</div></div>
+              <div><div className="text-xs text-[#6b7385]">Utilidad operativa</div><div className={`text-lg font-semibold mt-1 ${utilOp() >= 0 ? "text-emerald-600" : "text-red-500"}`}>{fmt(utilOp())}</div></div>
+              <div><div className="text-xs text-[#6b7385]">Margen neto</div><div className={`text-lg font-semibold mt-1 ${margen() >= 0 ? "text-emerald-600" : "text-red-500"}`}>{(margen() * 100).toFixed(1)}%</div></div>
             </div>
           )}
 
           <div className="flex justify-end">
             <button onClick={save} disabled={saving}
-              className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full text-sm font-medium">
+              className="px-5 py-2.5 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full text-sm font-medium">
               {saving ? "Guardando..." : "Guardar mes"}
             </button>
           </div>
@@ -272,29 +272,29 @@ export default function HistoricosPage() {
 
       {/* Importar Excel */}
       {tab === "importar" && (
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-5">
-          <h3 className="font-semibold text-ink">Importar desde Excel</h3>
+        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-5">
+          <h3 className="font-semibold text-navy">Importar desde Excel</h3>
 
-          <div className="bg-brand-50 border border-brand-200 rounded-2xl p-4 text-sm text-brand-800 space-y-2">
+          <div className="bg-cream border border-gold/30 rounded-2xl p-4 text-sm text-navy space-y-2">
             <div className="font-semibold">Formato esperado del Excel:</div>
             <div>Tu archivo debe tener estas columnas (los nombres pueden variar):</div>
             <div className="grid grid-cols-2 gap-1 text-xs mt-2">
               {["Año / Year", "Mes / Month (número 1-12)", "Venta (ingresos de venta)", "Renta (ingresos de renta)", "Ingresos Total (opcional)", "Gastos Total (opcional)", "Utilidad (opcional)", "Operaciones (opcional)"].map(c => (
-                <div key={c} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-brand-500 rounded-full flex-shrink-0"></span>{c}</div>
+                <div key={c} className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-navy rounded-full flex-shrink-0"></span>{c}</div>
               ))}
             </div>
-            <div className="text-xs text-brand-600 mt-2">Si Ingresos Total no está, se calcula como Venta + Renta. Si Gastos Total no está, queda en 0 (puedes editarlo después).</div>
+            <div className="text-xs text-gold mt-2">Si Ingresos Total no está, se calcula como Venta + Renta. Si Gastos Total no está, queda en 0 (puedes editarlo después).</div>
           </div>
 
           <div>
             <input type="file" accept=".xlsx,.xls,.csv" id="excel-upload" className="hidden"
               onChange={e => e.target.files?.[0] && importFromExcel(e.target.files[0])} />
             <label htmlFor="excel-upload"
-              className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-2xl py-12 cursor-pointer transition ${importing ? "border-brand-300 bg-brand-50" : "border-ink-line hover:border-brand-300 hover:bg-brand-50/30"}`}>
+              className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-2xl py-12 cursor-pointer transition ${importing ? "border-navy/30 bg-cream" : "border-stone hover:border-navy/30 hover:bg-cream/30"}`}>
               {importing ? (
-                <><div className="text-2xl mb-2">⏳</div><div className="text-sm text-brand-700 font-medium">Procesando Excel...</div></>
+                <><div className="text-2xl mb-2">⏳</div><div className="text-sm text-navy font-medium">Procesando Excel...</div></>
               ) : (
-                <><div className="text-3xl mb-3">📂</div><div className="text-sm text-ink font-medium">Clic para seleccionar tu Excel histórico</div><div className="text-xs text-ink-muted mt-1">.xlsx, .xls o .csv</div></>
+                <><div className="text-3xl mb-3">📂</div><div className="text-sm text-navy font-medium">Clic para seleccionar tu Excel histórico</div><div className="text-xs text-[#6b7385] mt-1">.xlsx, .xls o .csv</div></>
               )}
             </label>
           </div>

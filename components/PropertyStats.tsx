@@ -41,10 +41,10 @@ export function PropertyStats({ propertyId }: { propertyId: string }) {
   }, [propertyId]);
 
   if (!stats) return (
-    <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 animate-pulse">
-      <div className="h-4 bg-ink-ghost rounded w-32 mb-4"></div>
+    <div className="bg-white rounded-2xl border border-stone shadow-card p-6 animate-pulse">
+      <div className="h-4 bg-stone rounded w-32 mb-4"></div>
       <div className="grid grid-cols-3 gap-4">
-        {[1,2,3].map(i => <div key={i} className="h-16 bg-ink-ghost rounded-xl"></div>)}
+        {[1,2,3].map(i => <div key={i} className="h-16 bg-stone rounded-xl"></div>)}
       </div>
     </div>
   );
@@ -54,28 +54,28 @@ export function PropertyStats({ propertyId }: { propertyId: string }) {
     : "0";
 
   return (
-    <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-      <h3 className="font-semibold text-ink">📊 Estadísticas</h3>
+    <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+      <h3 className="font-semibold text-navy">📊 Estadísticas</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-ink-ghost rounded-xl p-4 text-center">
-          <div className="text-2xl font-semibold text-ink">{stats.views_total}</div>
-          <div className="text-xs text-ink-muted mt-1">Vistas totales</div>
+        <div className="bg-stone rounded-xl p-4 text-center">
+          <div className="text-2xl font-semibold text-navy">{stats.views_total}</div>
+          <div className="text-xs text-[#6b7385] mt-1">Vistas totales</div>
         </div>
-        <div className="bg-ink-ghost rounded-xl p-4 text-center">
-          <div className="text-2xl font-semibold text-ink">{stats.views_7d}</div>
-          <div className="text-xs text-ink-muted mt-1">Vistas (7 días)</div>
+        <div className="bg-stone rounded-xl p-4 text-center">
+          <div className="text-2xl font-semibold text-navy">{stats.views_7d}</div>
+          <div className="text-xs text-[#6b7385] mt-1">Vistas (7 días)</div>
         </div>
-        <div className="bg-ink-ghost rounded-xl p-4 text-center">
-          <div className="text-2xl font-semibold text-ink">{stats.inquiries_total}</div>
-          <div className="text-xs text-ink-muted mt-1">Solicitudes totales</div>
+        <div className="bg-stone rounded-xl p-4 text-center">
+          <div className="text-2xl font-semibold text-navy">{stats.inquiries_total}</div>
+          <div className="text-xs text-[#6b7385] mt-1">Solicitudes totales</div>
         </div>
-        <div className="bg-brand-50 rounded-xl p-4 text-center">
-          <div className="text-2xl font-semibold text-brand-600">{conversion}%</div>
-          <div className="text-xs text-ink-muted mt-1">Conversión</div>
+        <div className="bg-cream rounded-xl p-4 text-center">
+          <div className="text-2xl font-semibold text-gold">{conversion}%</div>
+          <div className="text-xs text-[#6b7385] mt-1">Conversión</div>
         </div>
       </div>
       {stats.views_30d > 0 && (
-        <p className="text-xs text-ink-muted">
+        <p className="text-xs text-[#6b7385]">
           {stats.views_30d} vistas en los últimos 30 días · {stats.inquiries_7d} solicitudes esta semana
         </p>
       )}

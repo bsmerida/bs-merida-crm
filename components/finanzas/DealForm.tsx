@@ -180,14 +180,14 @@ export function DealForm({
     onClose();
   };
 
-  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+  const inp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
   const pctField = (label: string, field: keyof FormState) => (
     <div>
-      <label className="text-xs text-ink-muted">{label}</label>
+      <label className="text-xs text-[#6b7385]">{label}</label>
       <div className="mt-1.5 flex gap-2 items-center">
         <input type="number" step="0.01" min="0" max="1" value={form[field]}
           onChange={e => set(field, e.target.value)} className={`${inp} flex-1`} />
-        <span className="text-sm text-ink-muted w-10 text-right">{(Number(form[field]) * 100).toFixed(0)}%</span>
+        <span className="text-sm text-[#6b7385] w-10 text-right">{(Number(form[field]) * 100).toFixed(0)}%</span>
       </div>
     </div>
   );
@@ -195,11 +195,11 @@ export function DealForm({
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-ink-line flex items-center justify-between sticky top-0 bg-white z-10">
-          <h2 className="font-semibold text-ink text-lg">
+        <div className="p-6 border-b border-stone flex items-center justify-between sticky top-0 bg-white z-10">
+          <h2 className="font-semibold text-navy text-lg">
             {isEditing ? "Editar operación" : "Registrar operación"}
           </h2>
-          <button onClick={onClose} className="text-ink-muted hover:text-ink text-xl">×</button>
+          <button onClick={onClose} className="text-[#6b7385] hover:text-navy text-xl">×</button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -207,7 +207,7 @@ export function DealForm({
           {/* Tipo de operación y deal */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-ink-muted">Tipo de operación</label>
+              <label className="text-xs text-[#6b7385]">Tipo de operación</label>
               <div className="mt-1.5">
                 <select value={form.operation_type} onChange={e => set("operation_type", e.target.value)} className={inp}>
                   <option value="venta">Venta</option>
@@ -216,7 +216,7 @@ export function DealForm({
               </div>
             </div>
             <div>
-              <label className="text-xs text-ink-muted">Estructura del deal</label>
+              <label className="text-xs text-[#6b7385]">Estructura del deal</label>
               <div className="mt-1.5">
                 <select value={form.deal_type} onChange={e => set("deal_type", e.target.value)} className={inp}>
                   {DEAL_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -228,7 +228,7 @@ export function DealForm({
           {/* Propiedad y cliente */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-ink-muted">Propiedad</label>
+              <label className="text-xs text-[#6b7385]">Propiedad</label>
               <div className="mt-1.5">
                 <select value={form.property_id} onChange={e => {
                   const p = properties.find(x => x.id === e.target.value);
@@ -241,7 +241,7 @@ export function DealForm({
               </div>
             </div>
             <div>
-              <label className="text-xs text-ink-muted">Cliente</label>
+              <label className="text-xs text-[#6b7385]">Cliente</label>
               <div className="mt-1.5">
                 <select value={form.lead_id} onChange={e => set("lead_id", e.target.value)} className={inp}>
                   <option value="">— Sin cliente</option>
@@ -254,7 +254,7 @@ export function DealForm({
           {/* Valor y comisión */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-ink-muted">
+              <label className="text-xs text-[#6b7385]">
                 {isRenta ? "Renta mensual (MXN) *" : "Valor de la operación (MXN) *"}
               </label>
               <div className="mt-1.5">
@@ -265,12 +265,12 @@ export function DealForm({
             </div>
             {isRenta ? (
               <div>
-                <label className="text-xs text-ink-muted">Honorarios de renta (MXN) *</label>
-                <div className="mt-1.5 bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5 text-sm text-brand-700 flex items-center justify-between">
+                <label className="text-xs text-[#6b7385]">Honorarios de renta (MXN) *</label>
+                <div className="mt-1.5 bg-cream border border-gold/20 rounded-xl px-4 py-2.5 text-sm text-navy flex items-center justify-between">
                   <span>{tv > 0 ? fmtMXN(tv) : "—"}</span>
-                  <span className="text-xs text-brand-500">= monto de renta ingresado</span>
+                  <span className="text-xs text-gold">= monto de renta ingresado</span>
                 </div>
-                <p className="text-[10px] text-ink-muted mt-1">Para rentas, el honorario es el total de la renta (generalmente 1 mes).</p>
+                <p className="text-[10px] text-[#6b7385] mt-1">Para rentas, el honorario es el total de la renta (generalmente 1 mes).</p>
               </div>
             ) : (
               pctField("% Comisión bruta *", "commission_rate")
@@ -283,7 +283,7 @@ export function DealForm({
               <p className="text-xs font-semibold text-orange-700 uppercase tracking-wider">Comisión compartida con otra inmobiliaria</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-ink-muted">Nombre de la otra inmobiliaria</label>
+                  <label className="text-xs text-[#6b7385]">Nombre de la otra inmobiliaria</label>
                   <input value={form.shared_agency_name}
                     onChange={e => set("shared_agency_name", e.target.value)}
                     placeholder="Ej. Inmobiliaria XYZ" className={`${inp} mt-1.5`} />
@@ -305,7 +305,7 @@ export function DealForm({
               <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Referido externo</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-ink-muted">Nombre del referido</label>
+                  <label className="text-xs text-[#6b7385]">Nombre del referido</label>
                   <input value={form.referral_name}
                     onChange={e => set("referral_name", e.target.value)}
                     placeholder="Ej. Carlos García" className={`${inp} mt-1.5`} />
@@ -317,11 +317,11 @@ export function DealForm({
 
           {/* Asesores internos */}
           {["asesor_solo", "asesor_compartida"].includes(form.deal_type) && (
-            <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-semibold text-brand-700 uppercase tracking-wider">Asesor(es) interno(s)</p>
+            <div className="bg-cream border border-gold/20 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-navy uppercase tracking-wider">Asesor(es) interno(s)</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-ink-muted">Asesor principal</label>
+                  <label className="text-xs text-[#6b7385]">Asesor principal</label>
                   <select value={form.agent_id} onChange={e => set("agent_id", e.target.value)} className={`${inp} mt-1.5`}>
                     <option value="">— Seleccionar</option>
                     {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
@@ -332,7 +332,7 @@ export function DealForm({
               {form.deal_type === "asesor_compartida" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-ink-muted">Segundo asesor</label>
+                    <label className="text-xs text-[#6b7385]">Segundo asesor</label>
                     <select value={form.agent2_id} onChange={e => set("agent2_id", e.target.value)} className={`${inp} mt-1.5`}>
                       <option value="">— Seleccionar</option>
                       {agents.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
@@ -346,18 +346,18 @@ export function DealForm({
 
           {/* Desglose de comisión en tiempo real */}
           {tv > 0 && (
-            <div className="bg-ink-ghost rounded-2xl p-4">
-              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">
+            <div className="bg-stone rounded-2xl p-4">
+              <p className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-3">
               {isRenta ? "Distribución del honorario de renta" : "Desglose de la comisión"}
             </p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-muted">{isRenta ? "Renta mensual" : "Valor de la operación"}</span>
-                  <span className="font-medium text-ink">{fmtMXN(tv)}</span>
+                  <span className="text-[#6b7385]">{isRenta ? "Renta mensual" : "Valor de la operación"}</span>
+                  <span className="font-medium text-navy">{fmtMXN(tv)}</span>
                 </div>
-                <div className="flex justify-between text-sm border-t border-ink-line pt-2">
-                  <span className="text-ink-muted">{isRenta ? "Honorario total (100% de la renta)" : `Comisión bruta (${(rate * 100).toFixed(1)}%)`}</span>
-                  <span className="font-medium text-ink">{fmtMXN(gross)}</span>
+                <div className="flex justify-between text-sm border-t border-stone pt-2">
+                  <span className="text-[#6b7385]">{isRenta ? "Honorario total (100% de la renta)" : `Comisión bruta (${(rate * 100).toFixed(1)}%)`}</span>
+                  <span className="font-medium text-navy">{fmtMXN(gross)}</span>
                 </div>
                 {sharedAmt > 0 && (
                   <div className="flex justify-between text-sm text-orange-600">
@@ -372,23 +372,23 @@ export function DealForm({
                   </div>
                 )}
                 {agentAmt > 0 && (
-                  <div className="flex justify-between text-sm text-brand-600">
+                  <div className="flex justify-between text-sm text-gold">
                     <span>− Asesor principal ({(agentPct * 100).toFixed(0)}%)</span>
                     <span>− {fmtMXN(agentAmt)}</span>
                   </div>
                 )}
                 {agent2Amt > 0 && (
-                  <div className="flex justify-between text-sm text-brand-600">
+                  <div className="flex justify-between text-sm text-gold">
                     <span>− Segundo asesor ({(agent2Pct * 100).toFixed(0)}%)</span>
                     <span>− {fmtMXN(agent2Amt)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-base font-semibold border-t border-ink-line pt-2">
-                  <span className="text-ink">Ingreso neto de la empresa</span>
+                <div className="flex justify-between text-base font-semibold border-t border-stone pt-2">
+                  <span className="text-navy">Ingreso neto de la empresa</span>
                   <span className={netAmt >= 0 ? "text-emerald-600" : "text-red-500"}>{fmtMXN(netAmt)}</span>
                 </div>
                 {gross > 0 && (
-                  <p className="text-[11px] text-ink-muted text-right">
+                  <p className="text-[11px] text-[#6b7385] text-right">
                     Margen real: {((netAmt / tv) * 100).toFixed(2)}% sobre el valor de la operación
                   </p>
                 )}
@@ -399,19 +399,19 @@ export function DealForm({
           {/* Fechas, cobro y estado */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-ink-muted">Fecha de cierre *</label>
+              <label className="text-xs text-[#6b7385]">Fecha de cierre *</label>
               <input type="date" value={form.closing_date}
                 onChange={e => set("closing_date", e.target.value)} className={`${inp} mt-1.5`} />
             </div>
             <div>
-              <label className="text-xs text-ink-muted">Fecha esperada de cobro</label>
+              <label className="text-xs text-[#6b7385]">Fecha esperada de cobro</label>
               <input type="date" value={form.expected_collection_date}
                 onChange={e => set("expected_collection_date", e.target.value)} className={`${inp} mt-1.5`} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-ink-muted">Estado de cobro</label>
+              <label className="text-xs text-[#6b7385]">Estado de cobro</label>
               <select value={form.status} onChange={e => set("status", e.target.value)} className={`${inp} mt-1.5`}>
                 <option value="pendiente">Pendiente</option>
                 <option value="parcial">Cobro parcial</option>
@@ -421,7 +421,7 @@ export function DealForm({
             </div>
             {(form.status === "parcial" || form.status === "cobrado") && (
               <div>
-                <label className="text-xs text-ink-muted">Monto cobrado hasta ahora</label>
+                <label className="text-xs text-[#6b7385]">Monto cobrado hasta ahora</label>
                 <input type="number" value={form.amount_collected}
                   onChange={e => set("amount_collected", e.target.value)}
                   placeholder={fmtMXN(gross)} className={`${inp} mt-1.5`} />
@@ -430,18 +430,18 @@ export function DealForm({
           </div>
 
           <div>
-            <label className="text-xs text-ink-muted">Notas</label>
+            <label className="text-xs text-[#6b7385]">Notas</label>
             <textarea rows={2} value={form.notes}
               onChange={e => set("notes", e.target.value)} className={`${inp} resize-none mt-1.5`} />
           </div>
         </div>
 
-        <div className="p-6 border-t border-ink-line flex justify-end gap-3 sticky bottom-0 bg-white">
-          <button onClick={onClose} className="px-5 py-2.5 border border-ink-line text-ink rounded-full text-sm hover:bg-ink-ghost">
+        <div className="p-6 border-t border-stone flex justify-end gap-3 sticky bottom-0 bg-white">
+          <button onClick={onClose} className="px-5 py-2.5 border border-stone text-navy rounded-full text-sm hover:bg-stone">
             Cancelar
           </button>
           <button onClick={save} disabled={saving}
-            className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white rounded-full text-sm font-medium">
+            className="px-5 py-2.5 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full text-sm font-medium">
             {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Registrar operación"}
           </button>
         </div>

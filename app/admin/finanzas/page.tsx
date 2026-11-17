@@ -48,12 +48,12 @@ const STATUS_COLORS: Record<string, string> = {
   cancelado: "bg-red-50 text-red-600",
 };
 
-function KPICard({ label, value, sub, color = "text-ink" }: { label: string; value: string; sub?: string; color?: string }) {
+function KPICard({ label, value, sub, color = "text-navy" }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
-      <div className="text-xs text-ink-muted">{label}</div>
+    <div className="bg-white rounded-2xl border border-stone shadow-card p-5">
+      <div className="text-xs text-[#6b7385]">{label}</div>
       <div className={`text-2xl font-semibold mt-2 tracking-tight ${color}`}>{value}</div>
-      {sub && <div className="text-xs text-ink-muted mt-1">{sub}</div>}
+      {sub && <div className="text-xs text-[#6b7385] mt-1">{sub}</div>}
     </div>
   );
 }
@@ -62,10 +62,10 @@ function HBar({ label, value, max, color = "#5E4B8E" }: { label: string; value: 
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
-        <span className="text-ink">{label}</span>
-        <span className="text-ink-muted font-medium">{fmtMXN(value)}</span>
+        <span className="text-navy">{label}</span>
+        <span className="text-[#6b7385] font-medium">{fmtMXN(value)}</span>
       </div>
-      <div className="h-2 bg-ink-ghost rounded-full overflow-hidden">
+      <div className="h-2 bg-stone rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${(value / max) * 100}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -483,7 +483,7 @@ export default function FinanzasPage() {
   const cxpTotalMes  = billsProc.filter((b: any) => b.fecha_vencimiento?.startsWith(hoyStr.slice(0,7))).reduce((s: number, b: any) => s + Number(b.monto), 0);
   const ESTADOS_CXP: Record<string, string> = { pendiente: "bg-amber-50 text-amber-700", pagado: "bg-emerald-50 text-emerald-700", vencido: "bg-red-50 text-red-700" };
   const CATS_CXP = ["Renta oficina","Servicios","Marketing","Legal","Nómina","Tecnología","Mantenimiento","Otro"];
-  const cxpInp = "w-full border border-ink-line rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-300";
+  const cxpInp = "w-full border border-stone rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-navy/30";
   const pagarBill = async (id: string) => { await supabase.from("cuentas_por_pagar").update({ estado: "pagado" }).eq("id", id); setRefresh(r => r + 1); };
   const borrarBill = async (id: string) => { if (!confirm("¿Eliminar?")) return; await supabase.from("cuentas_por_pagar").delete().eq("id", id); setRefresh(r => r + 1); };
   const guardarBill = async () => {
@@ -496,24 +496,26 @@ export default function FinanzasPage() {
 
   if (loading) return (
     <div className="p-10 flex items-center justify-center h-64">
-      <div className="text-ink-muted text-sm">Cargando datos financieros...</div>
+      <div className="text-[#6b7385] text-sm">Cargando datos financieros...</div>
     </div>
   );
 
   return (
-    <div className="p-10 space-y-6 max-w-7xl">
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl font-dmsans">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Finanzas</h1>
-          <p className="text-sm text-ink-muted mt-0.5">Módulo financiero BS Mérida</p>
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Finanzas<em className="italic font-serif text-gold">.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">Módulo financiero BS Mérida</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Selector de período */}
-          <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl">
+          <div className="flex gap-1 bg-stone p-1 rounded-xl">
             {PERIODOS.map(p => (
               <button key={p.value} onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${period === p.value ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${period === p.value ? "bg-white text-navy shadow-card" : "text-[#6b7385] hover:text-navy"}`}>
                 {p.label}
               </button>
             ))}
@@ -525,25 +527,25 @@ export default function FinanzasPage() {
             pipelineData: pipelineStages, totalLeads: leads.length, history: historialData,
           }} />
           <a href="/admin/finanzas/historicos"
-            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
+            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-stone text-navy rounded-full text-sm hover:border-stone">
             Históricos
           </a>
           <button onClick={() => setShowExpenseForm(true)}
-            className="px-4 py-2 bg-white border border-ink-line text-ink rounded-full text-sm hover:border-ink-soft">
+            className="px-4 py-2 bg-white border border-stone text-navy rounded-full text-sm hover:border-stone">
             + Gasto
           </button>
           <button onClick={() => setShowDealForm(true)}
-            className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium">
+            className="px-4 py-2 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium">
             + Operación
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-ink-ghost p-1 rounded-xl w-fit flex-wrap">
+      <div className="flex gap-1 bg-stone p-1 rounded-xl w-fit flex-wrap">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-ink shadow-card" : "text-ink-muted hover:text-ink"}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-navy shadow-card" : "text-[#6b7385] hover:text-navy"}`}>
             {t.label}
           </button>
         ))}
@@ -553,11 +555,11 @@ export default function FinanzasPage() {
       {tab === "pnl" && (
         <div className="space-y-6">
           {/* Semáforo de metas */}
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
+          <div className="bg-white rounded-2xl border border-stone shadow-card p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-ink">Semáforo de metas</h3>
-                <p className="text-xs text-ink-muted mt-0.5">
+                <h3 className="font-semibold text-navy">Semáforo de metas</h3>
+                <p className="text-xs text-[#6b7385] mt-0.5">
                   {numMonths === 1
                     ? `Mes actual · ${new Date().toLocaleDateString("es-MX", { month: "long", year: "numeric" })}`
                     : `${numMonths} meses · las metas se definen mensualmente y se suman`}
@@ -566,7 +568,7 @@ export default function FinanzasPage() {
               <button
                 onClick={() => editingMetas ? saveMetas() : setEditingMetas(true)}
                 disabled={savingMetas}
-                className="text-xs text-brand-600 hover:underline px-3 py-1.5 border border-brand-200 rounded-full disabled:opacity-50">
+                className="text-xs text-gold hover:underline px-3 py-1.5 border border-gold/30 rounded-full disabled:opacity-50">
                 {savingMetas ? "Guardando..." : editingMetas ? (
                   <span className="flex items-center gap-1.5">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -582,7 +584,7 @@ export default function FinanzasPage() {
             </div>
 
             {editingMetas && (
-              <div className="mb-4 bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5 text-xs text-brand-700">
+              <div className="mb-4 bg-cream border border-gold/20 rounded-xl px-4 py-2.5 text-xs text-navy">
                 {numMonths === 1
                   ? "Define la meta para este mes. Se guardará en la base de datos."
                   : `Defines la meta mensual. Se guardará igual en los ${numMonths} meses del período y el total será ×${numMonths}.`}
@@ -603,26 +605,26 @@ export default function FinanzasPage() {
                 const bad  = pct !== null && (invertido ? pct > 115 : pct < 70);
                 const semaforo = ok ? "ok" : warn ? "warn" : bad ? "bad" : "none";
                 return (
-                  <div key={key} className={`rounded-xl border p-4 ${ok ? "border-emerald-200 bg-emerald-50" : warn ? "border-amber-200 bg-amber-50" : bad ? "border-red-200 bg-red-50" : "border-ink-line bg-white"}`}>
+                  <div key={key} className={`rounded-xl border p-4 ${ok ? "border-emerald-200 bg-emerald-50" : warn ? "border-amber-200 bg-amber-50" : bad ? "border-red-200 bg-red-50" : "border-stone bg-white"}`}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-ink-muted">{label}</span>
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${semaforo === "ok" ? "bg-emerald-100 text-emerald-700" : semaforo === "warn" ? "bg-amber-100 text-amber-700" : semaforo === "bad" ? "bg-red-100 text-red-600" : "bg-ink-ghost text-ink-soft"}`}>{semaforo === "ok" ? "✓" : semaforo === "warn" ? "!" : semaforo === "bad" ? "✗" : "·"}</span>
+                      <span className="text-xs text-[#6b7385]">{label}</span>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${semaforo === "ok" ? "bg-emerald-100 text-emerald-700" : semaforo === "warn" ? "bg-amber-100 text-amber-700" : semaforo === "bad" ? "bg-red-100 text-red-600" : "bg-stone text-[#6b7385]"}`}>{semaforo === "ok" ? "✓" : semaforo === "warn" ? "!" : semaforo === "bad" ? "✗" : "·"}</span>
                     </div>
-                    <div className={`text-xl font-semibold tracking-tight ${ok ? "text-emerald-700" : warn ? "text-amber-700" : bad ? "text-red-600" : "text-ink"}`}>
+                    <div className={`text-xl font-semibold tracking-tight ${ok ? "text-emerald-700" : warn ? "text-amber-700" : bad ? "text-red-600" : "text-navy"}`}>
                       {fmt(real)}
                     </div>
                     {editingMetas ? (
                       <div className="mt-2">
-                        <p className="text-[10px] text-ink-muted mb-1">Meta {numMonths > 1 ? "mensual" : "del mes"}</p>
+                        <p className="text-[10px] text-[#6b7385] mb-1">Meta {numMonths > 1 ? "mensual" : "del mes"}</p>
                         <input
                           type="number" min="0"
                           placeholder="Ej. 150000"
                           value={metasMensuales[key] || ""}
                           onChange={e => setMetasMensuales(m => ({ ...m, [key]: Number(e.target.value) }))}
-                          className="w-full text-xs border border-ink-line rounded-lg px-2 py-1.5 text-ink focus:outline-none focus:border-brand-400"
+                          className="w-full text-xs border border-stone rounded-lg px-2 py-1.5 text-navy focus:outline-none focus:border-navy/40"
                         />
                         {numMonths > 1 && metasMensuales[key] > 0 && key !== "margen" && (
-                          <p className="text-[10px] text-brand-600 mt-1">Total período: {fmtMXN(metasMensuales[key] * numMonths)}</p>
+                          <p className="text-[10px] text-gold mt-1">Total período: {fmtMXN(metasMensuales[key] * numMonths)}</p>
                         )}
                       </div>
                     ) : (
@@ -633,13 +635,13 @@ export default function FinanzasPage() {
                               <div className={`h-full rounded-full transition-all ${ok ? "bg-emerald-500" : warn ? "bg-amber-400" : "bg-red-400"}`}
                                 style={{ width: `${Math.min(pct || 0, 100)}%` }} />
                             </div>
-                            <p className="text-[10px] text-ink-muted mt-1">
+                            <p className="text-[10px] text-[#6b7385] mt-1">
                               {pct?.toFixed(0)}% de {fmt(meta)}
                               {numMonths > 1 && key !== "margen" && <span className="ml-1">({fmtMXN(metasMensuales[key])}/mes)</span>}
                             </p>
                           </>
                         ) : (
-                          <p className="text-[10px] text-ink-muted">Sin meta — clic en Editar</p>
+                          <p className="text-[10px] text-[#6b7385]">Sin meta — clic en Editar</p>
                         )}
                       </div>
                     )}
@@ -651,8 +653,8 @@ export default function FinanzasPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Estado de resultados */}
-            <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-              <h3 className="font-semibold text-ink mb-5">Estado de resultados</h3>
+            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+              <h3 className="font-semibold text-navy mb-5">Estado de resultados</h3>
               <div className="space-y-3">
                 {[
                   { label: "Comisiones de venta",                     value: ingresoVenta,     type: "ingreso" },
@@ -668,10 +670,10 @@ export default function FinanzasPage() {
                   { label: "Utilidad operativa (EBIT)", value: utilidadOp, type: "total" },
                 ].map((row, i) => (
                   <div key={i} className={`flex justify-between text-sm py-1.5 ${
-                    row.type === "total" ? "font-semibold border-t border-ink-line pt-3 mt-1" :
-                    row.type === "subtotal" ? "font-medium border-t border-dashed border-ink-line pt-2" : ""
+                    row.type === "total" ? "font-semibold border-t border-stone pt-3 mt-1" :
+                    row.type === "subtotal" ? "font-medium border-t border-dashed border-stone pt-2" : ""
                   }`}>
-                    <span className={row.type === "gasto" ? "text-ink-muted pl-4" : "text-ink"}>{row.label}</span>
+                    <span className={row.type === "gasto" ? "text-[#6b7385] pl-4" : "text-navy"}>{row.label}</span>
                     <span className={row.value >= 0 ? "text-emerald-600" : "text-red-500"}>{fmtMXN(Math.abs(row.value))}</span>
                   </div>
                 ))}
@@ -679,15 +681,15 @@ export default function FinanzasPage() {
             </div>
 
             {/* Desglose visual */}
-            <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-              <h3 className="font-semibold text-ink mb-5">Estructura de ingresos y gastos</h3>
+            <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+              <h3 className="font-semibold text-navy mb-5">Estructura de ingresos y gastos</h3>
               <div className="space-y-4">
                 {ingresoTotal > 0 && (
                   <>
-                    <div className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Ingresos</div>
+                    <div className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">Ingresos</div>
                     {ingresoVenta > 0 && <HBar label="Comisiones venta" value={ingresoVenta} max={ingresoTotal} color="#10B981" />}
                     {ingresoRenta > 0 && <HBar label="Comisiones renta" value={ingresoRenta} max={ingresoTotal} color="#34D399" />}
-                    <div className="text-xs font-semibold text-ink-muted uppercase tracking-wider mt-4">Gastos</div>
+                    <div className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mt-4">Gastos</div>
                     {gastoCompartida > 0 && <HBar label="Compartida (otra inmob.)" value={gastoCompartida} max={ingresoTotal} color="#F97316" />}
                     {gastoReferidos > 0 && <HBar label="Referidos externos" value={gastoReferidos} max={ingresoTotal} color="#FB923C" />}
                     {gastoAsesores > 0 && <HBar label="Asesores internos" value={gastoAsesores} max={ingresoTotal} color="#EF4444" />}
@@ -697,7 +699,7 @@ export default function FinanzasPage() {
                   </>
                 )}
                 {ingresoTotal === 0 && (
-                  <div className="text-sm text-ink-muted text-center py-8">Sin operaciones en este período.</div>
+                  <div className="text-sm text-[#6b7385] text-center py-8">Sin operaciones en este período.</div>
                 )}
               </div>
             </div>
@@ -713,14 +715,14 @@ export default function FinanzasPage() {
             <KPICard label="Entradas acumuladas (12m)" value={fmtMXN(flujoMeses.reduce((s, m) => s + m.entradas, 0))} color="text-emerald-600" />
             <KPICard label="Salidas acumuladas (12m)" value={fmtMXN(flujoMeses.reduce((s, m) => s + m.salidas, 0))} color="text-red-500" />
             <KPICard label="Flujo neto (12m)" value={fmtMXN(flujoMeses.reduce((s, m) => s + m.neto, 0))} color={flujoMeses.reduce((s, m) => s + m.neto, 0) >= 0 ? "text-emerald-600" : "text-red-500"} />
-            <KPICard label="Saldo acumulado" value={fmtMXN(flujoMeses[flujoMeses.length - 1]?.acumulado || 0)} color="text-brand-600" />
+            <KPICard label="Saldo acumulado" value={fmtMXN(flujoMeses[flujoMeses.length - 1]?.acumulado || 0)} color="text-gold" />
           </div>
 
           {/* Gráfica de barras entradas vs salidas */}
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-ink">Entradas vs Salidas — últimos 12 meses</h3>
-              <div className="flex items-center gap-4 text-xs text-ink-muted">
+              <h3 className="font-semibold text-navy">Entradas vs Salidas — últimos 12 meses</h3>
+              <div className="flex items-center gap-4 text-xs text-[#6b7385]">
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block"></span>Entradas</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400 inline-block"></span>Salidas</span>
               </div>
@@ -728,7 +730,7 @@ export default function FinanzasPage() {
             <div className="flex items-end gap-1" style={{ height: 160 }}>
               {flujoMeses.map(m => (
                 <div key={m.mes} className="flex-1 flex items-end gap-[2px] group relative">
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-ink text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 text-center">
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-navy text-white text-[10px] px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 text-center">
                     {m.label}<br/>E: {fmtMXN(m.entradas)}<br/>S: {fmtMXN(m.salidas)}
                   </div>
                   <div className="flex-1 rounded-t-sm bg-emerald-400 hover:bg-emerald-500 transition"
@@ -741,34 +743,34 @@ export default function FinanzasPage() {
             <div className="flex gap-1 mt-2">
               {flujoMeses.map(m => (
                 <div key={m.mes} className="flex-1 text-center">
-                  <span className="text-[9px] text-ink-muted block">{m.label}</span>
+                  <span className="text-[9px] text-[#6b7385] block">{m.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Tabla detalle mensual */}
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line">
-              <h3 className="font-semibold text-ink">Flujo mensual detallado</h3>
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="p-5 border-b border-stone">
+              <h3 className="font-semibold text-navy">Flujo mensual detallado</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                <thead className="bg-stone/40 border-b border-stone">
                   <tr>{["Mes", "Entradas", "Salidas", "Flujo neto", "Flujo acumulado"].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-5 py-3">{h}</th>
+                    <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-5 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
                   {[...flujoMeses].reverse().map(m => (
-                    <tr key={m.mes} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                      <td className="px-5 py-3 text-sm font-medium text-ink capitalize">{m.label}</td>
+                    <tr key={m.mes} className="border-b border-stone last:border-0 hover:bg-stone/30">
+                      <td className="px-5 py-3 text-sm font-medium text-navy capitalize">{m.label}</td>
                       <td className="px-5 py-3 text-sm text-emerald-600 font-medium">{fmtMXN(m.entradas)}</td>
                       <td className="px-5 py-3 text-sm text-red-500">{fmtMXN(m.salidas)}</td>
                       <td className={`px-5 py-3 text-sm font-semibold ${m.neto >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                         {m.neto >= 0 ? "+" : ""}{fmtMXN(m.neto)}
                       </td>
-                      <td className={`px-5 py-3 text-sm font-semibold ${m.acumulado >= 0 ? "text-brand-600" : "text-red-500"}`}>
+                      <td className={`px-5 py-3 text-sm font-semibold ${m.acumulado >= 0 ? "text-gold" : "text-red-500"}`}>
                         {fmtMXN(m.acumulado)}
                       </td>
                     </tr>
@@ -788,24 +790,24 @@ export default function FinanzasPage() {
       {tab === "cxc" && (
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
-            <KPICard label="Total por cobrar" value={fmtMXN(totalCxC)} color="text-ink" />
+            <KPICard label="Total por cobrar" value={fmtMXN(totalCxC)} color="text-navy" />
             <KPICard label="Vencido" value={fmtMXN(vencido)} color="text-red-500" sub="Con fecha esperada pasada" />
             <KPICard label="Por vencer" value={fmtMXN(totalCxC - vencido)} color="text-amber-600" />
           </div>
 
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line flex items-center justify-between">
-              <h3 className="font-semibold text-ink">Operaciones pendientes de cobro</h3>
-              <span className="text-xs text-ink-muted">{dealsPendientes.length} operaciones</span>
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="p-5 border-b border-stone flex items-center justify-between">
+              <h3 className="font-semibold text-navy">Operaciones pendientes de cobro</h3>
+              <span className="text-xs text-[#6b7385]">{dealsPendientes.length} operaciones</span>
             </div>
             {dealsPendientes.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">🎉 Todo cobrado. Sin cuentas pendientes.</div>
+              <div className="p-12 text-center text-sm text-[#6b7385]">🎉 Todo cobrado. Sin cuentas pendientes.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                  <thead className="bg-stone/40 border-b border-stone">
                     <tr>{["Propiedad", "Cliente", "Comisión", "Pendiente", "Fecha esperada", "Días vencidos", "Estado"].map(h => (
-                      <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                      <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                     ))}</tr>
                   </thead>
                   <tbody>
@@ -815,18 +817,18 @@ export default function FinanzasPage() {
                         ? Math.max(0, Math.floor((today.getTime() - fechaLocal(d.expected_collection_date)!.getTime()) / (1000 * 60 * 60 * 24)))
                         : 0;
                       return (
-                        <tr key={d.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                          <td className="px-4 py-3 text-sm text-ink truncate max-w-[160px]">{d.property?.title || "—"}</td>
-                          <td className="px-4 py-3 text-sm text-ink-muted">{d.lead?.name || "—"}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-ink">{fmtMXN(Number(d.gross_commission))}</td>
+                        <tr key={d.id} className="border-b border-stone last:border-0 hover:bg-stone/30">
+                          <td className="px-4 py-3 text-sm text-navy truncate max-w-[160px]">{d.property?.title || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-[#6b7385]">{d.lead?.name || "—"}</td>
+                          <td className="px-4 py-3 text-sm font-medium text-navy">{fmtMXN(Number(d.gross_commission))}</td>
                           <td className="px-4 py-3 text-sm font-semibold text-amber-600">{fmtMXN(pendiente)}</td>
-                          <td className="px-4 py-3 text-sm text-ink-muted">
+                          <td className="px-4 py-3 text-sm text-[#6b7385]">
                             {fechaCorta(d.expected_collection_date)}
                           </td>
                           <td className="px-4 py-3">
                             {diasVencidos > 0 ? (
                               <span className="text-xs text-red-600 font-medium">{diasVencidos}d vencido</span>
-                            ) : <span className="text-xs text-ink-muted">—</span>}
+                            ) : <span className="text-xs text-[#6b7385]">—</span>}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[d.status] || ""}`}>{d.status}</span>
@@ -848,56 +850,56 @@ export default function FinanzasPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
             <KPICard label="Total pendiente" value={fmtMXN(cxpTotalPend)} color="text-amber-600" />
-            <KPICard label="Vencido" value={fmtMXN(cxpTotalVenc)} color={cxpTotalVenc > 0 ? "text-red-500" : "text-ink"} />
-            <KPICard label="Vence este mes" value={fmtMXN(cxpTotalMes)} color="text-ink" />
+            <KPICard label="Vencido" value={fmtMXN(cxpTotalVenc)} color={cxpTotalVenc > 0 ? "text-red-500" : "text-navy"} />
+            <KPICard label="Vence este mes" value={fmtMXN(cxpTotalMes)} color="text-navy" />
           </div>
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line flex items-center justify-between">
-              <h3 className="font-semibold text-ink">Cuentas por pagar</h3>
-              <button onClick={() => setShowBillForm(!showBillForm)} className="text-xs text-brand-600 border border-brand-200 rounded-full px-3 py-1.5 hover:bg-brand-50">+ Nueva cuenta</button>
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="p-5 border-b border-stone flex items-center justify-between">
+              <h3 className="font-semibold text-navy">Cuentas por pagar</h3>
+              <button onClick={() => setShowBillForm(!showBillForm)} className="text-xs text-gold border border-gold/30 rounded-full px-3 py-1.5 hover:bg-cream">+ Nueva cuenta</button>
             </div>
             {showBillForm && (
-              <div className="p-5 border-b border-ink-line bg-ink-ghost/20">
+              <div className="p-5 border-b border-stone bg-stone/20">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div><label className="text-xs text-ink-muted mb-1 block">Concepto *</label>
+                  <div><label className="text-xs text-[#6b7385] mb-1 block">Concepto *</label>
                     <input value={billForm.concepto} onChange={e => setBillForm({...billForm, concepto: e.target.value})} placeholder="Ej. Renta de oficina" className={cxpInp} /></div>
-                  <div><label className="text-xs text-ink-muted mb-1 block">Proveedor</label>
+                  <div><label className="text-xs text-[#6b7385] mb-1 block">Proveedor</label>
                     <input value={billForm.proveedor} onChange={e => setBillForm({...billForm, proveedor: e.target.value})} placeholder="Proveedor" className={cxpInp} /></div>
-                  <div><label className="text-xs text-ink-muted mb-1 block">Monto *</label>
+                  <div><label className="text-xs text-[#6b7385] mb-1 block">Monto *</label>
                     <input type="number" value={billForm.monto} onChange={e => setBillForm({...billForm, monto: e.target.value})} placeholder="0" className={cxpInp} /></div>
-                  <div><label className="text-xs text-ink-muted mb-1 block">Vencimiento *</label>
+                  <div><label className="text-xs text-[#6b7385] mb-1 block">Vencimiento *</label>
                     <input type="date" value={billForm.fecha_vencimiento} onChange={e => setBillForm({...billForm, fecha_vencimiento: e.target.value})} className={cxpInp} /></div>
-                  <div><label className="text-xs text-ink-muted mb-1 block">Categoría</label>
+                  <div><label className="text-xs text-[#6b7385] mb-1 block">Categoría</label>
                     <select value={billForm.categoria} onChange={e => setBillForm({...billForm, categoria: e.target.value})} className={cxpInp}>
                       {CATS_CXP.map(cat => <option key={cat}>{cat}</option>)}</select></div>
-                  <div><label className="text-xs text-ink-muted mb-1 block">Notas</label>
+                  <div><label className="text-xs text-[#6b7385] mb-1 block">Notas</label>
                     <input value={billForm.notas} onChange={e => setBillForm({...billForm, notas: e.target.value})} placeholder="Opcional" className={cxpInp} /></div>
                 </div>
                 <div className="flex gap-2 justify-end mt-3">
-                  <button onClick={() => setShowBillForm(false)} className="px-4 py-2 text-sm text-ink-muted border border-ink-line rounded-full">Cancelar</button>
+                  <button onClick={() => setShowBillForm(false)} className="px-4 py-2 text-sm text-[#6b7385] border border-stone rounded-full">Cancelar</button>
                   <button onClick={guardarBill} disabled={savingBill} className="px-5 py-2 text-sm font-medium bg-navy text-white rounded-full disabled:opacity-50">{savingBill ? "Guardando..." : "Guardar"}</button>
                 </div>
               </div>
             )}
             {billsProc.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">Sin cuentas registradas.</div>
+              <div className="p-12 text-center text-sm text-[#6b7385]">Sin cuentas registradas.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                  <thead className="bg-stone/40 border-b border-stone">
                     <tr>{["Concepto","Proveedor","Categoría","Monto","Vencimiento","Estado",""].map(h => (
-                      <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                      <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                     ))}</tr>
                   </thead>
                   <tbody>
                     {billsProc.map((b: any) => (
-                      <tr key={b.id} className={"border-b border-ink-line last:border-0 hover:bg-ink-ghost/30 " + (b.estado === "vencido" ? "bg-red-50/30" : "")}>
-                        <td className="px-4 py-3"><div className="text-sm font-medium text-ink">{b.concepto}</div>{b.notas && <div className="text-xs text-ink-muted">{b.notas}</div>}</td>
-                        <td className="px-4 py-3 text-sm text-ink-muted">{b.proveedor || "—"}</td>
-                        <td className="px-4 py-3 text-sm text-ink-muted">{b.categoria}</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-ink whitespace-nowrap">{fmtMXN(Number(b.monto))}</td>
-                        <td className="px-4 py-3 text-sm text-ink-muted whitespace-nowrap">{new Date(b.fecha_vencimiento + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}</td>
-                        <td className="px-4 py-3"><span className={"text-xs px-2 py-1 rounded-full font-medium capitalize " + (ESTADOS_CXP[b.estado] || "bg-ink-ghost text-ink-muted")}>{b.estado}</span></td>
+                      <tr key={b.id} className={"border-b border-stone last:border-0 hover:bg-stone/30 " + (b.estado === "vencido" ? "bg-red-50/30" : "")}>
+                        <td className="px-4 py-3"><div className="text-sm font-medium text-navy">{b.concepto}</div>{b.notas && <div className="text-xs text-[#6b7385]">{b.notas}</div>}</td>
+                        <td className="px-4 py-3 text-sm text-[#6b7385]">{b.proveedor || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-[#6b7385]">{b.categoria}</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-navy whitespace-nowrap">{fmtMXN(Number(b.monto))}</td>
+                        <td className="px-4 py-3 text-sm text-[#6b7385] whitespace-nowrap">{new Date(b.fecha_vencimiento + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}</td>
+                        <td className="px-4 py-3"><span className={"text-xs px-2 py-1 rounded-full font-medium capitalize " + (ESTADOS_CXP[b.estado] || "bg-stone text-[#6b7385]")}>{b.estado}</span></td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-3">
                             {b.estado !== "pagado" && <button onClick={() => pagarBill(b.id)} className="text-xs text-emerald-600 hover:underline whitespace-nowrap">Marcar pagado</button>}
@@ -922,73 +924,73 @@ export default function FinanzasPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KPICard label="Operaciones en período" value={String(dealsInPeriod.length)} />
             <KPICard label="Comisión bruta total" value={fmtMXN(ingresoTotal)} color="text-emerald-600" />
-            <KPICard label="Comisión neta empresa" value={fmtMXN(ingresoTotal - gastoComisiones)} color="text-brand-600" />
+            <KPICard label="Comisión neta empresa" value={fmtMXN(ingresoTotal - gastoComisiones)} color="text-gold" />
             <KPICard label="Ticket promedio" value={dealsInPeriod.length > 0 ? fmtMXN(dealsInPeriod.reduce((s: number, d: any) => s + Number(d.transaction_value), 0) / dealsInPeriod.length) : "—"} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line flex items-center justify-between gap-4">
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="p-5 border-b border-stone flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <h3 className="font-semibold text-ink">Detalle de operaciones</h3>
-                <div className="flex bg-ink-ghost rounded-lg p-0.5 text-xs">
+                <h3 className="font-semibold text-navy">Detalle de operaciones</h3>
+                <div className="flex bg-stone rounded-lg p-0.5 text-xs">
                   <button onClick={() => setShowAllDeals(false)}
-                    className={`px-3 py-1 rounded-md transition ${!showAllDeals ? "bg-white text-ink shadow-sm font-medium" : "text-ink-muted"}`}>
+                    className={`px-3 py-1 rounded-md transition ${!showAllDeals ? "bg-white text-navy shadow-sm font-medium" : "text-[#6b7385]"}`}>
                     Del período
                   </button>
                   <button onClick={() => setShowAllDeals(true)}
-                    className={`px-3 py-1 rounded-md transition ${showAllDeals ? "bg-white text-ink shadow-sm font-medium" : "text-ink-muted"}`}>
+                    className={`px-3 py-1 rounded-md transition ${showAllDeals ? "bg-white text-navy shadow-sm font-medium" : "text-[#6b7385]"}`}>
                     Todas ({deals.length})
                   </button>
                 </div>
               </div>
               <button onClick={() => setShowDealForm(true)}
-                className="text-xs text-brand-600 border border-brand-200 rounded-full px-3 py-1.5 hover:bg-brand-50">
+                className="text-xs text-gold border border-gold/30 rounded-full px-3 py-1.5 hover:bg-cream">
                 + Nueva operación
               </button>
             </div>
             {(showAllDeals ? deals : dealsInPeriod).length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">
+              <div className="p-12 text-center text-sm text-[#6b7385]">
                 {showAllDeals ? "Sin operaciones registradas." : `Sin operaciones en este período. Si tienes operaciones de otro mes, usa "Todas" o cambia el período a Semestre/Año.`}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                  <thead className="bg-stone/40 border-b border-stone">
                     <tr>{["Propiedad", "Cliente", "Tipo", "Valor operación", "Com. bruta", "Compartida / Ref.", "Asesores", "Neto empresa", "Cierre", "Estado", ""].map(h => (
-                      <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-3 py-3">{h}</th>
+                      <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-3 py-3">{h}</th>
                     ))}</tr>
                   </thead>
                   <tbody>
                   {(showAllDeals ? deals : dealsInPeriod).map((d: any) => (
-                      <tr key={d.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                        <td className="px-3 py-3 text-sm text-ink truncate max-w-[130px]">{d.property?.title || "—"}</td>
-                        <td className="px-3 py-3 text-sm text-ink-muted">{d.lead?.name || "—"}</td>
+                      <tr key={d.id} className="border-b border-stone last:border-0 hover:bg-stone/30">
+                        <td className="px-3 py-3 text-sm text-navy truncate max-w-[130px]">{d.property?.title || "—"}</td>
+                        <td className="px-3 py-3 text-sm text-[#6b7385]">{d.lead?.name || "—"}</td>
                         <td className="px-3 py-3">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${d.operation_type === "venta" ? "bg-brand-50 text-brand-700" : "bg-emerald-50 text-emerald-700"}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${d.operation_type === "venta" ? "bg-cream text-navy" : "bg-emerald-50 text-emerald-700"}`}>
                             {d.operation_type}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm font-medium text-ink">{fmtMXN(Number(d.transaction_value))}</td>
-                        <td className="px-3 py-3 text-sm text-ink">{fmtMXN(Number(d.gross_commission))}</td>
+                        <td className="px-3 py-3 text-sm font-medium text-navy">{fmtMXN(Number(d.transaction_value))}</td>
+                        <td className="px-3 py-3 text-sm text-navy">{fmtMXN(Number(d.gross_commission))}</td>
                         <td className="px-3 py-3 text-sm text-orange-600">
                           {(Number(d.shared_amount || 0) + Number(d.referral_amount || 0)) > 0
                             ? `− ${fmtMXN(Number(d.shared_amount || 0) + Number(d.referral_amount || 0))}`
                             : "—"}
                         </td>
-                        <td className="px-3 py-3 text-sm text-brand-600">
+                        <td className="px-3 py-3 text-sm text-gold">
                           {(Number(d.agent_commission || 0) + Number(d.agent2_commission || 0)) > 0
                             ? `− ${fmtMXN(Number(d.agent_commission || 0) + Number(d.agent2_commission || 0))}`
                             : "—"}
                         </td>
                         <td className="px-3 py-3 text-sm font-semibold text-emerald-600">{fmtMXN(Number(d.net_commission))}</td>
-                        <td className="px-3 py-3 text-xs text-ink-muted">{fechaCorta(d.closing_date)}</td>
+                        <td className="px-3 py-3 text-xs text-[#6b7385]">{fechaCorta(d.closing_date)}</td>
                         <td className="px-3 py-3">
                           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[d.status] || ""}`}>{d.status}</span>
                         </td>
                         <td className="px-3 py-3">
                           <div className="flex gap-1.5">
                             <button onClick={() => { setEditingDeal(d); setShowDealForm(true); }}
-                              className="text-xs text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                              className="text-xs text-gold border border-gold/30 rounded-full px-2 py-0.5 hover:bg-cream">
                               Editar
                             </button>
                             <button onClick={() => deleteDeal(d.id)}
@@ -1011,7 +1013,7 @@ export default function FinanzasPage() {
       {tab === "asesores" && (
         <div className="space-y-6">
           {agentStats.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-ink-line p-12 text-center text-sm text-ink-muted">Sin asesores activos.</div>
+            <div className="bg-white rounded-2xl border border-stone p-12 text-center text-sm text-[#6b7385]">Sin asesores activos.</div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1019,31 +1021,31 @@ export default function FinanzasPage() {
                 <KPICard label="Ingreso promedio por asesor" value={fmtMXN(agentStats.length > 0 ? agentStats.reduce((s: number, a: any) => s + a.ingresos, 0) / agentStats.length : 0)} />
                 <KPICard label="Conversión promedio" value={`${agentStats.length > 0 ? (agentStats.reduce((s: number, a: any) => s + Number(a.conv), 0) / agentStats.length).toFixed(0) : 0}%`} />
               </div>
-              <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+              <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                  <thead className="bg-stone/40 border-b border-stone">
                     <tr>{["Asesor", "Leads", "Cierres", "Valor vendido", "Ingresos generados", "Comisión", "Neto empresa", "Conversión"].map(h => (
-                      <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                      <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                     ))}</tr>
                   </thead>
                   <tbody>
                     {agentStats.map((a: any, i: number) => (
-                      <tr key={a.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                      <tr key={a.id} className="border-b border-stone last:border-0 hover:bg-stone/30">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {i === 0 && <span className="text-amber-500">🥇</span>}
                             {i === 1 && <span>🥈</span>}
                             {i === 2 && <span>🥉</span>}
-                            <span className="font-medium text-sm text-ink">{a.full_name}</span>
+                            <span className="font-medium text-sm text-navy">{a.full_name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-ink-muted">{a.myLeads}</td>
-                        <td className="px-4 py-3 text-sm text-ink">{a.cerrados}</td>
-                        <td className="px-4 py-3 text-sm text-ink">{fmtMXN(dealsInPeriod.filter((d: any) => d.agent_id === a.id || d.agent2_id === a.id).reduce((s: number, d: any) => s + Number(d.transaction_value), 0))}</td>
+                        <td className="px-4 py-3 text-sm text-[#6b7385]">{a.myLeads}</td>
+                        <td className="px-4 py-3 text-sm text-navy">{a.cerrados}</td>
+                        <td className="px-4 py-3 text-sm text-navy">{fmtMXN(dealsInPeriod.filter((d: any) => d.agent_id === a.id || d.agent2_id === a.id).reduce((s: number, d: any) => s + Number(d.transaction_value), 0))}</td>
                         <td className="px-4 py-3 text-sm font-medium text-emerald-600">{fmtMXN(a.ingresos)}</td>
                         <td className="px-4 py-3 text-sm text-orange-600">{fmtMXN(a.comisiones)}</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-brand-600">{fmtMXN(a.netEmpresa)}</td>
-                        <td className="px-4 py-3 text-sm text-ink">{a.conv}%</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-gold">{fmtMXN(a.netEmpresa)}</td>
+                        <td className="px-4 py-3 text-sm text-navy">{a.conv}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1059,37 +1061,37 @@ export default function FinanzasPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
             <KPICard label="Leads activos en pipeline" value={String(leads.filter(l => !["Cerrado ganado", "Cerrado perdido"].includes(l.status)).length)} />
-            <KPICard label="Ingreso esperado ponderado" value={fmtMXN(totalPonderado)} sub="Basado en probabilidad por etapa" color="text-brand-600" />
+            <KPICard label="Ingreso esperado ponderado" value={fmtMXN(totalPonderado)} sub="Basado en probabilidad por etapa" color="text-gold" />
             <KPICard label="Potencial total si todo cierra" value={fmtMXN(pipelineStages.reduce((s, p) => s + p.comPot, 0))} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
             <table className="w-full">
-              <thead className="bg-ink-ghost/40 border-b border-ink-line">
+              <thead className="bg-stone/40 border-b border-stone">
                 <tr>{["Etapa", "Leads", "Prob.", "Valor potencial", "Com. potencial", "Com. ponderada"].map(h => (
-                  <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                  <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {pipelineStages.map(p => (
-                  <tr key={p.estado} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                    <td className="px-4 py-3 font-medium text-sm text-ink">{p.estado}</td>
-                    <td className="px-4 py-3 text-sm text-ink-muted">{p.count}</td>
+                  <tr key={p.estado} className="border-b border-stone last:border-0 hover:bg-stone/30">
+                    <td className="px-4 py-3 font-medium text-sm text-navy">{p.estado}</td>
+                    <td className="px-4 py-3 text-sm text-[#6b7385]">{p.count}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{(p.prob * 100).toFixed(0)}%</span>
+                      <span className="text-xs bg-cream text-navy px-2 py-0.5 rounded-full">{(p.prob * 100).toFixed(0)}%</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-ink">{fmtMXN(p.valorPot)}</td>
-                    <td className="px-4 py-3 text-sm text-ink">{fmtMXN(p.comPot)}</td>
+                    <td className="px-4 py-3 text-sm text-navy">{fmtMXN(p.valorPot)}</td>
+                    <td className="px-4 py-3 text-sm text-navy">{fmtMXN(p.comPot)}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-emerald-600">{fmtMXN(p.ponderado)}</td>
                   </tr>
                 ))}
-                <tr className="bg-brand-50 font-semibold">
-                  <td className="px-4 py-3 text-sm text-brand-700">TOTAL</td>
-                  <td className="px-4 py-3 text-sm text-brand-700">{pipelineStages.reduce((s, p) => s + p.count, 0)}</td>
+                <tr className="bg-cream font-semibold">
+                  <td className="px-4 py-3 text-sm text-navy">TOTAL</td>
+                  <td className="px-4 py-3 text-sm text-navy">{pipelineStages.reduce((s, p) => s + p.count, 0)}</td>
                   <td className="px-4 py-3"></td>
-                  <td className="px-4 py-3 text-sm text-brand-700">{fmtMXN(pipelineStages.reduce((s, p) => s + p.valorPot, 0))}</td>
-                  <td className="px-4 py-3 text-sm text-brand-700">{fmtMXN(pipelineStages.reduce((s, p) => s + p.comPot, 0))}</td>
-                  <td className="px-4 py-3 text-sm text-brand-700">{fmtMXN(totalPonderado)}</td>
+                  <td className="px-4 py-3 text-sm text-navy">{fmtMXN(pipelineStages.reduce((s, p) => s + p.valorPot, 0))}</td>
+                  <td className="px-4 py-3 text-sm text-navy">{fmtMXN(pipelineStages.reduce((s, p) => s + p.comPot, 0))}</td>
+                  <td className="px-4 py-3 text-sm text-navy">{fmtMXN(totalPonderado)}</td>
                 </tr>
               </tbody>
             </table>
@@ -1126,18 +1128,18 @@ export default function FinanzasPage() {
           )}
 
           {/* Tabla por canal */}
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line">
-              <h3 className="font-semibold text-ink">Análisis por canal</h3>
-              <p className="text-xs text-ink-muted mt-0.5">Ingresos del período · leads históricos</p>
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="p-5 border-b border-stone">
+              <h3 className="font-semibold text-navy">Análisis por canal</h3>
+              <p className="text-xs text-[#6b7385] mt-0.5">Ingresos del período · leads históricos</p>
             </div>
             {marketingByChannel.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">Sin datos de origen en clientes.</div>
+              <div className="p-12 text-center text-sm text-[#6b7385]">Sin datos de origen en clientes.</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                <thead className="bg-stone/40 border-b border-stone">
                   <tr>{["Canal", "Leads", "Clientes", "Conversión", "Inversión", "Ingresos netos", "ROI", "ROAS", "CAC"].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                    <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
@@ -1146,20 +1148,20 @@ export default function FinanzasPage() {
                     const roiWarn = c.roi !== null && c.roi >= 0 && c.roi < 100;
                     const roiBad  = c.roi !== null && c.roi < 0;
                     return (
-                      <tr key={c.channel} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
-                        <td className="px-4 py-3 font-medium text-sm text-ink">{c.channel}</td>
-                        <td className="px-4 py-3 text-sm text-ink-muted">{c.leads}</td>
+                      <tr key={c.channel} className="border-b border-stone last:border-0 hover:bg-stone/30">
+                        <td className="px-4 py-3 font-medium text-sm text-navy">{c.channel}</td>
+                        <td className="px-4 py-3 text-sm text-[#6b7385]">{c.leads}</td>
                         <td className="px-4 py-3 text-sm text-emerald-600 font-medium">{c.cerrados}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-14 h-1.5 bg-ink-ghost rounded-full overflow-hidden">
-                              <div className="h-full bg-brand-400 rounded-full" style={{ width: `${Math.min(Number(c.conv), 100)}%` }} />
+                            <div className="w-14 h-1.5 bg-stone rounded-full overflow-hidden">
+                              <div className="h-full bg-gold rounded-full" style={{ width: `${Math.min(Number(c.conv), 100)}%` }} />
                             </div>
-                            <span className="text-xs text-ink">{c.conv}%</span>
+                            <span className="text-xs text-navy">{c.conv}%</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-red-500">
-                          {c.spend > 0 ? fmtMXN(c.spend) : <span className="text-ink-soft text-xs">Sin dato</span>}
+                          {c.spend > 0 ? fmtMXN(c.spend) : <span className="text-[#6b7385] text-xs">Sin dato</span>}
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-emerald-600">
                           {c.revenue > 0 ? fmtMXN(c.revenue) : "—"}
@@ -1169,17 +1171,17 @@ export default function FinanzasPage() {
                             <span className={`text-sm font-semibold ${roiOk ? "text-emerald-600" : roiWarn ? "text-amber-600" : "text-red-500"}`}>
                               {c.roi >= 0 ? "+" : ""}{c.roi.toFixed(0)}%
                             </span>
-                          ) : <span className="text-xs text-ink-soft">—</span>}
+                          ) : <span className="text-xs text-[#6b7385]">—</span>}
                         </td>
                         <td className="px-4 py-3">
                           {c.roas !== null ? (
                             <span className={`text-sm font-semibold ${c.roas >= 2 ? "text-emerald-600" : c.roas >= 1 ? "text-amber-600" : "text-red-500"}`}>
                               {c.roas.toFixed(1)}×
                             </span>
-                          ) : <span className="text-xs text-ink-soft">—</span>}
+                          ) : <span className="text-xs text-[#6b7385]">—</span>}
                         </td>
-                        <td className="px-4 py-3 text-sm text-ink-muted">
-                          {c.cac !== null ? fmtMXN(c.cac) : <span className="text-ink-soft text-xs">—</span>}
+                        <td className="px-4 py-3 text-sm text-[#6b7385]">
+                          {c.cac !== null ? fmtMXN(c.cac) : <span className="text-[#6b7385] text-xs">—</span>}
                         </td>
                       </tr>
                     );
@@ -1189,11 +1191,11 @@ export default function FinanzasPage() {
             )}
           </div>
 
-          <div className="bg-ink-ghost rounded-2xl px-5 py-4 text-xs text-ink-muted space-y-1">
-            <p><strong className="text-ink">ROI</strong> = (Ingresos − Inversión) / Inversión × 100. Por encima de 0% recuperas la inversión.</p>
-            <p><strong className="text-ink">ROAS</strong> = Ingresos / Inversión. 2× significa que por cada $1 invertido regresaron $2.</p>
-            <p><strong className="text-ink">CAC</strong> = Inversión / Clientes captados. Lo que costó adquirir cada cliente que cerró.</p>
-            <p className="text-ink-soft">Los ingresos son comisiones netas (ya descontados asesores y referidos) de deals del período.</p>
+          <div className="bg-stone rounded-2xl px-5 py-4 text-xs text-[#6b7385] space-y-1">
+            <p><strong className="text-navy">ROI</strong> = (Ingresos − Inversión) / Inversión × 100. Por encima de 0% recuperas la inversión.</p>
+            <p><strong className="text-navy">ROAS</strong> = Ingresos / Inversión. 2× significa que por cada $1 invertido regresaron $2.</p>
+            <p><strong className="text-navy">CAC</strong> = Inversión / Clientes captados. Lo que costó adquirir cada cliente que cerró.</p>
+            <p className="text-[#6b7385]">Los ingresos son comisiones netas (ya descontados asesores y referidos) de deals del período.</p>
           </div>
         </div>
       )}
@@ -1210,15 +1212,15 @@ export default function FinanzasPage() {
 
           {/* Gastos diferidos activos */}
           {expenses.some(e => e.is_deferred && e.amortization_months > 1) && (
-            <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-              <div className="p-5 border-b border-ink-line">
-                <h3 className="font-semibold text-ink">Gastos diferidos activos</h3>
-                <p className="text-xs text-ink-muted mt-0.5">Pagos únicos que se distribuyen en el P&L mensualmente</p>
+            <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+              <div className="p-5 border-b border-stone">
+                <h3 className="font-semibold text-navy">Gastos diferidos activos</h3>
+                <p className="text-xs text-[#6b7385] mt-0.5">Pagos únicos que se distribuyen en el P&L mensualmente</p>
               </div>
               <table className="w-full">
-                <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                <thead className="bg-stone/40 border-b border-stone">
                   <tr>{["Descripción", "Pago total", "Cobertura", "Impacto mensual", "Estado", ""].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                    <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
@@ -1231,31 +1233,31 @@ export default function FinanzasPage() {
                       ((nowDate.getTime() - coverStart.getTime()) / (coverEnd.getTime() - coverStart.getTime())) * 100
                     ));
                     return (
-                      <tr key={e.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                      <tr key={e.id} className="border-b border-stone last:border-0 hover:bg-stone/30">
                         <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-ink">{e.description}</p>
-                          {e.vendor && <p className="text-xs text-ink-muted">{e.vendor}</p>}
+                          <p className="text-sm font-medium text-navy">{e.description}</p>
+                          {e.vendor && <p className="text-xs text-[#6b7385]">{e.vendor}</p>}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-ink">{fmtMXN(Number(e.amount))}</td>
-                        <td className="px-4 py-3 text-xs text-ink-muted">
+                        <td className="px-4 py-3 text-sm font-medium text-navy">{fmtMXN(Number(e.amount))}</td>
+                        <td className="px-4 py-3 text-xs text-[#6b7385]">
                           {e.amortization_months} meses<br/>
-                          <span className="text-ink-soft">{coverStart.toLocaleDateString("es-MX", { month:"short", year:"2-digit" })} – {coverEnd.toLocaleDateString("es-MX", { month:"short", year:"2-digit" })}</span>
+                          <span className="text-[#6b7385]">{coverStart.toLocaleDateString("es-MX", { month:"short", year:"2-digit" })} – {coverEnd.toLocaleDateString("es-MX", { month:"short", year:"2-digit" })}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <p className="text-sm font-semibold text-brand-600">{fmtMXN(Number(e.amount) / e.amortization_months)}<span className="text-xs text-ink-muted font-normal">/mes</span></p>
-                          <div className="h-1.5 bg-ink-ghost rounded-full mt-1 w-24">
-                            <div className="h-1.5 bg-brand-400 rounded-full" style={{ width: `${pctDone}%` }} />
+                          <p className="text-sm font-semibold text-gold">{fmtMXN(Number(e.amount) / e.amortization_months)}<span className="text-xs text-[#6b7385] font-normal">/mes</span></p>
+                          <div className="h-1.5 bg-stone rounded-full mt-1 w-24">
+                            <div className="h-1.5 bg-gold rounded-full" style={{ width: `${pctDone}%` }} />
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-ink-ghost text-ink-muted"}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-stone text-[#6b7385]"}`}>
                             {isActive ? "Activo" : coverEnd < nowDate ? "Vencido" : "Pendiente"}
                           </span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1.5">
                             <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
-                              className="text-xs text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                              className="text-xs text-gold border border-gold/30 rounded-full px-2 py-0.5 hover:bg-cream">
                               Editar
                             </button>
                             <button onClick={() => deleteExpense(e.id)}
@@ -1273,30 +1275,30 @@ export default function FinanzasPage() {
           )}
 
           {/* Todos los gastos del período */}
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-            <div className="p-5 border-b border-ink-line flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
+            <div className="p-5 border-b border-stone flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-ink">Gastos del período</h3>
-                <p className="text-xs text-ink-muted mt-0.5">Pagos reales realizados en el período seleccionado</p>
+                <h3 className="font-semibold text-navy">Gastos del período</h3>
+                <p className="text-xs text-[#6b7385] mt-0.5">Pagos reales realizados en el período seleccionado</p>
               </div>
               <div className="flex items-center gap-2">
                 <a href="/admin/finanzas/historicos"
-                  className="text-xs text-ink-muted hover:text-ink border border-ink-line rounded-full px-3 py-1.5">
+                  className="text-xs text-[#6b7385] hover:text-navy border border-stone rounded-full px-3 py-1.5">
                   Históricos
                 </a>
                 <button onClick={() => setShowExpenseForm(true)}
-                  className="text-xs text-brand-600 border border-brand-200 hover:bg-brand-50 rounded-full px-3 py-1.5">
+                  className="text-xs text-gold border border-gold/30 hover:bg-cream rounded-full px-3 py-1.5">
                   + Registrar gasto
                 </button>
               </div>
             </div>
             {expensesCashInPeriod.length === 0 ? (
-              <div className="p-12 text-center text-sm text-ink-muted">Sin gastos registrados en este período.</div>
+              <div className="p-12 text-center text-sm text-[#6b7385]">Sin gastos registrados en este período.</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-ink-ghost/40 border-b border-ink-line">
+                <thead className="bg-stone/40 border-b border-stone">
                   <tr>{["Categoría", "Descripción", "Proveedor", "Monto real", "Impacto mensual P&L", "Fecha", "Tipo", ""].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                    <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
@@ -1305,32 +1307,32 @@ export default function FinanzasPage() {
                       ? Number(e.amount) / e.amortization_months
                       : Number(e.amount);
                     return (
-                      <tr key={e.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/30">
+                      <tr key={e.id} className="border-b border-stone last:border-0 hover:bg-stone/30">
                         <td className="px-4 py-3">
-                          <span className="text-xs bg-ink-ghost text-ink-muted px-2 py-0.5 rounded-full capitalize">
+                          <span className="text-xs bg-stone text-[#6b7385] px-2 py-0.5 rounded-full capitalize">
                             {e.category.replace(/_/g, " ")}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-ink">{e.description}</td>
-                        <td className="px-4 py-3 text-xs text-ink-muted">{e.vendor || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-navy">{e.description}</td>
+                        <td className="px-4 py-3 text-xs text-[#6b7385]">{e.vendor || "—"}</td>
                         <td className="px-4 py-3 text-sm font-medium text-red-500">{fmtMXN(Number(e.amount))}</td>
-                        <td className="px-4 py-3 text-sm text-ink-muted">
+                        <td className="px-4 py-3 text-sm text-[#6b7385]">
                           {e.is_deferred && e.amortization_months > 1
-                            ? <span className="text-brand-600">{fmtMXN(monthly)}/mes × {e.amortization_months}</span>
-                            : <span className="text-ink-soft">—</span>}
+                            ? <span className="text-gold">{fmtMXN(monthly)}/mes × {e.amortization_months}</span>
+                            : <span className="text-[#6b7385]">—</span>}
                         </td>
-                        <td className="px-4 py-3 text-xs text-ink-muted">{fechaCorta(e.expense_date)}</td>
+                        <td className="px-4 py-3 text-xs text-[#6b7385]">{fechaCorta(e.expense_date)}</td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-0.5">
-                            {e.is_deferred && <span className="text-xs text-brand-600">Diferido</span>}
+                            {e.is_deferred && <span className="text-xs text-gold">Diferido</span>}
                             {e.recurring   && <span className="text-xs text-emerald-600">Recurrente</span>}
-                            {e.invoiced    && <span className="text-xs text-ink-muted">Facturado</span>}
+                            {e.invoiced    && <span className="text-xs text-[#6b7385]">Facturado</span>}
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1.5">
                             <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
-                              className="text-xs text-brand-600 border border-brand-200 rounded-full px-2 py-0.5 hover:bg-brand-50">
+                              className="text-xs text-gold border border-gold/30 rounded-full px-2 py-0.5 hover:bg-cream">
                               Editar
                             </button>
                             <button onClick={() => deleteExpense(e.id)}

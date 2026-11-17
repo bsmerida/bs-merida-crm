@@ -132,14 +132,14 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
           </div>
           <div>
             <h1 className="text-sm font-semibold text-navy tracking-wide">Asistente IA · Duclaud</h1>
-            <p className="text-[11px] text-ink-muted flex items-center gap-1.5 mt-0.5">
+            <p className="text-[11px] text-[#6b7385] flex items-center gap-1.5 mt-0.5">
               <span className={`w-1.5 h-1.5 rounded-full ${contextReady ? "bg-emerald-500" : "bg-amber-400"}`}></span>
               {contextReady ? "Datos cargados · en línea" : "Cargando datos del CRM..."}
             </p>
           </div>
         </div>
         <button onClick={() => { setMessages([]); setError(null); }}
-          className="text-xs text-ink-muted hover:text-navy border border-stone rounded-full px-4 py-2 transition-colors">
+          className="text-xs text-[#6b7385] hover:text-navy border border-stone rounded-full px-4 py-2 transition-colors">
           Nueva conversación
         </button>
       </div>
@@ -151,7 +151,7 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
             {c}
           </span>
         ))}
-        <span className="ml-auto text-[10px] text-ink-soft">Contexto actualizado ahora</span>
+        <span className="ml-auto text-[10px] text-[#6b7385]">Contexto actualizado ahora</span>
       </div>
 
       {/* Chat */}
@@ -163,15 +163,15 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
                 <span className="font-serif text-2xl text-gold">A</span>
               </div>
               <h2 className="font-serif text-xl font-light text-navy mb-2">Asistente de Duclaud</h2>
-              <p className="text-sm text-ink-muted leading-relaxed">
+              <p className="text-sm text-[#6b7385] leading-relaxed">
                 Tengo acceso a los datos en tiempo real del CRM — leads, operaciones, inventario y finanzas. Pregúnteme lo que necesite.
               </p>
             </div>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-ink-soft mb-3 text-center">Preguntas frecuentes</p>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-[#6b7385] mb-3 text-center">Preguntas frecuentes</p>
             <div className="grid grid-cols-2 gap-2">
               {QUICK.map(q => (
                 <button key={q} onClick={() => send(q)}
-                  className="text-left text-sm text-ink-muted bg-white border border-stone hover:border-gold/50 hover:text-navy rounded-xl p-4 transition-all">
+                  className="text-left text-sm text-[#6b7385] bg-white border border-stone hover:border-gold/50 hover:text-navy rounded-xl p-4 transition-all">
                   {q}
                 </button>
               ))}
@@ -189,7 +189,7 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
             <div className={`max-w-[70%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${
               m.role === "user"
                 ? "bg-navy text-white rounded-br-sm"
-                : "bg-white text-ink border border-stone rounded-bl-sm"}`}>
+                : "bg-white text-navy border border-stone rounded-bl-sm"}`}>
               {m.content}
             </div>
           </div>
@@ -230,7 +230,7 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
               placeholder={contextReady ? "Pregúnteme sobre clientes, operaciones, finanzas..." : "Cargando datos..."}
               disabled={loading || !contextReady}
               rows={1}
-              className="w-full bg-transparent text-sm text-ink resize-none focus:outline-none placeholder:text-ink-soft disabled:opacity-50"
+              className="w-full bg-transparent text-sm text-navy resize-none focus:outline-none placeholder:text-[#6b7385] disabled:opacity-50"
               style={{ maxHeight: "120px" }}
             />
           </div>
@@ -241,7 +241,7 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
             </svg>
           </button>
         </div>
-        <p className="text-[10px] text-ink-soft text-center mt-2">
+        <p className="text-[10px] text-[#6b7385] text-center mt-2">
           Enter para enviar · Shift+Enter para nueva línea
         </p>
       </div>

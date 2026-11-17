@@ -89,20 +89,20 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
     }
   };
 
-  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
-  const numInp = "w-full bg-ink-ghost border border-transparent rounded-xl px-3 py-2 text-sm focus:outline-none focus:bg-white focus:border-brand-300 text-center";
+  const inp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
+  const numInp = "w-full bg-stone border border-transparent rounded-xl px-3 py-2 text-sm focus:outline-none focus:bg-white focus:border-navy/30 text-center";
 
   return (
-    <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-6">
+    <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-ink">¿Qué está buscando?</h3>
-          <p className="text-xs text-ink-muted mt-0.5">La IA usa esto para sugerir propiedades con precisión</p>
+          <h3 className="font-semibold text-navy">¿Qué está buscando?</h3>
+          <p className="text-xs text-[#6b7385] mt-0.5">La IA usa esto para sugerir propiedades con precisión</p>
         </div>
         <div className="flex items-center gap-3">
           {savedAt && <span className="text-xs text-emerald-600">✓ Guardado {savedAt}</span>}
           <button onClick={save} disabled={saving}
-            className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium disabled:opacity-50">
+            className="px-4 py-2 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium disabled:opacity-50">
             {saving ? "Guardando..." : "Guardar"}
           </button>
         </div>
@@ -110,13 +110,13 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
 
       {/* Zonas deseadas */}
       <div className="space-y-3">
-        <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Zonas deseadas</label>
+        <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">Zonas deseadas</label>
 
         {/* Chips de zonas seleccionadas */}
         {prefs.zones.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {prefs.zones.map(z => (
-              <div key={z.label} className="flex items-center gap-1.5 bg-brand-50 border border-brand-200 text-brand-700 text-sm px-3 py-1.5 rounded-full">
+              <div key={z.label} className="flex items-center gap-1.5 bg-cream border border-gold/30 text-navy text-sm px-3 py-1.5 rounded-full">
                 <span>📍 {z.label}</span>
                 <button onClick={() => removeZone(z.label)} className="hover:text-red-500 text-base leading-none">×</button>
               </div>
@@ -135,13 +135,13 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
               className={inp}
             />
             {showSugg && zoneSuggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-ink-line rounded-xl shadow-lg z-20 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-stone rounded-xl shadow-lg z-20 overflow-hidden">
                 {zoneSuggestions.map(z => (
                   <button key={z.label} onClick={() => addZone(z)}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-ink-ghost flex items-center gap-2">
-                    <span className="text-brand-500">📍</span>
-                    <span className="text-ink">{z.label}</span>
-                    <span className="text-ink-muted text-xs ml-auto">{z.count} prop.</span>
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-stone flex items-center gap-2">
+                    <span className="text-gold">📍</span>
+                    <span className="text-navy">{z.label}</span>
+                    <span className="text-[#6b7385] text-xs ml-auto">{z.count} prop.</span>
                   </button>
                 ))}
               </div>
@@ -150,12 +150,12 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
 
           {/* Radio de búsqueda */}
           {prefs.zones.length > 0 && (
-            <div className="flex items-center gap-3 text-sm text-ink-muted">
+            <div className="flex items-center gap-3 text-sm text-[#6b7385]">
               <span>Radio de búsqueda:</span>
               <div className="flex gap-1">
                 {[1, 2, 3, 5, 8].map(km => (
                   <button key={km} onClick={() => set("radius_km", km)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition ${prefs.radius_km === km ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"}`}>
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition ${prefs.radius_km === km ? "bg-navy text-white border-navy" : "bg-white text-navy border-stone hover:border-navy/30"}`}>
                     {km} km
                   </button>
                 ))}
@@ -168,11 +168,11 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
       {/* Operación y tipo */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Operación</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">Operación</label>
           <div className="flex gap-2">
             {["Venta", "Renta"].map(op => (
               <button key={op} onClick={() => set("operation", prefs.operation === op ? "" : op)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${prefs.operation === op ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${prefs.operation === op ? "bg-navy text-white border-navy" : "bg-stone border-transparent text-navy hover:border-navy/30"}`}>
                 {op === "Venta" ? "Comprar" : "Rentar"}
               </button>
             ))}
@@ -180,11 +180,11 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Tipo de propiedad</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">Tipo de propiedad</label>
           <div className="flex flex-wrap gap-1.5">
             {TIPOS.map(t => (
               <button key={t} onClick={() => toggleType(t)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${prefs.types.includes(t) ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${prefs.types.includes(t) ? "bg-navy text-white border-navy" : "bg-stone border-transparent text-navy hover:border-navy/30"}`}>
                 {t}
               </button>
             ))}
@@ -195,19 +195,19 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
       {/* Recámaras y baños */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider block text-center">Rec. mín</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider block text-center">Rec. mín</label>
           <input type="number" min="0" max="10" value={prefs.bedrooms_min ?? ""} onChange={e => set("bedrooms_min", e.target.value ? Number(e.target.value) : null)} placeholder="—" className={numInp} />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider block text-center">Rec. máx</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider block text-center">Rec. máx</label>
           <input type="number" min="0" max="10" value={prefs.bedrooms_max ?? ""} onChange={e => set("bedrooms_max", e.target.value ? Number(e.target.value) : null)} placeholder="—" className={numInp} />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider block text-center">Baños mín</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider block text-center">Baños mín</label>
           <input type="number" min="0" max="10" value={prefs.bathrooms_min ?? ""} onChange={e => set("bathrooms_min", e.target.value ? Number(e.target.value) : null)} placeholder="—" className={numInp} />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider block text-center">m² constr. mín</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider block text-center">m² constr. mín</label>
           <input type="number" min="0" value={prefs.m2_construction_min ?? ""} onChange={e => set("m2_construction_min", e.target.value ? Number(e.target.value) : null)} placeholder="—" className={numInp} />
         </div>
       </div>
@@ -215,18 +215,18 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
       {/* m² terreno */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">m² terreno mínimo</label>
+          <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">m² terreno mínimo</label>
           <input type="number" min="0" value={prefs.m2_land_min ?? ""} onChange={e => set("m2_land_min", e.target.value ? Number(e.target.value) : null)} placeholder="Sin mínimo" className={inp} />
         </div>
       </div>
 
       {/* Amenidades */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Características importantes</label>
+        <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">Características importantes</label>
         <div className="flex flex-wrap gap-2">
           {AMENIDADES.map(a => (
             <button key={a} onClick={() => toggleAmenidad(a)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${prefs.amenities.includes(a) ? "bg-emerald-500 text-white border-emerald-500" : "bg-ink-ghost border-transparent text-ink hover:border-emerald-300"}`}>
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${prefs.amenities.includes(a) ? "bg-emerald-500 text-white border-emerald-500" : "bg-stone border-transparent text-navy hover:border-emerald-300"}`}>
               {a}
             </button>
           ))}
@@ -235,7 +235,7 @@ export function LeadPreferences({ lead, onSaved }: { lead: any; onSaved?: () => 
 
       {/* Notas */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Notas adicionales de búsqueda</label>
+        <label className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider">Notas adicionales de búsqueda</label>
         <textarea value={prefs.search_notes} onChange={e => set("search_notes", e.target.value)}
           placeholder="Ej: No quiere planta baja, necesita cuarto de servicio, busca algo moderno..."
           rows={2} className={`${inp} resize-none`} />

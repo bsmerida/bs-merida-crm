@@ -163,7 +163,7 @@ export function LeadEditor({
     }
   };
 
-  const inp = "w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300";
+  const inp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -171,20 +171,20 @@ export function LeadEditor({
       <div className="lg:col-span-2 space-y-6">
 
         {/* Info principal */}
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+        <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
           <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
             <div>
-              <h1 className="text-2xl font-semibold text-ink tracking-tight">
+              <h1 className="text-2xl font-semibold text-navy tracking-tight">
                 {isNew ? "Nuevo cliente" : form.name || "Cliente"}
               </h1>
               {!isNew && (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[form.status] || "bg-ink-ghost text-ink-muted"}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[form.status] || "bg-stone text-[#6b7385]"}`}>
                     {form.status}
                   </span>
-                  <span className="text-xs text-ink-muted">Origen: {lead.source || "—"}</span>
+                  <span className="text-xs text-[#6b7385]">Origen: {lead.source || "—"}</span>
                   {lead.utm_data && (
-                    <span className="text-xs text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-gold bg-cream px-2 py-0.5 rounded-full">
                       📊 {lead.utm_data.utm_source || lead.utm_data.ref || "UTM"}
                     </span>
                   )}
@@ -192,28 +192,28 @@ export function LeadEditor({
               )}
             </div>
             <button onClick={save} disabled={saving}
-              className="bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white text-sm font-medium px-5 py-2.5 rounded-full">
+              className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white text-sm font-medium px-5 py-2.5 rounded-full">
               {saving ? "Guardando..." : isNew ? "Crear cliente" : "Guardar cambios"}
             </button>
           </div>
           {savedAt && <div className="text-xs text-emerald-600 mb-4">✓ Guardado a las {savedAt}</div>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="text-xs text-ink-muted">Nombre *</label><div className="mt-1.5"><input value={form.name} onChange={e => set("name", e.target.value)} placeholder="Nombre completo" className={inp} /></div></div>
-            <div><label className="text-xs text-ink-muted">Estado</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Nombre *</label><div className="mt-1.5"><input value={form.name} onChange={e => set("name", e.target.value)} placeholder="Nombre completo" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Estado</label><div className="mt-1.5">
               <select value={form.status} onChange={e => set("status", e.target.value)} className={inp}>
                 {ESTADOS_LEAD.map(s => <option key={s}>{s}</option>)}
               </select>
             </div></div>
-            <div><label className="text-xs text-ink-muted">Teléfono / WhatsApp</label><div className="mt-1.5"><input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="Ej. 9991234567" className={inp} /></div></div>
-            <div><label className="text-xs text-ink-muted">Correo</label><div className="mt-1.5"><input value={form.email} onChange={e => set("email", e.target.value)} placeholder="correo@ejemplo.com" className={inp} /></div></div>
-            <div><label className="text-xs text-ink-muted">Asesor asignado</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Teléfono / WhatsApp</label><div className="mt-1.5"><input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="Ej. 9991234567" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Correo</label><div className="mt-1.5"><input value={form.email} onChange={e => set("email", e.target.value)} placeholder="correo@ejemplo.com" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Asesor asignado</label><div className="mt-1.5">
               <select value={form.agent_id} onChange={e => set("agent_id", e.target.value)} className={inp}>
                 <option value="">Sin asignar</option>
                 {agentes.map(a => <option key={a.id} value={a.id}>{a.full_name}</option>)}
               </select>
             </div></div>
-            <div><label className="text-xs text-ink-muted">Origen</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Origen</label><div className="mt-1.5">
               <select value={form.source} onChange={e => set("source", e.target.value)} className={inp}>
                 <option value="Manual">Manual</option>
                 <option value="Referido">Referido</option>
@@ -244,20 +244,20 @@ export function LeadEditor({
                 <option value="Otro">Otro</option>
               </select>
             </div></div>
-            <div><label className="text-xs text-ink-muted">Presupuesto (texto)</label><div className="mt-1.5"><input value={form.budget_text} onChange={e => set("budget_text", e.target.value)} placeholder="Ej. 3-5M" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Presupuesto (texto)</label><div className="mt-1.5"><input value={form.budget_text} onChange={e => set("budget_text", e.target.value)} placeholder="Ej. 3-5M" className={inp} /></div></div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-4">
-            <div><label className="text-xs text-ink-muted">Presupuesto mínimo (MXN)</label><div className="mt-1.5"><input type="number" value={form.budget_min} onChange={e => set("budget_min", e.target.value)} placeholder="Ej. 2000000" className={inp} /></div></div>
-            <div><label className="text-xs text-ink-muted">Presupuesto máximo (MXN)</label><div className="mt-1.5"><input type="number" value={form.budget_max} onChange={e => set("budget_max", e.target.value)} placeholder="Ej. 5000000" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Presupuesto mínimo (MXN)</label><div className="mt-1.5"><input type="number" value={form.budget_min} onChange={e => set("budget_min", e.target.value)} placeholder="Ej. 2000000" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Presupuesto máximo (MXN)</label><div className="mt-1.5"><input type="number" value={form.budget_max} onChange={e => set("budget_max", e.target.value)} placeholder="Ej. 5000000" className={inp} /></div></div>
           </div>
 
           <div className="mt-4">
-            <label className="text-xs text-ink-muted">Operación buscada</label>
+            <label className="text-xs text-[#6b7385]">Operación buscada</label>
             <div className="flex gap-2 mt-1.5">
               {["Comprar", "Rentar"].map(op => (
                 <button key={op} type="button" onClick={() => set("search_operation", form.search_operation === op ? "" : op)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${form.search_operation === op ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium border transition ${form.search_operation === op ? "bg-navy text-white border-navy" : "bg-stone border-transparent text-navy hover:border-navy/30"}`}>
                   {op === "Comprar" ? "Comprar" : "Rentar"}
                 </button>
               ))}
@@ -265,11 +265,11 @@ export function LeadEditor({
           </div>
 
           <div className="mt-4">
-            <label className="text-xs text-ink-muted">Tipo de inmueble <span className="text-ink-soft">(puede ser varios)</span></label>
+            <label className="text-xs text-[#6b7385]">Tipo de inmueble <span className="text-[#6b7385]">(puede ser varios)</span></label>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {TIPOS_INMUEBLE.map(t => (
                 <button key={t} type="button" onClick={() => toggleType(t)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${form.search_types.includes(t) ? "bg-brand-500 text-white border-brand-500" : "bg-ink-ghost border-transparent text-ink hover:border-brand-300"}`}>
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${form.search_types.includes(t) ? "bg-navy text-white border-navy" : "bg-stone border-transparent text-navy hover:border-navy/30"}`}>
                   {t}
                 </button>
               ))}
@@ -277,11 +277,11 @@ export function LeadEditor({
           </div>
 
           <div className="mt-4 space-y-2">
-            <label className="text-xs text-ink-muted">Zonas de interés <span className="text-ink-soft">(con geolocalización)</span></label>
+            <label className="text-xs text-[#6b7385]">Zonas de interés <span className="text-[#6b7385]">(con geolocalización)</span></label>
             {selectedZones.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedZones.map(z => (
-                  <div key={z.label} className="flex items-center gap-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs px-2.5 py-1.5 rounded-full">
+                  <div key={z.label} className="flex items-center gap-1 bg-cream border border-gold/30 text-navy text-xs px-2.5 py-1.5 rounded-full">
                     📍 {z.label}
                     <button type="button" onClick={() => removeZone(z.label)} className="hover:text-red-500 ml-0.5">×</button>
                   </div>
@@ -294,24 +294,24 @@ export function LeadEditor({
                 placeholder="Buscar zona o colonia del inventario..."
                 className={inp} />
               {showZoneSugg && zoneSugg.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-ink-line rounded-xl shadow-lg z-20 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-stone rounded-xl shadow-lg z-20 overflow-hidden">
                   {zoneSugg.map(z => (
                     <button key={z.label} type="button" onClick={() => addZone(z)}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-ink-ghost flex items-center gap-2">
-                      <span className="text-brand-500">📍</span>
-                      <span className="text-ink">{z.label}</span>
-                      <span className="text-ink-muted text-xs ml-auto">{z.count} prop.</span>
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-stone flex items-center gap-2">
+                      <span className="text-gold">📍</span>
+                      <span className="text-navy">{z.label}</span>
+                      <span className="text-[#6b7385] text-xs ml-auto">{z.count} prop.</span>
                     </button>
                   ))}
                 </div>
               )}
             </div>
             {selectedZones.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-ink-muted">
+              <div className="flex items-center gap-2 text-xs text-[#6b7385]">
                 <span>Radio:</span>
                 {[1, 2, 3, 5, 8].map(km => (
                   <button key={km} type="button" onClick={() => setRadiusKm(km)}
-                    className={`px-2.5 py-1 rounded-full border transition ${radiusKm === km ? "bg-brand-500 text-white border-brand-500" : "bg-white text-ink border-ink-line hover:border-brand-300"}`}>
+                    className={`px-2.5 py-1 rounded-full border transition ${radiusKm === km ? "bg-navy text-white border-navy" : "bg-white text-navy border-stone hover:border-navy/30"}`}>
                     {km}km
                   </button>
                 ))}
@@ -320,35 +320,35 @@ export function LeadEditor({
           </div>
 
           <div className="mt-4">
-            <label className="text-xs text-ink-muted">Interés</label>
+            <label className="text-xs text-[#6b7385]">Interés</label>
             <div className="mt-1.5"><textarea rows={2} value={form.interest} onChange={e => set("interest", e.target.value)} placeholder="Ej. Casa en Cholul, 3 recámaras, presupuesto 3M" className={`${inp} resize-none`} /></div>
           </div>
           <div className="mt-4">
-            <label className="text-xs text-ink-muted">Notas internas</label>
+            <label className="text-xs text-[#6b7385]">Notas internas</label>
             <div className="mt-1.5"><textarea rows={3} value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Solo visible para el equipo" className={`${inp} resize-none`} /></div>
           </div>
         </div>
 
         {/* Perfil */}
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
+        <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
           <div className="flex items-center gap-2 mb-4">
-            <h3 className="font-semibold text-ink">Perfil del cliente</h3>
-            <span className="text-[10px] text-ink-muted bg-ink-ghost px-2 py-0.5 rounded-full">Opcional · para estadísticas</span>
+            <h3 className="font-semibold text-navy">Perfil del cliente</h3>
+            <span className="text-[10px] text-[#6b7385] bg-stone px-2 py-0.5 rounded-full">Opcional · para estadísticas</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div><label className="text-xs text-ink-muted">Edad</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Edad</label><div className="mt-1.5">
               <input type="number" min="18" max="99" value={form.age} onChange={e => set("age", e.target.value)} placeholder="Ej. 34" className={inp} />
             </div></div>
-            <div><label className="text-xs text-ink-muted">Género</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Género</label><div className="mt-1.5">
               <select value={form.gender} onChange={e => set("gender", e.target.value)} className={inp}>
                 <option value="">— Sin especificar</option>
                 <option>Hombre</option><option>Mujer</option><option>Otro</option>
               </select>
             </div></div>
-            <div><label className="text-xs text-ink-muted">Ciudad</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Ciudad</label><div className="mt-1.5">
               <input value={form.client_city} onChange={e => set("client_city", e.target.value)} placeholder="Ej. Monterrey" className={inp} />
             </div></div>
-            <div><label className="text-xs text-ink-muted">Estado</label><div className="mt-1.5">
+            <div><label className="text-xs text-[#6b7385]">Estado</label><div className="mt-1.5">
               <input value={form.client_state} onChange={e => set("client_state", e.target.value)} placeholder="Ej. Nuevo León" className={inp} />
             </div></div>
           </div>
@@ -356,30 +356,30 @@ export function LeadEditor({
 
         {/* Bitácora — solo en edición */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-            <h3 className="font-semibold text-ink mb-4">Bitácora de actividades</h3>
+          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+            <h3 className="font-semibold text-navy mb-4">Bitácora de actividades</h3>
             <div className="flex gap-2 mb-4 flex-wrap">
-              <select value={actType} onChange={e => setActType(e.target.value)} className="bg-ink-ghost rounded-xl px-3 py-2 text-sm focus:outline-none">
+              <select value={actType} onChange={e => setActType(e.target.value)} className="bg-stone rounded-xl px-3 py-2 text-sm focus:outline-none">
                 {TIPOS_ACTIVIDAD.map(t => <option key={t}>{t}</option>)}
               </select>
               <input value={actDesc} onChange={e => setActDesc(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addActivity()}
                 placeholder="¿Qué pasó? Ej. Llamé, agendamos visita el viernes"
-                className="flex-1 bg-ink-ghost rounded-xl px-4 py-2 text-sm focus:outline-none focus:bg-white min-w-[200px]" />
-              <button onClick={addActivity} className="bg-brand-500 hover:bg-brand-600 text-white text-sm px-4 py-2 rounded-xl">Agregar</button>
+                className="flex-1 bg-stone rounded-xl px-4 py-2 text-sm focus:outline-none focus:bg-white min-w-[200px]" />
+              <button onClick={addActivity} className="bg-navy hover:bg-navy-mid text-white text-sm px-4 py-2 rounded-xl">Agregar</button>
             </div>
             {acts.length === 0 ? (
-              <div className="text-sm text-ink-muted text-center py-6">Sin actividades. Agrega la primera arriba.</div>
+              <div className="text-sm text-[#6b7385] text-center py-6">Sin actividades. Agrega la primera arriba.</div>
             ) : (
               <div className="space-y-3">
                 {acts.map((a: any) => (
-                  <div key={a.id} className="flex gap-3 pb-3 border-b border-ink-line last:border-0">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center text-[11px] font-semibold uppercase">
+                  <div key={a.id} className="flex gap-3 pb-3 border-b border-stone last:border-0">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cream text-navy flex items-center justify-center text-[11px] font-semibold uppercase">
                       {a.type.slice(0, 2)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-ink">{a.description}</div>
-                      <div className="text-xs text-ink-muted mt-0.5">
+                      <div className="text-sm text-navy">{a.description}</div>
+                      <div className="text-xs text-[#6b7385] mt-0.5">
                         {a.user?.full_name || "Sistema"} · {new Date(a.created_at).toLocaleString("es-MX")}
                       </div>
                     </div>
@@ -395,18 +395,18 @@ export function LeadEditor({
       <div className="space-y-6">
         {/* Cambio rápido de estado */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-            <h3 className="font-semibold text-ink mb-4">Cambio rápido de estado</h3>
+          <div className="bg-white rounded-2xl border border-stone shadow-card p-6">
+            <h3 className="font-semibold text-navy mb-4">Cambio rápido de estado</h3>
             <div className="space-y-1.5">
               {ESTADOS_LEAD.map(s => (
                 <button key={s}
                   onClick={() => { set("status", s); setTimeout(save, 100); }}
                   className={`w-full text-left text-sm px-3 py-2.5 rounded-xl transition flex items-center gap-2 ${
                     form.status === s
-                      ? `${STATUS_COLORS[s] || "bg-brand-50 text-brand-700"} font-medium`
-                      : "text-ink-muted hover:bg-ink-ghost hover:text-ink"
+                      ? `${STATUS_COLORS[s] || "bg-cream text-navy"} font-medium`
+                      : "text-[#6b7385] hover:bg-stone hover:text-navy"
                   }`}>
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${form.status === s ? "bg-current opacity-60" : "bg-ink-line"}`}></span>
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${form.status === s ? "bg-current opacity-60" : "bg-stone"}`}></span>
                   {s}
                 </button>
               ))}
@@ -416,19 +416,19 @@ export function LeadEditor({
 
         {/* Info del registro */}
         {!isNew && (
-          <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-3">
-            <h3 className="font-semibold text-ink mb-1">Datos del registro</h3>
-            <div className="text-xs text-ink-muted space-y-2">
-              <div className="flex justify-between"><span>Origen</span><span className="text-ink font-medium">{lead.source || "—"}</span></div>
-              <div className="flex justify-between"><span>Registrado</span><span className="text-ink">{new Date(lead.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span></div>
-              <div className="flex justify-between"><span>Último contacto</span><span className="text-ink">{lead.last_contact_at ? new Date(lead.last_contact_at).toLocaleDateString("es-MX") : "—"}</span></div>
+          <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-3">
+            <h3 className="font-semibold text-navy mb-1">Datos del registro</h3>
+            <div className="text-xs text-[#6b7385] space-y-2">
+              <div className="flex justify-between"><span>Origen</span><span className="text-navy font-medium">{lead.source || "—"}</span></div>
+              <div className="flex justify-between"><span>Registrado</span><span className="text-navy">{new Date(lead.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+              <div className="flex justify-between"><span>Último contacto</span><span className="text-navy">{lead.last_contact_at ? new Date(lead.last_contact_at).toLocaleDateString("es-MX") : "—"}</span></div>
               {lead.utm_data && Object.keys(lead.utm_data).length > 0 && (
-                <div className="pt-2 border-t border-ink-line">
-                  <div className="font-medium text-ink mb-1">Campaña de origen</div>
+                <div className="pt-2 border-t border-stone">
+                  <div className="font-medium text-navy mb-1">Campaña de origen</div>
                   {Object.entries(lead.utm_data).map(([k, v]) => (
                     <div key={k} className="flex justify-between">
                       <span>{k.replace("utm_", "")}</span>
-                      <span className="text-ink">{String(v)}</span>
+                      <span className="text-navy">{String(v)}</span>
                     </div>
                   ))}
                 </div>
@@ -439,9 +439,9 @@ export function LeadEditor({
 
         {/* Ayuda para nuevo cliente */}
         {isNew && (
-          <div className="bg-brand-50 border border-brand-200 rounded-2xl p-5">
-            <div className="text-sm font-semibold text-brand-800 mb-2">Nuevo cliente manual</div>
-            <div className="text-xs text-brand-700 space-y-1">
+          <div className="bg-cream border border-gold/30 rounded-2xl p-5">
+            <div className="text-sm font-semibold text-navy mb-2">Nuevo cliente manual</div>
+            <div className="text-xs text-navy space-y-1">
               <div>• Solo el nombre es obligatorio</div>
               <div>• Al crear, podrás agregar actividades y cambiar el estado</div>
               <div>• El origen quedará registrado como “Manual”</div>

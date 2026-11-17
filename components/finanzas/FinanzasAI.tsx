@@ -95,7 +95,7 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
   if (!open) {
     return (
       <button onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-full text-sm font-medium">
+        className="flex items-center gap-1.5 px-4 py-2 bg-navy hover:bg-navy-mid text-white rounded-full text-sm font-medium">
         Analizar con IA
       </button>
     );
@@ -105,22 +105,22 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ maxHeight: "85vh" }}>
         {/* Header */}
-        <div className="p-5 border-b border-ink-line flex items-center justify-between flex-shrink-0">
+        <div className="p-5 border-b border-stone flex items-center justify-between flex-shrink-0">
           <div>
-            <div className="font-semibold text-ink">Analista Financiero IA</div>
-            <div className="text-xs text-ink-muted mt-0.5">Basado en tus datos de {data.period}</div>
+            <div className="font-semibold text-navy">Analista Financiero IA</div>
+            <div className="text-xs text-[#6b7385] mt-0.5">Basado en tus datos de {data.period}</div>
           </div>
-          <button onClick={() => setOpen(false)} className="text-ink-muted hover:text-ink text-xl w-8 h-8 flex items-center justify-center">×</button>
+          <button onClick={() => setOpen(false)} className="text-[#6b7385] hover:text-navy text-xl w-8 h-8 flex items-center justify-center">×</button>
         </div>
 
         {/* Preguntas rápidas */}
         {messages.length === 0 && (
           <div className="p-5 flex-shrink-0">
-            <div className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-3">Preguntas frecuentes</div>
+            <div className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-3">Preguntas frecuentes</div>
             <div className="grid grid-cols-1 gap-2">
               {PREGUNTAS_RAPIDAS.map(q => (
                 <button key={q} onClick={() => send(q)}
-                  className="text-left text-sm text-ink px-3 py-2.5 bg-ink-ghost hover:bg-brand-50 hover:text-brand-700 rounded-xl transition">
+                  className="text-left text-sm text-navy px-3 py-2.5 bg-stone hover:bg-cream hover:text-navy rounded-xl transition">
                   {q}
                 </button>
               ))}
@@ -135,8 +135,8 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                   m.role === "user"
-                    ? "bg-brand-500 text-white rounded-br-md"
-                    : "bg-ink-ghost text-ink rounded-bl-md"
+                    ? "bg-navy text-white rounded-br-md"
+                    : "bg-stone text-navy rounded-bl-md"
                 }`}>
                   {m.role === "assistant"
                     ? m.content.split("\n").map((line, j) => <div key={j}>{line || <br />}</div>)
@@ -146,10 +146,10 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-ink-ghost rounded-2xl px-4 py-3 flex gap-1.5 items-center">
-                  <div className="w-1.5 h-1.5 bg-ink-soft rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                  <div className="w-1.5 h-1.5 bg-ink-soft rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                  <div className="w-1.5 h-1.5 bg-ink-soft rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                <div className="bg-stone rounded-2xl px-4 py-3 flex gap-1.5 items-center">
+                  <div className="w-1.5 h-1.5 bg-[#6b7385] rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                  <div className="w-1.5 h-1.5 bg-[#6b7385] rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                  <div className="w-1.5 h-1.5 bg-[#6b7385] rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
                 </div>
               </div>
             )}
@@ -157,16 +157,16 @@ Máximo 300 palabras por respuesta. No repitas datos que ya mencioné, interpré
         )}
 
         {/* Input */}
-        <div className="p-4 border-t border-ink-line flex gap-2 flex-shrink-0">
+        <div className="p-4 border-t border-stone flex gap-2 flex-shrink-0">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
             placeholder="Pregunta algo sobre tus finanzas..."
-            className="flex-1 bg-ink-ghost rounded-full px-4 py-2.5 text-sm focus:outline-none"
+            className="flex-1 bg-stone rounded-full px-4 py-2.5 text-sm focus:outline-none"
           />
           <button onClick={() => send()} disabled={!input.trim() || loading}
-            className="w-10 h-10 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-full flex items-center justify-center flex-shrink-0">
+            className="w-10 h-10 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-full flex items-center justify-center flex-shrink-0">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>

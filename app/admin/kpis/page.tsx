@@ -117,50 +117,52 @@ export default async function KPIsPage() {
   };
 
   return (
-    <div className="p-10 space-y-8 max-w-7xl">
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl font-dmsans">
       <div>
-        <h1 className="text-2xl font-semibold text-ink tracking-tight">KPIs</h1>
-        <p className="text-sm text-ink-muted mt-0.5">
+        <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+          KPIs<em className="italic font-serif text-gold">.</em>
+        </h1>
+        <p className="text-[#6b7385] text-[15px] mt-1">
           {ahora.toLocaleDateString("es-MX", { month: "long", year: "numeric", day: "numeric" })}
         </p>
       </div>
 
       {/* ── SECCIÓN 1: KPIs principales ── */}
       <div>
-        <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-4">Negocio</h2>
+        <h2 className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-4">Negocio</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
               label: "Comisiones del mes",
               value: fmtMXN(comisionesMes),
               sub: delta(growthComisiones),
-              color: "text-ink",
+              color: "text-navy",
               bg: "bg-white",
             },
             {
               label: "Pipeline activo",
               value: fmtMXN(valorPipeline),
-              sub: <span className="text-xs text-ink-muted">{opsActivas.length} operaciones</span>,
-              color: "text-brand-600",
+              sub: <span className="text-xs text-[#6b7385]">{opsActivas.length} operaciones</span>,
+              color: "text-gold",
               bg: "bg-white",
             },
             {
               label: "Ticket promedio",
               value: ticketPromedio > 0 ? fmtMXN(ticketPromedio) : "—",
-              sub: <span className="text-xs text-ink-muted">{opsCerradasMes.length} cierres este mes</span>,
-              color: "text-ink",
+              sub: <span className="text-xs text-[#6b7385]">{opsCerradasMes.length} cierres este mes</span>,
+              color: "text-navy",
               bg: "bg-white",
             },
             {
               label: "Tasa de conversión",
               value: `${convGeneral}%`,
-              sub: <span className="text-xs text-ink-muted">{leadsCerrados} de {leadsTotal} leads</span>,
+              sub: <span className="text-xs text-[#6b7385]">{leadsCerrados} de {leadsTotal} leads</span>,
               color: "text-emerald-600",
               bg: "bg-white",
             },
           ].map(k => (
-            <div key={k.label} className={`${k.bg} rounded-2xl border border-ink-line shadow-card p-5`}>
-              <div className="text-xs text-ink-muted">{k.label}</div>
+            <div key={k.label} className={`${k.bg} rounded-[28px] shadow-float p-5`}>
+              <div className="text-xs text-[#6b7385]">{k.label}</div>
               <div className={`text-2xl font-semibold mt-2 tracking-tight ${k.color}`}>{k.value}</div>
               <div className="mt-1">{k.sub}</div>
             </div>
@@ -170,7 +172,7 @@ export default async function KPIsPage() {
 
       {/* ── SECCIÓN 2: Leads ── */}
       <div>
-        <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-4">Clientes</h2>
+        <h2 className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-4">Clientes</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
@@ -181,22 +183,22 @@ export default async function KPIsPage() {
             {
               label: "Activos en proceso",
               value: leadsActivos,
-              sub: <span className="text-xs text-ink-muted">sin cerrar</span>,
+              sub: <span className="text-xs text-[#6b7385]">sin cerrar</span>,
             },
             {
               label: "Cerrados ganados",
               value: leadsCerrados,
-              sub: <span className="text-xs text-ink-muted">{leadsPerdidos} perdidos</span>,
+              sub: <span className="text-xs text-[#6b7385]">{leadsPerdidos} perdidos</span>,
             },
             {
               label: "Días prom. a cierre",
               value: diasPromConversion !== null ? `${diasPromConversion}d` : "—",
-              sub: <span className="text-xs text-ink-muted">desde primer contacto</span>,
+              sub: <span className="text-xs text-[#6b7385]">desde primer contacto</span>,
             },
           ].map(k => (
-            <div key={k.label} className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
-              <div className="text-xs text-ink-muted">{k.label}</div>
-              <div className="text-2xl font-semibold mt-2 tracking-tight text-ink">{k.value}</div>
+            <div key={k.label} className="bg-white rounded-[28px] shadow-float p-5">
+              <div className="text-xs text-[#6b7385]">{k.label}</div>
+              <div className="text-2xl font-semibold mt-2 tracking-tight text-navy">{k.value}</div>
               <div className="mt-1">{k.sub}</div>
             </div>
           ))}
@@ -205,7 +207,7 @@ export default async function KPIsPage() {
 
       {/* ── SECCIÓN 3: Inventario y tráfico ── */}
       <div>
-        <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-4">Inventario y tráfico web</h2>
+        <h2 className="text-xs font-semibold text-[#6b7385] uppercase tracking-wider mb-4">Inventario y tráfico web</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "Propiedades disponibles", value: propsDisponibles, sub: fmtMXN(valorInventario) + " en inventario" },
@@ -213,10 +215,10 @@ export default async function KPIsPage() {
             { label: "Solicitudes totales", value: totalInquiries, sub: "via chatbot y WA" },
             { label: "Conversión web", value: `${convTrafico}%`, sub: "vistas → solicitud" },
           ].map(k => (
-            <div key={k.label} className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
-              <div className="text-xs text-ink-muted">{k.label}</div>
-              <div className="text-2xl font-semibold mt-2 tracking-tight text-ink">{k.value}</div>
-              <div className="text-xs text-ink-muted mt-1">{k.sub}</div>
+            <div key={k.label} className="bg-white rounded-[28px] shadow-float p-5">
+              <div className="text-xs text-[#6b7385]">{k.label}</div>
+              <div className="text-2xl font-semibold mt-2 tracking-tight text-navy">{k.value}</div>
+              <div className="text-xs text-[#6b7385] mt-1">{k.sub}</div>
             </div>
           ))}
         </div>
@@ -225,24 +227,24 @@ export default async function KPIsPage() {
       {/* ── SECCIÓN 4: Embudo + Ranking ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Embudo */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-ink-line shadow-card p-6">
+        <div className="lg:col-span-2 bg-white rounded-[28px] shadow-float p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-ink">Embudo de conversión</h3>
-            <span className="text-xs text-ink-muted">{leads.length} leads totales</span>
+            <h3 className="font-semibold text-navy">Embudo de conversión</h3>
+            <span className="text-xs text-[#6b7385]">{leads.length} leads totales</span>
           </div>
           {leads.length === 0 ? (
-            <div className="text-sm text-ink-muted text-center py-12">Sin leads registrados.</div>
+            <div className="text-sm text-[#6b7385] text-center py-12">Sin leads registrados.</div>
           ) : (
             <div className="space-y-3">
               {funnel.map((s, i) => (
                 <div key={s.estado}>
                   <div className="flex items-center justify-between text-sm mb-1.5">
-                    <span className="text-ink">{s.estado}</span>
-                    <span className="text-ink-muted">
-                      <span className="text-ink font-semibold">{s.count}</span> · {s.pct}%
+                    <span className="text-navy">{s.estado}</span>
+                    <span className="text-[#6b7385]">
+                      <span className="text-navy font-semibold">{s.count}</span> · {s.pct}%
                     </span>
                   </div>
-                  <div className="h-2 bg-ink-ghost rounded-full overflow-hidden">
+                  <div className="h-2 bg-stone rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all"
                       style={{
                         width: `${s.pct}%`,
@@ -256,31 +258,31 @@ export default async function KPIsPage() {
         </div>
 
         {/* Ranking asesores */}
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-          <h3 className="font-semibold text-ink mb-5">Ranking asesores</h3>
-          <p className="text-xs text-ink-muted mb-4">Por comisiones cerradas este mes</p>
+        <div className="bg-white rounded-[28px] shadow-float p-6">
+          <h3 className="font-semibold text-navy mb-5">Ranking asesores</h3>
+          <p className="text-xs text-[#6b7385] mb-4">Por comisiones cerradas este mes</p>
           {ranking.length === 0 ? (
-            <div className="text-sm text-ink-muted text-center py-8">Sin asesores activos.</div>
+            <div className="text-sm text-[#6b7385] text-center py-8">Sin asesores activos.</div>
           ) : (
             <div className="space-y-4">
               {ranking.map((a: any, i: number) => (
                 <div key={a.id} className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
                     i === 0 ? "bg-amber-100 text-amber-700" :
-                    i === 1 ? "bg-ink-ghost text-ink-muted" :
-                    "bg-ink-ghost text-ink-soft"
+                    i === 1 ? "bg-stone text-[#6b7385]" :
+                    "bg-stone text-[#6b7385]"
                   }`}>
                     {i + 1}
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-cream text-navy flex items-center justify-center text-xs font-semibold flex-shrink-0">
                     {a.initials}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-ink truncate">{a.full_name}</div>
-                    <div className="text-xs text-ink-muted">{a.myLeads} leads · {a.myConv}% conv.</div>
+                    <div className="font-medium text-sm text-navy truncate">{a.full_name}</div>
+                    <div className="text-xs text-[#6b7385]">{a.myLeads} leads · {a.myConv}% conv.</div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-sm font-semibold text-ink">{fmtMXN(a.myComMes)}</div>
+                    <div className="text-sm font-semibold text-navy">{fmtMXN(a.myComMes)}</div>
                   </div>
                 </div>
               ))}
@@ -291,8 +293,8 @@ export default async function KPIsPage() {
 
       {/* Links rápidos */}
       <div className="flex flex-wrap gap-3 pt-2">
-        <Link href="/admin/leads" className="text-xs text-brand-600 hover:underline">Ver todos los clientes →</Link>
-        <Link href="/admin/propiedades/estadisticas" className="text-xs text-brand-600 hover:underline">Estadísticas de propiedades →</Link>
+        <Link href="/admin/leads" className="text-xs text-gold hover:underline">Ver todos los clientes →</Link>
+        <Link href="/admin/propiedades/estadisticas" className="text-xs text-gold hover:underline">Estadísticas de propiedades →</Link>
       </div>
     </div>
   );

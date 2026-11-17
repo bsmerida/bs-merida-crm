@@ -38,29 +38,29 @@ export function PropertyNotes({ propertyId, userId }: { propertyId: string; user
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
+    <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
       <div className="flex items-center gap-2">
-        <h3 className="font-semibold text-ink">🔒 Notas internas</h3>
-        <span className="text-[10px] text-ink-muted bg-ink-ghost px-2 py-0.5 rounded-full">Solo visible para el equipo</span>
+        <h3 className="font-semibold text-navy">🔒 Notas internas</h3>
+        <span className="text-[10px] text-[#6b7385] bg-stone px-2 py-0.5 rounded-full">Solo visible para el equipo</span>
       </div>
       <div className="flex gap-2">
         <textarea value={text} onChange={e => setText(e.target.value)} rows={2}
           placeholder="Escribe una nota interna..."
-          className="flex-1 bg-ink-ghost border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-brand-300 resize-none" />
+          className="flex-1 bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30 resize-none" />
         <button onClick={save} disabled={saving || !text.trim()}
-          className="px-4 py-2 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white rounded-xl text-sm font-medium self-end">
+          className="px-4 py-2 bg-navy hover:bg-navy-mid disabled:opacity-50 text-white rounded-xl text-sm font-medium self-end">
           {saving ? "..." : "Guardar"}
         </button>
       </div>
       {notes.length === 0 ? (
-        <p className="text-xs text-ink-muted text-center py-4">Sin notas todavía.</p>
+        <p className="text-xs text-[#6b7385] text-center py-4">Sin notas todavía.</p>
       ) : (
         <div className="space-y-3">
           {notes.map(n => (
-            <div key={n.id} className="bg-ink-ghost rounded-xl p-3 relative group">
-              <p className="text-sm text-ink leading-relaxed whitespace-pre-line">{n.content}</p>
+            <div key={n.id} className="bg-stone rounded-xl p-3 relative group">
+              <p className="text-sm text-navy leading-relaxed whitespace-pre-line">{n.content}</p>
               <div className="flex items-center justify-between mt-2">
-                <span className="text-[10px] text-ink-muted">
+                <span className="text-[10px] text-[#6b7385]">
                   {new Date(n.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                 </span>
                 <button onClick={() => remove(n.id)}

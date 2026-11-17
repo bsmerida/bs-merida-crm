@@ -51,15 +51,15 @@ export default function CuentasPorPagarPage() {
     await db.from("cuentas_por_pagar").delete().eq("id", id); load();
   }
 
-  const inp = "w-full border border-ink-line rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand-300";
-  const sel = "bg-white border border-ink-line rounded-full px-4 py-2 text-sm focus:outline-none cursor-pointer";
+  const inp = "w-full border border-stone rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-navy/30";
+  const sel = "bg-white border border-stone rounded-full px-4 py-2 text-sm focus:outline-none cursor-pointer";
 
   return (
     <div className="p-10 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Cuentas por pagar</h1>
-          <p className="text-sm text-ink-muted mt-0.5">{filtered.length} cuentas · {fmtMXN(totalPendiente)} pendiente</p>
+          <h1 className="font-serif text-navy text-2xl tracking-tight">Cuentas por pagar</h1>
+          <p className="text-sm text-[#6b7385] mt-0.5">{filtered.length} cuentas · {fmtMXN(totalPendiente)} pendiente</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 px-5 py-2.5 bg-navy text-white rounded-full text-sm font-medium hover:opacity-90">
@@ -71,36 +71,36 @@ export default function CuentasPorPagarPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: "Total pendiente", value: fmtMXN(totalPendiente), color: "text-amber-600" },
-          { label: "Vencido",         value: fmtMXN(totalVencido),   color: totalVencido > 0 ? "text-red-600" : "text-ink" },
-          { label: "Vence este mes",  value: fmtMXN(totalMes),       color: "text-ink" },
+          { label: "Vencido",         value: fmtMXN(totalVencido),   color: totalVencido > 0 ? "text-red-600" : "text-navy" },
+          { label: "Vence este mes",  value: fmtMXN(totalMes),       color: "text-navy" },
         ].map(k => (
-          <div key={k.label} className="bg-white rounded-2xl border border-ink-line shadow-card p-5">
-            <div className="text-xs text-ink-muted">{k.label}</div>
+          <div key={k.label} className="bg-white rounded-2xl border border-stone shadow-card p-5">
+            <div className="text-xs text-[#6b7385]">{k.label}</div>
             <div className={"text-2xl font-semibold mt-2 tracking-tight " + k.color}>{k.value}</div>
           </div>
         ))}
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-ink">Nueva cuenta por pagar</h2>
+        <div className="bg-white rounded-2xl border border-stone shadow-card p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-navy">Nueva cuenta por pagar</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="text-xs text-ink-muted mb-1 block">Concepto *</label>
+            <div><label className="text-xs text-[#6b7385] mb-1 block">Concepto *</label>
               <input value={form.concepto} onChange={e => setForm({...form, concepto: e.target.value})} placeholder="Ej. Renta de oficina" className={inp} /></div>
-            <div><label className="text-xs text-ink-muted mb-1 block">Proveedor</label>
+            <div><label className="text-xs text-[#6b7385] mb-1 block">Proveedor</label>
               <input value={form.proveedor} onChange={e => setForm({...form, proveedor: e.target.value})} placeholder="Nombre del proveedor" className={inp} /></div>
-            <div><label className="text-xs text-ink-muted mb-1 block">Monto *</label>
+            <div><label className="text-xs text-[#6b7385] mb-1 block">Monto *</label>
               <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})} placeholder="0" className={inp} /></div>
-            <div><label className="text-xs text-ink-muted mb-1 block">Fecha de vencimiento *</label>
+            <div><label className="text-xs text-[#6b7385] mb-1 block">Fecha de vencimiento *</label>
               <input type="date" value={form.fecha_vencimiento} onChange={e => setForm({...form, fecha_vencimiento: e.target.value})} className={inp} /></div>
-            <div><label className="text-xs text-ink-muted mb-1 block">Categoría</label>
+            <div><label className="text-xs text-[#6b7385] mb-1 block">Categoría</label>
               <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})} className={inp}>
                 {CATEGORIAS.map(c => <option key={c}>{c}</option>)}</select></div>
-            <div><label className="text-xs text-ink-muted mb-1 block">Notas</label>
+            <div><label className="text-xs text-[#6b7385] mb-1 block">Notas</label>
               <input value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} placeholder="Opcional" className={inp} /></div>
           </div>
           <div className="flex gap-2 justify-end pt-2">
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-ink-muted border border-ink-line rounded-full">Cancelar</button>
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-[#6b7385] border border-stone rounded-full">Cancelar</button>
             <button onClick={save} disabled={saving} className="px-5 py-2 text-sm font-medium bg-navy text-white rounded-full disabled:opacity-50">
               {saving ? "Guardando..." : "Guardar"}</button>
           </div>
@@ -117,30 +117,30 @@ export default function CuentasPorPagarPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-2xl border border-ink-line p-12 text-center text-sm text-ink-muted">Cargando...</div>
+        <div className="bg-white rounded-2xl border border-stone p-12 text-center text-sm text-[#6b7385]">Cargando...</div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-ink-line p-12 text-center text-sm text-ink-muted">Sin cuentas registradas.</div>
+        <div className="bg-white rounded-2xl border border-stone p-12 text-center text-sm text-[#6b7385]">Sin cuentas registradas.</div>
       ) : (
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
+        <div className="bg-white rounded-2xl border border-stone shadow-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-ink-line bg-ink-ghost/40">
+              <thead className="border-b border-stone bg-stone/40">
                 <tr>{["Concepto", "Proveedor", "Categoría", "Monto", "Vencimiento", "Estado", ""].map((h, i) => (
-                  <th key={i} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-4 py-3">{h}</th>
+                  <th key={i} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {filtered.map(b => (
-                  <tr key={b.id} className={"border-b border-ink-line last:border-0 hover:bg-ink-ghost/30 " + (b.estado === "vencido" ? "bg-red-50/30" : "")}>
-                    <td className="px-4 py-3"><div className="text-sm font-medium text-ink">{b.concepto}</div>
-                      {b.notas && <div className="text-xs text-ink-muted">{b.notas}</div>}</td>
-                    <td className="px-4 py-3 text-sm text-ink-muted">{b.proveedor || "—"}</td>
-                    <td className="px-4 py-3 text-sm text-ink-muted">{b.categoria}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-ink whitespace-nowrap">{fmtMXN(Number(b.monto))}</td>
-                    <td className="px-4 py-3 text-sm text-ink-muted whitespace-nowrap">
+                  <tr key={b.id} className={"border-b border-stone last:border-0 hover:bg-stone/30 " + (b.estado === "vencido" ? "bg-red-50/30" : "")}>
+                    <td className="px-4 py-3"><div className="text-sm font-medium text-navy">{b.concepto}</div>
+                      {b.notas && <div className="text-xs text-[#6b7385]">{b.notas}</div>}</td>
+                    <td className="px-4 py-3 text-sm text-[#6b7385]">{b.proveedor || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-[#6b7385]">{b.categoria}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-navy whitespace-nowrap">{fmtMXN(Number(b.monto))}</td>
+                    <td className="px-4 py-3 text-sm text-[#6b7385] whitespace-nowrap">
                       {new Date(b.fecha_vencimiento + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}</td>
                     <td className="px-4 py-3">
-                      <span className={"text-xs px-2 py-1 rounded-full font-medium capitalize " + (ESTADOS[b.estado] || "bg-ink-ghost text-ink-muted")}>{b.estado}</span></td>
+                      <span className={"text-xs px-2 py-1 rounded-full font-medium capitalize " + (ESTADOS[b.estado] || "bg-stone text-[#6b7385]")}>{b.estado}</span></td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-3">
                         {b.estado !== "pagado" && (

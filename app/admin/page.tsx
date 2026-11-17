@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import { fmtMXN } from "@/lib/utils";
-import { Icon } from "@/components/Icon";
 import { resumenInicio } from "@/lib/finanzas";
 import { fechaMerida, meridaParts } from "@/lib/time";
 import { ultimosClientes } from "@/lib/stats";
@@ -44,6 +43,10 @@ export default async function AdminDashboard() {
   const resumen = resumenInicio(opsAll || [], meridaParts(new Date()).ymd);
   const visits = visitsProx || [];
   const agentList = agentes || [];
+  const yo = agentList.find(a => a.id === auth?.userId);
+  const primerNombre = yo?.full_name?.split(" ")[0] || "";
+  const hora = meridaParts(new Date()).hour;
+  const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
 
   // Stats
   const leadsActivos = leads.filter(l => !["Cerrado ganado", "Cerrado perdido"].includes(l.status)).length;
@@ -77,90 +80,106 @@ export default async function AdminDashboard() {
   }).sort((a, b) => b.comision - a.comision).slice(0, 5);
 
   // Operaciones cerradas en los últimos 6 meses (ingreso por comisiones)
-  const ahora = new Date();
   const meses = resumen.meses;
   const maxMes = Math.max(...meses.map(m => m.val), 1);
 
+  const card = "bg-white rounded-[32px] px-[26px] py-6";
+
   return (
-    <div className="p-10 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-ink tracking-tight">Inicio</h1>
-        <p className="text-sm text-ink-muted mt-0.5">Resumen de la operación · {ahora.toLocaleDateString("es-MX", { month: "long", year: "numeric" })}</p>
+    <div className="p-4 md:p-6 space-y-4 font-dmsans">
+      {/* Barra superior */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            {saludo}{primerNombre ? <>, <em className="italic font-serif text-gold">{primerNombre}.</em></> : "."}
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">Resumen de tu operación al día de hoy</p>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <div className="bg-white rounded-full pl-4 pr-5 py-3 flex items-center gap-2.5 text-[#6b7385] text-sm">
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+            Buscar clientes o propiedades
+          </div>
+          <button className="bg-white w-[46px] h-[46px] rounded-full flex items-center justify-center text-navy/60" aria-label="Notificaciones">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </button>
+          <Link href="/admin/leads/nuevo" className="bg-navy hover:bg-navy-mid text-white font-semibold text-sm px-[22px] py-3 rounded-full transition-colors whitespace-nowrap">
+            Nuevo cliente
+          </Link>
+        </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
-          <div className="text-[13px] text-ink-muted">Clientes activos</div>
-          <div className="text-3xl font-semibold tracking-tight mt-2 text-ink">{leadsActivos}</div>
-          <Link href="/admin/leads" className="text-xs text-brand-600 hover:underline mt-3 inline-block">Ver clientes →</Link>
+      {/* Cifras */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className={card}>
+          <div className="text-[#6b7385] text-[13px]">Clientes activos</div>
+          <div className="font-semibold text-navy text-[38px] tracking-[-0.76px] mt-1">{leadsActivos}</div>
+          <Link href="/admin/leads" className="text-xs text-gold hover:text-gold-dk mt-3 inline-block font-medium">Ver clientes →</Link>
         </div>
-        <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
-          <div className="text-[13px] text-ink-muted">Propiedades disponibles</div>
-          <div className="text-3xl font-semibold tracking-tight mt-2 text-ink">{propsDisponibles}</div>
-          <div className="text-xs text-ink-muted mt-3">{fmtMXN(valorInventario)} en inventario</div>
+        <div className={card}>
+          <div className="text-[#6b7385] text-[13px]">Propiedades disponibles</div>
+          <div className="font-semibold text-navy text-[38px] tracking-[-0.76px] mt-1">{propsDisponibles}</div>
+          <div className="bg-cream text-navy text-xs font-medium px-3 py-1.5 rounded-full inline-block mt-3">{fmtMXN(valorInventario)} en inventario</div>
         </div>
         {verDinero && (
-          <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
-            <div className="text-[13px] text-ink-muted">Por cobrar</div>
-            <div className="text-3xl font-semibold tracking-tight mt-2 text-brand-600">{fmtMXN(resumen.porCobrar)}</div>
-            <div className="text-xs text-ink-muted mt-3">{resumen.opsPorCobrar} operaciones sin cobrar completas</div>
+          <div className={card}>
+            <div className="text-[#6b7385] text-[13px]">Por cobrar</div>
+            <div className="font-semibold text-navy text-[38px] tracking-[-0.76px] mt-1">{fmtMXN(resumen.porCobrar)}</div>
+            <div className="bg-cream text-navy text-xs font-medium px-3 py-1.5 rounded-full inline-block mt-3">{resumen.opsPorCobrar} operaciones sin cobrar completas</div>
           </div>
         )}
         {verDinero && (
-          <div className="bg-white rounded-2xl border border-ink-line p-6 shadow-card">
-            <div className="text-[13px] text-ink-muted">Comisiones del mes</div>
-            <div className="text-3xl font-semibold tracking-tight mt-2 text-ink">{fmtMXN(resumen.comisionesMes)}</div>
-            <div className="text-xs text-ink-muted mt-3">{resumen.opsCerradasMes} operaciones cerradas</div>
+          <div className={card}>
+            <div className="text-[#6b7385] text-[13px]">Comisiones del mes</div>
+            <div className="font-semibold text-navy text-[38px] tracking-[-0.76px] mt-1">{fmtMXN(resumen.comisionesMes)}</div>
+            <div className="bg-cream text-navy text-xs font-medium px-3 py-1.5 rounded-full inline-block mt-3">{resumen.opsCerradasMes} operaciones cerradas</div>
           </div>
         )}
       </div>
 
-      {/* Funnel + Ranking */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-ink-line shadow-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-ink">Embudo de conversión</h3>
-            <span className="text-xs text-ink-muted">Total: {leads.length} clientes</span>
+      {/* Funnel + Equipo */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+        <div className={`lg:col-span-2 ${card} flex flex-col gap-4`}>
+          <div className="flex items-center justify-between">
+            <h3 className="font-serif text-navy text-[28px]">Embudo de conversión</h3>
+            <span className="text-xs text-[#6b7385]">Total: {leads.length} clientes</span>
           </div>
           {leads.length === 0 ? (
-            <div className="text-sm text-ink-muted text-center py-12">Aún no hay clientes registrados.</div>
+            <div className="text-sm text-[#6b7385] text-center py-12">Aún no hay clientes registrados.</div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-3.5">
               {funnel.map(s => (
-                <div key={s.estado}>
-                  <div className="flex items-center justify-between text-sm mb-1.5">
-                    <span className="text-ink">{s.estado}</span>
-                    <span className="text-ink-muted"><span className="text-ink font-medium">{s.count}</span> · {s.pct}%</span>
+                <div key={s.estado} className="flex items-center gap-3.5">
+                  <p className="text-navy text-sm font-medium w-[130px] shrink-0 truncate">{s.estado}</p>
+                  <div className="flex-1 bg-cream rounded-full overflow-hidden h-[14px]">
+                    <div className="h-full bg-navy rounded-full transition-all" style={{ width: `${s.pct}%` }} />
                   </div>
-                  <div className="h-1.5 bg-ink-ghost rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-500 rounded-full" style={{ width: `${s.pct}%` }}></div>
-                  </div>
+                  <span className="text-navy text-[15px] font-semibold w-8 text-right shrink-0">{s.count}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-          <h3 className="font-semibold text-ink mb-5">Equipo</h3>
+        <div className={`${card} flex flex-col gap-4`}>
+          <h3 className="font-serif text-navy text-[28px]">Equipo</h3>
           {ranking.length === 0 ? (
-            <div className="text-sm text-ink-muted text-center py-8">Sin asesores activos</div>
+            <div className="text-sm text-[#6b7385] text-center py-8">Sin asesores activos</div>
           ) : (
-            <div className="space-y-5">
+            <div className="flex flex-col gap-3.5">
               {ranking.map(a => (
                 <div key={a.id} className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">
+                  <div className="w-10 h-10 rounded-full bg-cream text-navy flex items-center justify-center text-sm font-semibold shrink-0">
                     {a.initials || a.full_name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2) || "?"}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-ink truncate">{a.full_name}</div>
-                    <div className="text-xs text-ink-muted">{a.leads} clientes · {a.ops} ops</div>
+                    <div className="font-semibold text-sm text-navy truncate">{a.full_name}</div>
+                    <div className="text-xs text-[#6b7385]">{a.leads} clientes · {a.ops} ops</div>
                   </div>
-                  {verDinero && (
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-ink">{fmtMXN(a.comision)}</div>
-                    </div>
+                  {verDinero ? (
+                    <div className="text-sm font-semibold text-navy shrink-0">{fmtMXN(a.comision)}</div>
+                  ) : (
+                    <span className="bg-cream text-navy text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0">Activo</span>
                   )}
                 </div>
               ))}
@@ -169,68 +188,71 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Gráfico de operaciones cerradas por mes */}
-      {verDinero && <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-        <h3 className="font-semibold text-ink mb-6">Operaciones cerradas (últimos 6 meses)</h3>
-        <div className="flex items-end justify-between gap-3 h-56">
-          {meses.map(m => {
-            // Alto en px, no %: la columna no tiene altura fija y un % no se puede
-            // resolver contra un contenedor de alto automático (colapsaba a minHeight).
-            const ALTO_MAX_BARRA = 150;
-            const alto = m.val > 0 ? Math.max((m.val / maxMes) * ALTO_MAX_BARRA, 8) : 2;
-            return (
-              <div key={m.mes} className="flex-1 h-full flex flex-col items-center justify-end gap-0.5">
-                <div className="text-xs font-semibold text-ink h-4">{m.ops > 0 ? m.ops : ""}</div>
-                <div className="text-xs text-ink-muted mb-1.5">{m.val > 0 ? (m.val >= 1_000_000 ? `${(m.val / 1_000_000).toFixed(1)}M` : `${Math.round(m.val / 1000)}k`) : "—"}</div>
-                <div className="w-full bg-brand-500 rounded-t-lg" style={{ height: `${alto}px` }} />
-                <div className="text-xs text-ink-muted font-medium capitalize mt-1.5">{m.mes}</div>
-              </div>
-            );
-          })}
+      {/* Operaciones cerradas por mes */}
+      {verDinero && (
+        <div className={`${card} flex flex-col gap-4`}>
+          <h3 className="font-serif text-navy text-[28px]">Operaciones cerradas · 6 meses</h3>
+          <div className="flex items-end justify-center gap-5 h-[180px]">
+            {meses.map((m, i) => {
+              // Alto en px, no %: la columna no tiene altura fija y un % no se puede
+              // resolver contra un contenedor de alto automático (colapsaba a minHeight).
+              const ALTO_MAX_BARRA = 130;
+              const alto = m.val > 0 ? Math.max((m.val / maxMes) * ALTO_MAX_BARRA, 8) : 4;
+              const actual = i === meses.length - 1;
+              return (
+                <div key={m.mes} className="flex flex-col items-center gap-2 w-12">
+                  <p className="text-navy text-[13px] font-semibold">{m.ops > 0 ? m.ops : ""}</p>
+                  <div className={`w-full rounded-[14px] transition-all ${actual ? "bg-navy" : "bg-stone"}`} style={{ height: `${alto}px` }} />
+                  <p className="text-[#6b7385] text-xs capitalize">{m.mes}</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[#6b7385] text-xs text-center">Comisión cobrable de ventas y rentas por mes de cierre. El número arriba de cada barra es la cantidad de operaciones.</p>
         </div>
-        <div className="text-xs text-ink-muted mt-4 text-center">Comisión cobrable de ventas y rentas por mes de cierre. El número arriba de cada barra es la cantidad de operaciones.</div>
-      </div>}
+      )}
 
-      {/* Origen de leads + Próximas visitas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-          <h3 className="font-semibold text-ink mb-5">Origen de clientes</h3>
+      {/* Origen de clientes + Próximas visitas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+        <div className={`${card} flex flex-col gap-4`}>
+          <h3 className="font-serif text-navy text-[28px]">Origen de clientes</h3>
           {origenes.length === 0 ? (
-            <div className="text-sm text-ink-muted text-center py-8">Sin clientes registrados</div>
+            <div className="text-sm text-[#6b7385] text-center py-8">Sin clientes registrados</div>
           ) : (
-            <div className="space-y-3">
-              {origenes.map(([fuente, count]) => (
-                <div key={fuente} className="flex items-center gap-3 text-sm">
-                  <span className="w-32 text-ink truncate">{fuente}</span>
-                  <div className="flex-1 h-1.5 bg-ink-ghost rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-400 rounded-full" style={{ width: `${(count / maxOrigen) * 100}%` }}></div>
+            <div className="flex flex-col gap-3">
+              {origenes.map(([fuente, count], i) => (
+                <div key={fuente} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-navy font-medium">{fuente}</span>
+                    <span className="text-navy font-semibold">{Math.round((count / leads.length) * 100)}%</span>
                   </div>
-                  <span className="text-ink font-medium w-8 text-right text-sm">{count}</span>
+                  <div className="bg-cream rounded-full h-2 overflow-hidden">
+                    <div className={`h-full rounded-full ${i === 0 ? "bg-navy" : "bg-gold"}`} style={{ width: `${(count / maxOrigen) * 100}%` }} />
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-ink-line shadow-card p-6">
-          <h3 className="font-semibold text-ink mb-5">Próximas visitas</h3>
+        <div className={`${card} flex flex-col gap-4`}>
+          <h3 className="font-serif text-navy text-[28px]">Próximas visitas</h3>
           {visits.length === 0 ? (
-            <div className="text-sm text-ink-muted text-center py-8">Sin visitas agendadas</div>
+            <div className="text-sm text-[#6b7385] text-center py-8">Sin visitas agendadas</div>
           ) : (
-            <div className="space-y-1">
+            <div className="flex flex-col gap-2.5">
               {visits.map((v: any) => {
                 const fecha = new Date(v.scheduled_at);
                 return (
-                  <div key={v.id} className="flex items-center gap-4 py-3 border-b border-ink-line last:border-0">
-                    <div className="w-14 text-center">
-                      <div className="text-[11px] text-ink-muted uppercase tracking-wide">{fecha.toLocaleDateString("es-MX", { month: "short", day: "numeric" })}</div>
-                      <div className="text-sm font-semibold text-ink">{fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}</div>
+                  <div key={v.id} className="bg-cream rounded-[22px] px-4 py-3 flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-gold text-xs font-semibold">
+                        {fecha.toLocaleDateString("es-MX", { weekday: "short", day: "numeric" })} · {fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                      <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0 ${v.status === "Confirmada" ? "bg-white text-navy" : "bg-white text-[#6b7385]"}`}>{v.status}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-ink truncate">{v.lead?.name || "Sin cliente"}</div>
-                      <div className="text-xs text-ink-muted truncate">{v.property?.title || "Sin propiedad"} · {v.agent?.full_name || "Sin asesor"}</div>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${v.status === "Confirmada" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{v.status}</span>
+                    <p className="text-navy text-sm font-medium">{v.property?.title || "Sin propiedad"}</p>
+                    <p className="text-[#6b7385] text-xs">{v.lead?.name || "Sin cliente"} · {v.agent?.full_name || "Sin asesor"}</p>
                   </div>
                 );
               })}
@@ -240,35 +262,32 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Últimos clientes */}
-      <div className="bg-white rounded-2xl border border-ink-line shadow-card overflow-hidden">
-        <div className="px-6 py-5 border-b border-ink-line flex items-center justify-between">
-          <h3 className="font-semibold text-ink">Últimos clientes recibidos</h3>
-          <Link href="/admin/leads" className="text-xs text-brand-600 hover:underline">Ver todos</Link>
+      <div className={card}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-serif text-navy text-[28px]">Últimos clientes recibidos</h3>
+          <Link href="/admin/leads" className="text-[#6b7385] hover:text-navy text-[13px] font-semibold transition-colors">Ver todos</Link>
         </div>
         {leads.length === 0 ? (
-          <div className="p-10 text-center text-sm text-ink-muted">
+          <div className="py-10 text-center text-sm text-[#6b7385]">
             No hay clientes registrados todavía. Los que lleguen del sitio web o el chatbot aparecerán aquí.
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="border-b border-ink-line">
-              <tr>{["Cliente", "Origen", "Estado", "Recibido"].map(h => (
-                <th key={h} className="text-left text-[11px] font-semibold text-ink-muted uppercase tracking-wide px-6 py-3.5">{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {ultimosClientes(leads, 5).map((l: any) => (
-                <tr key={l.id} className="border-b border-ink-line last:border-0 hover:bg-ink-ghost/40">
-                  <td className="px-6 py-4">
-                    <Link href={`/admin/leads/${l.id}`} className="font-medium text-sm text-ink hover:text-brand-600">{l.name}</Link>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-ink-muted">{l.source || "—"}</td>
-                  <td className="px-6 py-4"><span className="text-xs px-2 py-1 rounded-full bg-brand-50 text-brand-700">{l.status}</span></td>
-                  <td className="px-6 py-4 text-xs text-ink-muted">{fechaMerida(l.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="flex flex-col">
+            {ultimosClientes(leads, 5).map((l: any) => (
+              <Link href={`/admin/leads/${l.id}`} key={l.id}
+                className="flex items-center gap-3.5 py-3 border-t border-stone first:border-t-0 hover:bg-cream/60 -mx-2 px-2 rounded-[18px] transition-colors">
+                <div className="w-10 h-10 rounded-full bg-cream text-navy flex items-center justify-center text-sm font-semibold shrink-0">
+                  {l.name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-navy truncate">{l.name}</p>
+                  <p className="text-[#6b7385] text-xs">{fechaMerida(l.created_at)}</p>
+                </div>
+                <span className="text-[#6b7385] text-[13px] shrink-0 hidden sm:inline">{l.source || "—"}</span>
+                <span className="bg-cream text-navy text-xs font-medium px-3 py-1.5 rounded-full shrink-0">{l.status}</span>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </div>

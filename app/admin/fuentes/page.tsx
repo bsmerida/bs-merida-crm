@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { getAuth } from "@/lib/auth";
 import { FuentesRevision } from "@/components/FuentesRevision";
 import { FuentesPanel } from "@/components/FuentesPanel";
+import { fotosPorPropiedad } from "@/lib/fotos";
 
 export const dynamic = "force-dynamic";
 
@@ -33,16 +34,10 @@ export default async function FuentesPage() {
   // para reconocer de un vistazo de cuál se trata.
   const idsPropiedades = [...new Set(pendientes.flatMap((b: any) =>
     [b.property_id, ...(b.coincidencia?.candidatos || []).map((c: any) => c.id)]).filter(Boolean))] as string[];
-  const fotosActuales: Record<string, string[]> = {};
-  if (idsPropiedades.length) {
-    const { data: imagenes } = await supabase.from("property_images")
-      .select("property_id, url, position, is_cover").in("property_id", idsPropiedades)
-      .order("position", { ascending: true });
-    for (const img of imagenes || []) {
-      const l = (fotosActuales[img.property_id] ||= []);
-      if (img.is_cover) l.unshift(img.url); else l.push(img.url);
-    }
-  }
+  // fotosPorPropiedad ya resuelve en lotes el límite de URL de Supabase con
+  // .in() (con muchos borradores pendientes, cada uno con varios candidatos,
+  // idsPropiedades puede crecer bastante).
+  const fotosActuales = idsPropiedades.length ? await fotosPorPropiedad(supabase, idsPropiedades, 8) : {};
   const proveedores = Object.fromEntries(lista.map(f => [f.id, `${f.proveedor}${f.alcance ? ` · ${f.alcance}` : ""}`]));
 
   return (

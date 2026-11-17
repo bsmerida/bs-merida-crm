@@ -42,7 +42,8 @@ beforeEach(() => {
     propiedad_borradores: [
       { id: NUEVA, fuente_id: "F-0010", desarrollo_id: DESARROLLO, clave_modelo: "kinora|tipo-a|Departamento|Venta", accion: "Nueva",
         property_id: null, estado: "Pendiente", datos: datosNueva, cambios: null,
-        fotos: [{ url: "https://s/1.jpg" }, { url: "https://s/2.jpg" }] },
+        fotos: [{ url: "https://s/1.jpg" }, { url: "https://s/2.jpg" }],
+        extra: { creditos_aceptados: ["Infonavit", "Crédito bancario"] } },
       { id: ACTUALIZAR, fuente_id: "F-0010", desarrollo_id: DESARROLLO, clave_modelo: "kinora|tipo-b|Departamento|Venta", accion: "Actualizar",
         property_id: PROP, estado: "Pendiente", datos: { ...datosNueva, title: "Otro" },
         cambios: { price: { antes: 2300000, despues: 2450000 }, m2_construction: { antes: 80, despues: 85 } }, fotos: [] },
@@ -122,6 +123,23 @@ describe("aprobar una nueva", () => {
     expect(res.status).toBe(400);
     expect(writes("properties")).toHaveLength(0);
     expect(writes("propiedad_borradores", "update")).toHaveLength(0);
+  });
+
+  it("créditos aceptados del agente: se guardan como nota interna, nunca en la ficha pública", async () => {
+    const res = await patch(NUEVA, { accion: "aprobar" });
+    expect(res.status).toBe(200);
+    const prop = writes("properties", "insert")[0].payload as any;
+    expect(prop.creditos_aceptados).toBeUndefined();
+    expect(prop.description).not.toMatch(/Infonavit/);
+    const notas = writes("property_notes", "insert");
+    expect(notas).toHaveLength(1);
+    expect(notas[0].payload).toMatchObject({ user_id: ADMIN, content: expect.stringContaining("Infonavit") });
+    expect((notas[0].payload as any).content).toContain("Crédito bancario");
+  });
+
+  it("sin créditos en el borrador: no crea ninguna nota", async () => {
+    await patch(ACTUALIZAR, { accion: "aprobar" });
+    expect(writes("property_notes", "insert")).toHaveLength(0);
   });
 });
 

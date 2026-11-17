@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const db = createAdminClient();
   const { data: borrador } = await db.from("propiedad_borradores")
-    .select("id, fuente_id, desarrollo_id, clave_modelo, accion, property_id, estado, datos, cambios, fotos")
+    .select("id, fuente_id, desarrollo_id, clave_modelo, accion, property_id, estado, datos, cambios, fotos, extra")
     .eq("id", params.id).single();
   if (!borrador) return NextResponse.json({ error: "Borrador no encontrado" }, { status: 404 });
   if (borrador.estado !== "Pendiente") return NextResponse.json({ error: "Este borrador ya fue revisado." }, { status: 409 });

@@ -55,16 +55,46 @@ function ZoneAutocomplete({ zones, value, onChange }: { zones: string[]; value: 
         </div>
       </div>
       {open && suggestions.length > 0 && (
-        <div className="absolute left-0 top-full mt-2 w-full min-w-[220px] bg-white border border-stone rounded-2xl shadow-float z-50 overflow-hidden">
-          <div className="max-h-52 overflow-y-auto py-1">
+        <div className="absolute left-0 top-full mt-2 w-full min-w-[220px] bg-white rounded-[24px] shadow-float z-50 overflow-hidden">
+          <div className="max-h-52 overflow-y-auto py-2 px-2">
             {suggestions.map(z => (
               <button key={z} type="button" onMouseDown={() => pick(z)}
-                className={"w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors " +
+                className={"w-full text-left px-4 py-2.5 rounded-[18px] text-sm flex items-center gap-2 transition-colors " +
                   (value === z ? "text-gold font-medium bg-cream" : "text-navy hover:bg-cream")}>
                 {z === "Todas" ? "Todas las zonas" : z}
               </button>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const BEDS_OPTIONS  = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1+" }, { v: "2", l: "2+" }, { v: "3", l: "3+" }, { v: "4", l: "4+" }];
+const BATHS_OPTIONS = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1+" }, { v: "2", l: "2+" }, { v: "3", l: "3+" }];
+const SORT_OPTIONS  = [{ v: "recent", l: "Más recientes" }, { v: "price_asc", l: "Menor precio" }, { v: "price_desc", l: "Mayor precio" }];
+
+function FieldDropdown({ label, value, options, onChange, active, onToggle }: {
+  label: string; value: string; options: { v: string; l: string }[]; onChange: (v: string) => void;
+  active: boolean; onToggle: () => void;
+}) {
+  const selected = options.find(o => o.v === value)?.l || options[0].l;
+  return (
+    <div className="relative min-w-0 flex-1">
+      <button type="button" onClick={onToggle} className="bg-cream rounded-[24px] px-6 py-3 flex flex-col gap-0.5 w-full text-left">
+        <p className="text-[#6b7385] text-[11px] font-semibold tracking-[1.1px] uppercase">{label}</p>
+        <p className="text-navy text-[17px] truncate">{selected}</p>
+      </button>
+      {active && (
+        <div className="absolute left-0 top-full mt-2 w-full min-w-[160px] bg-white rounded-[24px] shadow-float z-50 overflow-hidden py-2 px-2">
+          {options.map(o => (
+            <button key={o.v} type="button" onMouseDown={() => onChange(o.v)}
+              className={"w-full text-left px-4 py-2.5 rounded-[18px] text-sm transition-colors " +
+                (value === o.v ? "text-gold font-medium bg-cream" : "text-navy hover:bg-cream")}>
+              {o.l}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -79,6 +109,16 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const [priceMin, setPriceMin]   = useState(initialMin || "");
   const [priceMax, setPriceMax]   = useState(initialMax || "");
   const [sortBy, setSortBy]       = useState("recent");
+  const [activeField, setActiveField] = useState<null | "beds" | "baths" | "sort">(null);
+  const filtersRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (filtersRef.current && !filtersRef.current.contains(e.target as Node)) setActiveField(null);
+    }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
   // Se dibujan de POR_PAGINA en POR_PAGINA: con las 400+ tarjetas de golpe la
   // página pesaba ~1 MB por visita (transferencia de Vercel).
   const [visibles, setVisibles]   = useState(POR_PAGINA);
@@ -106,9 +146,8 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const hasFilters = filterType !== "Todos" || filterZone !== "Todas" || filterBeds !== "0" || filterBaths !== "0" || priceMin || priceMax;
   const clear = () => { setFilterType("Todos"); setFilterZone("Todas"); setFilterBeds("0"); setFilterBaths("0"); setPriceMin(""); setPriceMax(""); };
 
-  const field = "bg-cream rounded-[24px] px-6 py-3 flex flex-col gap-0.5 min-w-0";
+  const field = "bg-cream rounded-[24px] px-6 py-3 flex flex-col gap-0.5 min-w-0 flex-1";
   const label = "text-[#6b7385] text-[11px] font-semibold tracking-[1.1px] uppercase";
-  const sel   = "text-navy text-[17px] bg-transparent focus:outline-none w-full cursor-pointer";
 
   return (
     <div className="space-y-6">
@@ -122,29 +161,14 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
         ))}
       </div>
 
-      <div className="bg-white rounded-[28px] border border-stone p-3 flex flex-wrap gap-2 items-stretch">
+      <div ref={filtersRef} className="bg-white rounded-[28px] shadow-float p-3 flex flex-wrap gap-2 items-stretch">
         <ZoneAutocomplete zones={zones} value={filterZone} onChange={setFilterZone} />
         {operation === "Venta" && (
           <>
-            <div className={field}>
-              <p className={label}>Recámaras</p>
-              <select value={filterBeds} onChange={e => setFilterBeds(e.target.value)} className={sel}>
-                <option value="0">Cualquiera</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-                <option value="4">4+</option>
-              </select>
-            </div>
-            <div className={field}>
-              <p className={label}>Baños</p>
-              <select value={filterBaths} onChange={e => setFilterBaths(e.target.value)} className={sel}>
-                <option value="0">Cualquiera</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-              </select>
-            </div>
+            <FieldDropdown label="Recámaras" value={filterBeds} options={BEDS_OPTIONS} onChange={v => { setFilterBeds(v); setActiveField(null); }}
+              active={activeField === "beds"} onToggle={() => setActiveField(activeField === "beds" ? null : "beds")} />
+            <FieldDropdown label="Baños" value={filterBaths} options={BATHS_OPTIONS} onChange={v => { setFilterBaths(v); setActiveField(null); }}
+              active={activeField === "baths"} onToggle={() => setActiveField(activeField === "baths" ? null : "baths")} />
           </>
         )}
         <div className={field}>
@@ -157,14 +181,8 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
           <input type="number" placeholder="Sin límite" value={priceMax} onChange={e => setPriceMax(e.target.value)}
             className="text-navy text-[17px] bg-transparent focus:outline-none w-full placeholder:text-navy/40" />
         </div>
-        <div className={field}>
-          <p className={label}>Ordenar</p>
-          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className={sel}>
-            <option value="recent">Más recientes</option>
-            <option value="price_asc">Menor precio</option>
-            <option value="price_desc">Mayor precio</option>
-          </select>
-        </div>
+        <FieldDropdown label="Ordenar" value={sortBy} options={SORT_OPTIONS} onChange={v => { setSortBy(v); setActiveField(null); }}
+          active={activeField === "sort"} onToggle={() => setActiveField(activeField === "sort" ? null : "sort")} />
       </div>
 
       <div className="flex items-center justify-between">

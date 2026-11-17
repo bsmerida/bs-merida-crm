@@ -28,7 +28,7 @@ export function MapaExplorer({ properties }: { properties: MapaProp[] }) {
   }, [properties, query, operation]);
 
   return (
-    <div className="rounded-[32px] md:rounded-[48px] bg-white border border-stone overflow-hidden flex flex-col md:flex-row h-[80vh] md:h-[820px]">
+    <div className="rounded-[32px] md:rounded-[48px] bg-white shadow-float overflow-hidden flex flex-col md:flex-row h-[80vh] md:h-[820px]">
       {/* Panel de resultados */}
       <div className="w-full md:w-[420px] shrink-0 border-b md:border-b-0 md:border-r border-stone flex flex-col">
         <div className="p-5 pb-4">

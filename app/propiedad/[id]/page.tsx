@@ -18,6 +18,15 @@ const fmt = (n: number, cur = "MXN") =>
     style: "currency", currency: cur, maximumFractionDigits: 0,
   }).format(n);
 
+// Estimación de referencia: 20% de enganche, tasa anual 10.5%, 20 años. No es una cotización real.
+function mensualidadEstimada(price: number) {
+  const prestamo = price * 0.8;
+  const r = 0.105 / 12;
+  const n = 20 * 12;
+  const pago = (prestamo * r) / (1 - Math.pow(1 + r, -n));
+  return Math.round(pago / 100) * 100;
+}
+
 export default async function PropiedadDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const { data: p }: { data: any } = await supabase.from("properties").select(PUBLIC_PROPERTY_DETAIL_COLUMNS).eq("id", params.id).single();
@@ -143,19 +152,19 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               <div className="bg-white rounded-[32px] border border-stone p-7">
                 <p className="font-serif text-navy text-2xl md:text-[30px] mb-5">Detalles técnicos</p>
                 <div className="grid grid-cols-2 gap-5">
-                  {property.m2_land && (
+                  {(property.m2_land ?? 0) > 0 && (
                     <div>
                       <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Terreno</p>
                       <p className="text-navy font-semibold mt-1">{property.m2_land} m²</p>
                     </div>
                   )}
-                  {(property as any).floors && (
+                  {(property as any).floors > 0 && (
                     <div>
                       <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Niveles</p>
                       <p className="text-navy font-semibold mt-1">{(property as any).floors}</p>
                     </div>
                   )}
-                  {(property as any).year_built && (
+                  {(property as any).year_built > 0 && (
                     <div>
                       <p className="text-[#6b7385] text-[11px] uppercase tracking-[1.1px]">Año de construcción</p>
                       <p className="text-navy font-semibold mt-1">{(property as any).year_built}</p>
@@ -186,6 +195,17 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
               </p>
               <p className="font-semibold text-navy text-4xl md:text-[49px] tracking-tight md:tracking-[-1.47px] -mt-3">{priceLabel}</p>
               <p className="text-[#6b7385] text-sm -mt-3">{currency} · Precio de lista</p>
+
+              {property.operation === "Venta" && priceType === "total" && currency === "MXN" && (
+                <div className="bg-stone rounded-[24px] px-[22px] py-5 flex flex-col gap-1.5">
+                  <p className="text-[#6b7385] text-[11px] font-semibold tracking-[1.98px]">DESDE</p>
+                  <div className="flex gap-2 items-end">
+                    <p className="font-semibold text-navy text-[31px] tracking-[-0.31px]">{fmt(mensualidadEstimada(property.price), currency)}</p>
+                    <p className="text-[#6b7385] text-[15px]">/ mes*</p>
+                  </div>
+                  <p className="text-[#6b7385] text-xs leading-[17px]">*Estimado con 20% de enganche, tasa de referencia a 20 años. Sujeto a aprobación bancaria.</p>
+                </div>
+              )}
 
               <PropertyContactButtons
                 propertyId={property.id}

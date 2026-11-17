@@ -1,8 +1,11 @@
 // app/cita-elegir/page.tsx
-// El cliente revisa el horario que eligió en el correo y lo confirma con un botón.
+// El cliente revisa los horarios que el asesor le propuso y confirma uno con un botón.
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
 import { etiquetaFecha } from "@/lib/citas";
+import { PublicHeaderV3 } from "@/components/PublicHeaderV3";
+import { PublicFooterV3 } from "@/components/PublicFooterV3";
+import { ElegirHorarioForm } from "@/components/ElegirHorarioForm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Confirmar visita — Duclaud Bienes Raíces", robots: { index: false } };
@@ -10,48 +13,84 @@ export const metadata = { title: "Confirmar visita — Duclaud Bienes Raíces", 
 export default async function CitaElegirPage({ searchParams }: { searchParams: { token?: string; option?: string } }) {
   const token = searchParams.token || "";
   const optionIdx = Number(searchParams.option || "0");
+  const db = createAdminClient();
+  const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
 
   const { data: request } = token
-    ? await createAdminClient().from("appointment_requests")
-        .select("status, property_title, agent_options").eq("client_token", token).maybeSingle()
+    ? await db.from("appointment_requests")
+        .select("status, property_title, agent_options, agent_id").eq("client_token", token).maybeSingle()
     : { data: null };
-  const chosen = (request?.agent_options as { date: string; time: string }[] | undefined)?.[optionIdx];
+
+  const opciones = ((request?.agent_options as { date: string; time: string }[] | undefined) || [])
+    .map(o => ({ label: etiquetaFecha(o.date), time: o.time }));
   const yaAtendida = request && request.status !== "rescheduled";
 
+  let agentName = "Tu asesor";
+  if (request?.agent_id) {
+    const { data: agent } = await db.from("profiles").select("full_name").eq("id", request.agent_id).maybeSingle();
+    if (agent?.full_name) agentName = agent.full_name;
+  }
+
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-10 text-center">
-        {!request || (!chosen && !yaAtendida) ? (
+    <div className="bg-cream p-4 font-dmsans break-words">
+      <PublicHeaderV3 active="" />
+
+      <section className="px-5 md:px-16 pt-10 md:pt-24 pb-14 md:pb-24 flex flex-col gap-5 md:gap-7">
+        {!request || opciones.length === 0 ? (
           <>
-            <h1 className="font-serif text-2xl text-navy mb-3">Enlace no válido</h1>
-            <p className="text-sm text-ink-muted">Este enlace no es válido o ya expiró. Contacta directamente con tu asesor.</p>
+            <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Algo salió mal</p>
+            <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
+              Enlace no <em className="italic not-italic font-serif text-gold">válido.</em>
+            </h1>
+            <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
+              Este enlace no es válido o ya expiró. Contacta directamente con tu asesor.
+            </p>
+            <div className="flex gap-2.5 flex-wrap mt-2 md:mt-3">
+              <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
+                className="bg-navy hover:bg-navy-mid text-white font-semibold px-[30px] py-[17px] rounded-full transition-colors">
+                Escribir por WhatsApp
+              </a>
+              <Link href="/" className="bg-stone hover:bg-stone-dk text-navy font-semibold px-[30px] py-[17px] rounded-full transition-colors">
+                Ir al inicio
+              </Link>
+            </div>
           </>
         ) : yaAtendida ? (
           <>
-            <h1 className="font-serif text-2xl text-navy mb-3">Esta visita ya fue atendida</h1>
-            <p className="text-sm text-ink-muted">Revisa tu correo con los detalles o contacta a tu asesor si necesitas cambiarla.</p>
+            <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">Cita</p>
+            <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
+              Esta visita ya fue <em className="italic not-italic font-serif text-gold">atendida.</em>
+            </h1>
+            <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
+              Revisa tu correo con los detalles o contacta a tu asesor si necesitas cambiarla.
+            </p>
+            <div className="flex gap-2.5 flex-wrap mt-2 md:mt-3">
+              <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
+                className="bg-navy hover:bg-navy-mid text-white font-semibold px-[30px] py-[17px] rounded-full transition-colors">
+                Escribir por WhatsApp
+              </a>
+              <Link href="/" className="bg-stone hover:bg-stone-dk text-navy font-semibold px-[30px] py-[17px] rounded-full transition-colors">
+                Ir al inicio
+              </Link>
+            </div>
           </>
         ) : (
           <>
-            <h1 className="font-serif text-2xl text-navy mb-3">Confirma tu visita</h1>
-            {request.property_title && <p className="text-sm text-ink-muted">{request.property_title}</p>}
-            <div className="border-2 border-gold/40 rounded-2xl px-6 py-4 my-5">
-              <p className="text-lg font-semibold text-navy">{etiquetaFecha(chosen!.date)}</p>
-              <p className="text-sm text-ink-muted">a las {chosen!.time} hrs</p>
-            </div>
-            <form method="post" action="/api/citas/confirmar-cliente">
-              <input type="hidden" name="token" value={token} />
-              <input type="hidden" name="option" value={String(optionIdx)} />
-              <button type="submit"
-                className="w-full bg-navy text-white font-medium px-8 py-3 rounded-full hover:bg-navy/90 transition text-sm">
-                Confirmar este horario
-              </button>
-            </form>
-            <p className="text-xs text-ink-muted mt-4">¿Prefieres otro horario? Responde el correo o llama a tu asesor.</p>
+            <p className="text-gold text-xs font-semibold tracking-[1.92px] uppercase">
+              Visita{request.property_title ? ` · ${request.property_title}` : ""}
+            </p>
+            <h1 className="font-serif text-navy text-4xl md:text-[96px] md:leading-[96px] tracking-tight md:tracking-[-1.92px] min-w-0">
+              Confirma tu <em className="italic not-italic font-serif text-gold">visita.</em>
+            </h1>
+            <p className="text-[#6b7385] text-base md:text-[22px] md:leading-[33px] max-w-[800px] min-w-0">
+              {agentName} te propuso {opciones.length === 1 ? "un horario" : opciones.length === 3 ? "tres horarios" : `${opciones.length} horarios`}. Elige el que mejor te acomode.
+            </p>
+            <ElegirHorarioForm token={token} opciones={opciones} defaultIdx={Math.min(optionIdx, opciones.length - 1)} />
           </>
         )}
-        <Link href="/" className="inline-block mt-6 text-sm text-ink-muted hover:underline">Ir al inicio</Link>
-      </div>
+      </section>
+
+      <PublicFooterV3 />
     </div>
   );
 }

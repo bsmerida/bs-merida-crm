@@ -42,5 +42,17 @@ export async function POST(req: NextRequest) {
 
   if (!await confirmRequest(db, request, chosen, "rescheduled")) return go("/cita-confirmada?status=already");
 
-  return go(`/cita-confirmada?date=${encodeURIComponent(etiquetaFecha(chosen.date))}&time=${encodeURIComponent(chosen.time)}`);
+  const { data: agent } = request.agent_id
+    ? await db.from("profiles").select("full_name, phone").eq("id", request.agent_id).maybeSingle()
+    : { data: null };
+
+  const params = new URLSearchParams({
+    date: etiquetaFecha(chosen.date),
+    time: chosen.time,
+  });
+  if (request.property_title) params.set("property", request.property_title);
+  if (agent?.full_name) params.set("agent", agent.full_name);
+  if (agent?.phone) params.set("agentPhone", agent.phone);
+
+  return go(`/cita-confirmada?${params.toString()}`);
 }

@@ -36,7 +36,7 @@ function PropCard({ card }: { card: PropCard }) {
         <div className="flex items-center gap-2 mt-1 text-[10px] text-ink-muted">
           {card.bedrooms > 0  && <span className="flex items-center gap-1"><Icon name="bed"  className="w-3 h-3" />{card.bedrooms}</span>}
           {card.bathrooms > 0 && <span className="flex items-center gap-1"><Icon name="bath" className="w-3 h-3" />{card.bathrooms}</span>}
-          {card.m2 && <span>{card.m2}m²</span>}
+          {(card.m2 ?? 0) > 0 && <span>{card.m2}m²</span>}
         </div>
       </div>
       <div className="flex items-center pr-2 text-stone-dk group-hover:text-gold transition">

@@ -1,9 +1,6 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
-// Archivo estático (antes 145 KB de base64 dentro del JS de cada página)
-const DUCLAUD_LOGO_WHITE = "/logo-white.jpg";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -27,7 +24,7 @@ const icons: Record<string, JSX.Element> = {
   close:     <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
 };
 
-function SvgIcon({ name, size = 16 }: { name: string; size?: number }) {
+function SvgIcon({ name, size = 18 }: { name: string; size?: number }) {
   return (
     <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.75"
       strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="shrink-0">
@@ -64,56 +61,51 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
 
   const item = (href: string, label: string, icon: string, badge?: number | null) => (
     <Link key={href} href={href} onClick={() => setOpen(false)}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm transition-all ${
-        isActive(href) ? "bg-gold/15 text-gold font-medium" : "text-white/45 hover:bg-white/6 hover:text-white/75"}`}>
+      className={`flex items-center gap-3 px-[14px] py-[11px] rounded-full mb-0.5 text-[15px] font-medium transition-colors ${
+        isActive(href) ? "bg-navy text-white font-semibold" : "text-navy hover:bg-cream"}`}>
       <SvgIcon name={icon} />
       <span className="flex-1">{label}</span>
-      {badge ? <span className="bg-gold text-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">{badge}</span> : null}
+      {badge ? <span className="bg-stone text-navy text-[11px] font-semibold px-2 py-0.5 rounded-full">{badge}</span> : null}
     </Link>
   );
 
   const sidebarContent = (
     <>
-      <div className="px-5 py-5 border-b border-white/8">
-        <Link href="/admin" className="select-none" onClick={() => setOpen(false)}>
-          <Image src={DUCLAUD_LOGO_WHITE} alt="D.UCLAUD Bienes Raíces" width={160} height={44} className="h-10 w-auto" priority/>
-          <p className="text-[9px] uppercase tracking-[0.12em] text-white/25 mt-1">Panel administrativo</p>
-        </Link>
-      </div>
+      <Link href="/admin" className="select-none flex flex-col gap-[3px] px-[10px] pb-[22px]" onClick={() => setOpen(false)}>
+        <p className="font-serif text-navy text-[30px] tracking-[1.2px]">D<span className="text-gold">.</span>UCLAUD</p>
+        <p className="text-[#6b7385] text-[10px] font-medium tracking-[1.4px] uppercase">Panel administrativo</p>
+      </Link>
 
-      <nav className="flex-1 py-4 px-3 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto">
         {mainNav.map(n => item(n.href, n.label, n.icon, n.badge))}
         {!isAdmin && item("/admin/ajustes", "Ajustes", "settings")}
         {isAdmin && (
           <>
-            <div className="text-[9px] font-semibold text-white/20 uppercase tracking-[0.16em] px-3 pt-5 pb-2">Análisis</div>
+            <div className="text-[10px] font-semibold text-[#a4a9b5] uppercase tracking-[1.6px] px-[14px] pt-[18px] pb-2">Análisis</div>
             {adminNav.map(n => item(n.href, n.label, n.icon))}
           </>
         )}
-        <div className="mt-4 pt-4 border-t border-white/8">
-          <Link href="/admin/asistente" onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
-              isActive("/admin/asistente") ? "bg-gold/15 text-gold font-medium" : "text-gold/60 hover:bg-gold/10 hover:text-gold"}`}>
-            <SvgIcon name="sparkle" />
-            <span className="flex-1">Asistente IA</span>
-            <span className="text-[9px] text-gold/50 border border-gold/20 px-1.5 py-0.5 rounded-full">IA</span>
-          </Link>
-        </div>
+        <Link href="/admin/asistente" onClick={() => setOpen(false)}
+          className={`flex items-center gap-3 px-[16px] py-[12px] rounded-full mt-2 text-[15px] font-semibold transition-colors ${
+            isActive("/admin/asistente") ? "bg-navy text-white" : "bg-stone text-navy hover:bg-stone-dk"}`}>
+          <SvgIcon name="sparkle" />
+          <span className="flex-1">Asistente IA</span>
+        </Link>
       </nav>
 
-      <div className="p-3 border-t border-white/8">
-        <div className="flex items-center gap-3 px-3 py-2 mb-1 rounded-xl">
-          <div className="w-7 h-7 bg-gold/20 border border-gold/30 rounded-full flex items-center justify-center text-[10px] font-semibold text-gold shrink-0">
+      <div className="flex flex-col gap-1">
+        <div className="bg-cream flex items-center gap-2.5 p-2.5 rounded-full">
+          <div className="w-9 h-9 bg-navy rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] text-white/70 truncate">{profile?.full_name || "Sin nombre"}</div>
-            <div className="text-[10px] text-white/25 capitalize">{profile?.role}</div>
+            <div className="text-[13px] font-semibold text-navy truncate">{profile?.full_name || "Sin nombre"}</div>
+            <div className="text-[11px] text-[#6b7385] capitalize">{profile?.role}</div>
           </div>
         </div>
         <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); router.refresh(); }}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors">
-          <SvgIcon name="logout" size={13} /> Cerrar sesión
+          className="w-full flex items-center gap-2.5 px-[14px] pt-2.5 pb-1 text-[13px] text-[#6b7385] hover:text-navy transition-colors">
+          <SvgIcon name="logout" size={16} /> Cerrar sesión
         </button>
       </div>
     </>
@@ -122,15 +114,13 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
   return (
     <>
       {/* ── Móvil: barra superior ──────────────────────────────────────────── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-navy flex items-center justify-between px-4 h-14 border-b border-white/10">
-        <Link href="/admin">
-          <Image src={DUCLAUD_LOGO_WHITE} alt="D.UCLAUD" width={120} height={34} className="h-7 w-auto"/>
-        </Link>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-navy flex items-center justify-between px-4 h-14">
+        <Link href="/admin" className="font-serif text-white text-xl tracking-[1.2px]">D<span className="text-gold">.</span>UCLAUD</Link>
         <div className="flex items-center gap-3">
           {leadsNuevos > 0 && (
             <span className="bg-gold text-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">{leadsNuevos}</span>
           )}
-          <button onClick={() => setOpen(o => !o)} className="text-white/60 hover:text-white transition-colors p-1">
+          <button onClick={() => setOpen(o => !o)} className="text-white/70 hover:text-white transition-colors p-1">
             <SvgIcon name={open ? "close" : "menu"} size={22}/>
           </button>
         </div>
@@ -139,18 +129,18 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
       {/* ── Móvil: overlay ─────────────────────────────────────────────────── */}
       {open && (
         <div className="md:hidden fixed inset-0 z-40" onClick={() => setOpen(false)}>
-          <div className="absolute inset-0 bg-black/50"/>
+          <div className="absolute inset-0 bg-navy/50"/>
         </div>
       )}
 
       {/* ── Móvil: drawer ──────────────────────────────────────────────────── */}
-      <div className={`md:hidden fixed top-14 left-0 bottom-0 z-40 w-72 bg-navy flex flex-col transition-transform duration-300 ${
+      <div className={`md:hidden fixed top-14 left-0 bottom-0 z-40 w-72 bg-white rounded-tr-[32px] flex flex-col p-4 transition-transform duration-300 ${
         open ? "translate-x-0" : "-translate-x-full"}`}>
         {sidebarContent}
       </div>
 
       {/* ── Desktop: sidebar fijo ──────────────────────────────────────────── */}
-      <aside className="hidden md:flex w-60 bg-navy flex-col h-screen sticky top-0">
+      <aside className="hidden md:flex w-[250px] shrink-0 bg-white rounded-[36px] flex-col p-4 h-[calc(100vh-32px)] sticky top-4">
         {sidebarContent}
       </aside>
     </>

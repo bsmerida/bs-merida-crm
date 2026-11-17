@@ -41,43 +41,46 @@ export default async function AdminPropiedades() {
     };
   });
 
+  const disponibles = props.filter(p => p.status === "Disponible").length;
+  const reservadas  = props.filter(p => p.status === "Reservada").length;
+  const cerradas    = props.filter(p => p.status === "Vendida" || p.status === "Rentada").length;
+
   return (
-    <div className="p-10 space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="p-4 md:p-6 space-y-5 font-dmsans">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Propiedades</h1>
-          <p className="text-sm text-ink-muted mt-0.5">
-            {isAdmin ? `${props.length} en el inventario` : `${props.length} propiedades asignadas a ti`}
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Propiedades<em className="italic font-serif text-gold">.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">
+            {isAdmin
+              ? `${disponibles} disponibles · ${reservadas} reservadas · ${cerradas} vendidas o rentadas`
+              : `${props.length} propiedades asignadas a ti`}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           {isAdmin && (
             <>
               <Link href="/admin/propiedades/estadisticas"
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-stone text-ink rounded-full text-sm hover:border-navy transition-colors">
-                <svg className="w-4 h-4 text-navy" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-                  <path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/>
-                </svg>
+                className="bg-stone hover:bg-stone-dk text-navy font-semibold text-sm px-[22px] py-3 rounded-full transition-colors">
                 Estadísticas
               </Link>
               <Link href="/admin/propiedades/tokko"
-                className="flex items-center gap-2 px-4 py-2 bg-navy/5 border border-navy/20 text-navy rounded-full text-sm hover:bg-navy/10 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-                  <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-                </svg>
-                Sincronizar
+                className="bg-stone hover:bg-stone-dk text-navy font-semibold text-sm px-[22px] py-3 rounded-full transition-colors">
+                Tokko
               </Link>
               <Link href="/admin/geocode"
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-stone text-ink rounded-full text-sm hover:border-navy transition-colors">
-                <svg className="w-4 h-4 text-gold" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
-                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-                </svg>
+                className="bg-stone hover:bg-stone-dk text-navy font-semibold text-sm px-[22px] py-3 rounded-full transition-colors">
                 Coordenadas
+              </Link>
+              <Link href="/admin/propiedades/importar"
+                className="bg-stone hover:bg-stone-dk text-navy font-semibold text-sm px-[22px] py-3 rounded-full transition-colors">
+                Importar
               </Link>
             </>
           )}
           <Link href="/admin/propiedades/nueva"
-            className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 text-white rounded-full text-sm hover:bg-brand-600">
+            className="bg-navy hover:bg-navy-mid text-white font-semibold text-sm px-[22px] py-3 rounded-full transition-colors flex items-center gap-1.5">
             <Icon name="plus" className="w-3.5 h-3.5" /> Nueva propiedad
           </Link>
         </div>

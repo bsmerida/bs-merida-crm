@@ -24,7 +24,7 @@ const PRIORITY_MAP: Record<string, [string, string]> = {
   urgent: ["bg-red-100 text-red-700 border-red-200",     "Urgente"],
   high:   ["bg-amber-100 text-amber-700 border-amber-200","Alta"   ],
   normal: ["bg-blue-50 text-blue-600 border-blue-200",   "Normal" ],
-  low:    ["bg-stone-100 text-stone-500 border-stone-200","Baja"   ],
+  low:    ["bg-stone text-stone-500 border-stone-200","Baja"   ],
 };
 
 const CATEGORY_OPTIONS = ["Seguimiento","Administración","Operaciones","Marketing","Otro"];
@@ -102,7 +102,7 @@ function TaskModal({
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-7 py-5 border-b border-stone">
           <h2 className="font-serif text-xl text-navy">{task ? "Editar tarea" : "Nueva tarea"}</h2>
-          <button onClick={onClose} className="text-ink-soft hover:text-navy p-1">
+          <button onClick={onClose} className="text-[#6b7385] hover:text-navy p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
@@ -111,22 +111,22 @@ function TaskModal({
 
         <div className="p-7 space-y-4">
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Título *</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Título *</label>
             <input value={title} onChange={e => setTitle(e.target.value)}
               placeholder="¿Qué hay que hacer?"
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-ink-line focus:outline-none focus:border-navy"/>
+              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy"/>
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Descripción</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Descripción</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Detalles opcionales..." rows={3}
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-ink-line focus:outline-none focus:border-navy resize-none"/>
+              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy resize-none"/>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Prioridad</label>
+              <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Prioridad</label>
               <select value={priority} onChange={e => setPriority(e.target.value as "low"|"normal"|"high"|"urgent")}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
                 <option value="low">Baja</option>
@@ -137,7 +137,7 @@ function TaskModal({
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Estado</label>
+              <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Estado</label>
               <select value={status} onChange={e => setStatus(e.target.value as Task["status"])}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
                 <option value="todo">Por hacer</option>
@@ -147,20 +147,20 @@ function TaskModal({
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Fecha inicio</label>
+              <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Fecha inicio</label>
               <input type="date" value={startsAt} onChange={e => setStartsAt(e.target.value)}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy"/>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Fecha límite</label>
+              <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Fecha límite</label>
               <input type="date" value={dueAt} onChange={e => setDueAt(e.target.value)}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy"/>
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Categoría</label>
+            <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Categoría</label>
             <select value={category} onChange={e => setCategory(e.target.value)}
               className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
               <option value="">Sin categoría</option>
@@ -170,7 +170,7 @@ function TaskModal({
 
           {profiles.length > 0 && (
             <div>
-              <label className="text-[10px] uppercase tracking-[0.14em] text-ink-soft block mb-1.5">Asignado a</label>
+              <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Asignado a</label>
               <select value={assignedTo} onChange={e => setAssignedTo(e.target.value)}
                 className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy">
                 {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name || "Sin nombre"}</option>)}
@@ -216,11 +216,11 @@ function TaskCard({
     <div className={`bg-white rounded-2xl border p-4 space-y-3 ${overdue ? "border-red-200" : "border-stone"}`}>
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium leading-snug ${task.status === "done" ? "line-through text-ink-muted" : "text-navy"}`}>
+          <p className={`text-sm font-medium leading-snug ${task.status === "done" ? "line-through text-[#6b7385]" : "text-navy"}`}>
             {task.title}
           </p>
           {task.description && (
-            <p className="text-xs text-ink-muted mt-1 line-clamp-2">{task.description}</p>
+            <p className="text-xs text-[#6b7385] mt-1 line-clamp-2">{task.description}</p>
           )}
         </div>
         <PriorityBadge p={task.priority}/>
@@ -228,19 +228,19 @@ function TaskCard({
 
       <div className="flex flex-wrap items-center gap-2">
         {task.category && (
-          <span className="text-[10px] text-ink-soft bg-cream px-2 py-0.5 rounded-full capitalize">{task.category}</span>
+          <span className="text-[10px] text-[#6b7385] bg-cream px-2 py-0.5 rounded-full capitalize">{task.category}</span>
         )}
         {task.lead && (
-          <span className="text-[10px] text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full truncate max-w-[120px]">
+          <span className="text-[10px] text-gold bg-cream px-2 py-0.5 rounded-full truncate max-w-[120px]">
             👤 {task.lead.name}
           </span>
         )}
       </div>
 
       <div className="flex items-center gap-3 text-[11px]">
-        {task.starts_at && <span className="text-ink-muted">Inicio: {formatDate(task.starts_at)}</span>}
+        {task.starts_at && <span className="text-[#6b7385]">Inicio: {formatDate(task.starts_at)}</span>}
         {task.due_at && (
-          <span className={overdue ? "text-red-500 font-semibold" : "text-ink-muted"}>
+          <span className={overdue ? "text-red-500 font-semibold" : "text-[#6b7385]"}>
             {overdue ? "⚠ " : ""}Límite: {formatDate(task.due_at)}
           </span>
         )}
@@ -249,29 +249,29 @@ function TaskCard({
       <div className="flex items-center justify-between pt-1 border-t border-stone">
         <div className="flex items-center gap-2">
           {task.assignee && <Avatar name={task.assignee.full_name} initials={task.assignee.initials}/>}
-          <span className="text-[11px] text-ink-muted truncate max-w-[100px]">{task.assignee?.full_name?.split(" ")[0] || ""}</span>
+          <span className="text-[11px] text-[#6b7385] truncate max-w-[100px]">{task.assignee?.full_name?.split(" ")[0] || ""}</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => onStatusChange(task.id, nextStatus[task.status])}
-            className="text-[10px] font-medium text-brand-600 hover:text-brand-700 px-2.5 py-1 rounded-lg hover:bg-brand-50 transition">
+            className="text-[10px] font-medium text-gold hover:text-navy px-2.5 py-1 rounded-lg hover:bg-cream transition">
             {nextLabel[task.status]} →
           </button>
           <button onClick={() => onEdit(task)}
-            className="p-1.5 text-ink-soft hover:text-navy rounded-lg hover:bg-cream transition">
+            className="p-1.5 text-[#6b7385] hover:text-navy rounded-lg hover:bg-cream transition">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </button>
           {!confirmDel ? (
             <button onClick={() => setConfirmDel(true)}
-              className="p-1.5 text-ink-soft hover:text-red-400 rounded-lg hover:bg-red-50 transition">
+              className="p-1.5 text-[#6b7385] hover:text-red-400 rounded-lg hover:bg-red-50 transition">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/>
               </svg>
             </button>
           ) : (
             <div className="flex items-center gap-1">
-              <button onClick={() => setConfirmDel(false)} className="text-[10px] text-ink-soft px-1.5 py-1 rounded hover:bg-cream">No</button>
+              <button onClick={() => setConfirmDel(false)} className="text-[10px] text-[#6b7385] px-1.5 py-1 rounded hover:bg-cream">No</button>
               <button onClick={() => onDelete(task.id)} className="text-[10px] text-white bg-red-500 px-2 py-1 rounded-lg">Sí</button>
             </div>
           )}
@@ -294,11 +294,11 @@ function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
         return (
           <div key={col.key} className={`rounded-2xl border-2 p-4 ${col.color}`}>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-semibold text-ink uppercase tracking-[0.1em]">{col.label}</p>
-              <span className="text-xs text-ink-muted bg-white rounded-full px-2 py-0.5 border border-stone">{colTasks.length}</span>
+              <p className="text-xs font-semibold text-navy uppercase tracking-[0.1em]">{col.label}</p>
+              <span className="text-xs text-[#6b7385] bg-white rounded-full px-2 py-0.5 border border-stone">{colTasks.length}</span>
             </div>
             <div className="space-y-3">
-              {colTasks.length === 0 && <p className="text-xs text-ink-line text-center py-6">Sin tareas</p>}
+              {colTasks.length === 0 && <p className="text-xs text-[#6b7385] text-center py-6">Sin tareas</p>}
               {colTasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>)}
             </div>
           </div>
@@ -316,7 +316,7 @@ function ListView({ tasks, onEdit, onDelete, onStatusChange }: {
 }) {
   return (
     <div className="space-y-2">
-      {tasks.length === 0 && <div className="text-center py-16"><p className="text-sm text-ink-muted">No hay tareas que coincidan.</p></div>}
+      {tasks.length === 0 && <div className="text-center py-16"><p className="text-sm text-[#6b7385]">No hay tareas que coincidan.</p></div>}
       {tasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>)}
     </div>
   );
@@ -384,7 +384,7 @@ export function TareasClient({
         <div className="flex items-center bg-white border border-stone rounded-full p-0.5 text-xs">
           {(["kanban","list"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
-              className={`px-3 py-1.5 rounded-full font-medium transition ${view===v?"bg-navy text-white":"text-ink-soft hover:text-navy"}`}>
+              className={`px-3 py-1.5 rounded-full font-medium transition ${view===v?"bg-navy text-white":"text-[#6b7385] hover:text-navy"}`}>
               {v === "kanban" ? "Kanban" : "Lista"}
             </button>
           ))}
@@ -392,7 +392,7 @@ export function TareasClient({
 
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Buscar tarea..."
-          className="border border-stone rounded-full px-4 py-2 text-sm text-navy placeholder:text-ink-line focus:outline-none focus:border-navy flex-1 min-w-[160px]"/>
+          className="border border-stone rounded-full px-4 py-2 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy flex-1 min-w-[160px]"/>
 
         <select value={filterPrio} onChange={e => setFilterPrio(e.target.value)}
           className="border border-stone rounded-full px-3 py-2 text-sm text-navy focus:outline-none">

@@ -29,23 +29,27 @@ export default async function AdminMapaPage() {
     .is("lat", null);
 
   return (
-    <div className="p-6 md:p-10 space-y-6">
+    <div className="p-4 md:p-6 space-y-5 font-dmsans">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Mapa de propiedades</h1>
-          <p className="text-sm text-ink-muted mt-0.5">
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Mapa<em className="italic font-serif text-gold">.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">
             {properties.length} con coordenadas
             {sinCoords ? ` · ${sinCoords} sin geocodificar` : ""}
           </p>
         </div>
         {sinCoords ? (
-          <Link href="/admin/propiedades?tab=coordenadas"
-            className="text-sm bg-gold text-white px-4 py-2 rounded-full hover:bg-gold/90 transition">
+          <Link href="/admin/geocode"
+            className="bg-navy hover:bg-navy-mid text-white font-semibold text-sm px-[22px] py-3 rounded-full transition-colors">
             Geocodificar {sinCoords} propiedades →
           </Link>
         ) : null}
       </div>
-      <PropertiesMap properties={properties} height="75vh"/>
+      <div className="rounded-[32px] overflow-hidden">
+        <PropertiesMap properties={properties} height="75vh"/>
+      </div>
     </div>
   );
 }

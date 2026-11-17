@@ -30,26 +30,26 @@ export default async function AdminTareasPage() {
   const compliance = all.length > 0 ? Math.round((done.length / all.length) * 100) : 0;
 
   return (
-    <div className="p-6 md:p-10 space-y-8">
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Tareas</h1>
-          <p className="text-sm text-ink-muted mt-0.5">Organización y seguimiento del equipo</p>
-        </div>
+    <div className="p-4 md:p-6 space-y-5 font-dmsans">
+      <div>
+        <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+          Tareas<em className="italic font-serif text-gold">.</em>
+        </h1>
+        <p className="text-[#6b7385] text-[15px] mt-1">Organización y seguimiento del equipo</p>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         {[
           { label: "Cumplimiento", value: `${compliance}%`, sub: `${done.length} de ${all.length} completadas`, color: compliance >= 75 ? "text-emerald-600" : compliance >= 50 ? "text-amber-600" : "text-red-500" },
           { label: "Vencidas",     value: overdue.length,   sub: "sin completar",           color: overdue.length > 0 ? "text-red-500" : "text-emerald-600" },
-          { label: "Vencen hoy",   value: dueToday.length,  sub: "pendientes hoy",          color: dueToday.length > 0 ? "text-amber-600" : "text-ink-muted" },
+          { label: "Vencen hoy",   value: dueToday.length,  sub: "pendientes hoy",          color: dueToday.length > 0 ? "text-amber-600" : "text-[#6b7385]" },
           { label: "Total activas",value: all.filter(t => t.status !== "done").length, sub: "en progreso o pendientes", color: "text-navy" },
         ].map(k => (
-          <div key={k.label} className="bg-white rounded-2xl border border-stone p-4">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-ink-soft mb-2">{k.label}</p>
-            <p className={`text-2xl font-semibold ${k.color}`}>{k.value}</p>
-            <p className="text-[11px] text-ink-muted mt-1">{k.sub}</p>
+          <div key={k.label} className="bg-white rounded-[28px] px-5 py-5">
+            <p className="text-[11px] uppercase tracking-[1.1px] text-[#6b7385] mb-2">{k.label}</p>
+            <p className={`text-[32px] font-semibold tracking-[-0.64px] ${k.color}`}>{k.value}</p>
+            <p className="text-[12px] text-[#6b7385] mt-1">{k.sub}</p>
           </div>
         ))}
       </div>

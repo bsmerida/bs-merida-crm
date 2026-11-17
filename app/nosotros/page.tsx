@@ -94,7 +94,7 @@ export default async function NosotrosPage() {
           <h2 className="font-serif text-navy text-3xl md:text-5xl mb-8 md:mb-10 text-center">El equipo</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {profiles.map((p: any) => (
-              <div key={p.id} className="bg-white rounded-[28px] border border-stone p-6 flex flex-col gap-4">
+              <div key={p.id} className="bg-white rounded-[28px] shadow-float p-6 flex flex-col gap-4">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 bg-navy rounded-full flex items-center justify-center shrink-0">
                     <span className="font-serif text-gold text-sm">

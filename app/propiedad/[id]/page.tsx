@@ -149,7 +149,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
             </div>
 
             {(property.m2_land || (property as any).floors || (property as any).year_built) && (
-              <div className="bg-white rounded-[32px] border border-stone p-7">
+              <div className="bg-white rounded-[32px] shadow-float p-7">
                 <p className="font-serif text-navy text-2xl md:text-[30px] mb-5">Detalles técnicos</p>
                 <div className="grid grid-cols-2 gap-5">
                   {(property.m2_land ?? 0) > 0 && (
@@ -175,7 +175,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
             )}
 
             {lat && lng && (
-              <div className="bg-white rounded-[32px] border border-stone overflow-hidden">
+              <div className="bg-white rounded-[32px] shadow-float overflow-hidden">
                 <div className="px-7 py-5 border-b border-stone">
                   <p className="font-serif text-navy text-2xl md:text-[30px]">Ubicación</p>
                   <p className="text-[#6b7385] text-sm mt-1">{[property.zone, property.city, property.state].filter(Boolean).join(", ")}</p>

@@ -33,7 +33,7 @@ export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl,
 
         <a href={`https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`}
           target="_blank" rel="noopener noreferrer"
-          className="flex items-center justify-center w-full border border-navy/30 hover:bg-navy/5 text-navy font-semibold py-[18px] rounded-full transition-colors">
+          className="flex items-center justify-center w-full bg-stone hover:bg-stone-dk text-navy font-semibold py-[18px] rounded-full transition-colors">
           Escribir por WhatsApp
         </a>
 
@@ -44,11 +44,11 @@ export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl,
 
         <div className="flex gap-2">
           <a href={`/api/propiedad/${propertyId}/pdf?mode=cliente`}
-            className="flex-1 bg-white border border-stone text-navy text-center font-medium py-2.5 rounded-full hover:border-navy/30 transition-colors text-sm">
+            className="flex-1 bg-cream hover:bg-stone text-navy text-center font-medium py-2.5 rounded-full transition-colors text-sm">
             📄 Para cliente
           </a>
           <a href={`/api/propiedad/${propertyId}/pdf?mode=asesor`}
-            className="flex-1 bg-white border border-stone text-navy text-center font-medium py-2.5 rounded-full hover:border-navy/30 transition-colors text-sm">
+            className="flex-1 bg-cream hover:bg-stone text-navy text-center font-medium py-2.5 rounded-full transition-colors text-sm">
             📄 Para asesor
           </a>
         </div>

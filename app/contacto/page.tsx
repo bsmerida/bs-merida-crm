@@ -106,24 +106,30 @@ export default function ContactoPage() {
 
           {/* Info */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            {[
-              { l: "WHATSAPP", v: phone, s: "Respuesta más rápida", href: `https://wa.me/${wa}` },
-              { l: "CORREO",   v: email, s: "Te respondemos el mismo día", href: `mailto:${email}` },
-              { l: "HORARIO",  v: "Lun – Vie · 9:00 a 18:00", s: "Sáb · 10:00 a 14:00", href: undefined },
-            ].map(d => (
-              <div key={d.l} className="bg-white rounded-[24px] p-6">
-                <p className="text-gold text-[11px] font-semibold tracking-[1.1px]">{d.l}</p>
-                {d.href ? (
-                  <a href={d.href} target={d.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
-                    className="block font-serif text-navy text-2xl mt-1 hover:text-gold transition-colors">{d.v}</a>
-                ) : (
-                  <p className="font-serif text-navy text-2xl mt-1">{d.v}</p>
-                )}
-                <p className="text-[#6b7385] text-sm mt-1.5">{d.s}</p>
+            <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="bg-navy hover:bg-navy-mid transition-colors rounded-[24px] md:rounded-[32px] px-6 md:px-8 py-5 md:py-6.5 block">
+              <p className="text-gold text-[11px] font-semibold tracking-[2.2px]">WHATSAPP</p>
+              <p className="font-medium text-white text-2xl md:text-[28px] md:tracking-[-0.28px] mt-1">{phone}</p>
+              <p className="text-white/75 text-sm mt-1.5">Respuesta más rápida</p>
+            </a>
+            <a href={`mailto:${email}`} className="bg-stone hover:bg-stone-dk transition-colors rounded-[24px] md:rounded-[32px] px-6 md:px-8 py-5 md:py-6.5 block">
+              <p className="text-gold text-[11px] font-semibold tracking-[2.2px]">CORREO</p>
+              <p className="font-serif text-navy text-2xl mt-1">{email}</p>
+              <p className="text-[#6b7385] text-sm mt-1.5">Te respondemos el mismo día</p>
+            </a>
+            <div className="bg-stone rounded-[24px] md:rounded-[32px] px-6 md:px-8 py-5 md:py-6.5">
+              <p className="text-gold text-[11px] font-semibold tracking-[2.2px]">HORARIO</p>
+              <p className="font-medium text-navy text-2xl md:text-[28px] md:tracking-[-0.28px] mt-1">Lun – Vie · 9:00 a 18:00</p>
+              <p className="text-[#6b7385] text-sm mt-1.5">Sáb · 10:00 a 14:00</p>
+            </div>
+            <div className="bg-stone rounded-[24px] md:rounded-[32px] h-[200px] md:h-[260px] relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-[160%] h-px bg-white/60 rotate-[10deg]" />
+                <div className="w-px h-[160%] bg-white/60 -rotate-[14deg] absolute" />
+                <div className="w-px h-[160%] bg-white/60 rotate-[18deg] absolute" />
               </div>
-            ))}
-            <div className="bg-stone rounded-[24px] h-[200px] flex items-center justify-center">
-              <p className="text-navy/50 text-xs uppercase tracking-wide">Duclaud · Mérida</p>
+              <span className="relative bg-navy text-white text-[13px] font-semibold px-[18px] py-2.5 rounded-full flex items-center gap-1.5">
+                <span className="w-[7px] h-[7px] rounded-full bg-gold" />Duclaud · Mérida
+              </span>
             </div>
           </div>
         </div>

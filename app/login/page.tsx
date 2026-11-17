@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -27,34 +26,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center hero-gradient px-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-10"><Logo className="h-9" /></div>
-        <div className="bg-white rounded-3xl border border-ink-line shadow-card p-8">
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">Acceso staff</h1>
-          <p className="text-sm text-ink-muted mt-1">Para administradores y asesores de Duclaud.</p>
-          <form onSubmit={submit} className="mt-6 space-y-3">
-            <div>
-              <label className="text-xs text-ink-muted">Correo</label>
-              <input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
-                className="mt-1 w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-brand-300" />
-            </div>
-            <div>
-              <label className="text-xs text-ink-muted">Contraseña</label>
-              <input type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
-                className="mt-1 w-full bg-ink-ghost border border-transparent rounded-xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-brand-300" />
-            </div>
-            {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>}
-            <button type="submit" disabled={loading}
-              className="w-full bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300 text-white font-medium py-3 rounded-full mt-2">
-              {loading ? "Entrando..." : "Iniciar sesión"}
-            </button>
-          </form>
-          <p className="text-xs text-ink-soft text-center mt-6">¿No tienes cuenta? El administrador la crea desde el panel de ajustes.</p>
-        </div>
-        <div className="text-center mt-6">
-          <a href="/" className="text-sm text-ink-muted hover:text-ink">← Volver al sitio</a>
-        </div>
+    <div className="min-h-screen bg-cream flex items-center justify-center px-4 font-dmsans">
+      <div className="bg-white rounded-[44px] px-8 md:px-[56px] py-10 md:py-12 w-full max-w-[480px] flex flex-col items-center gap-[22px]">
+        <p className="font-serif text-navy text-[34px] tracking-[1.36px]">D<span className="text-gold">.</span>UCLAUD</p>
+        <p className="font-serif text-navy text-4xl md:text-[44px] md:tracking-[-0.44px] -mt-2">
+          Acceso a<em className="italic font-serif text-gold">sesores.</em>
+        </p>
+        <p className="text-[#6b7385] text-[15px] -mt-2">Entra con tu cuenta del equipo.</p>
+
+        <form onSubmit={submit} className="w-full flex flex-col gap-[14px]">
+          <div className="w-full flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-[#6b7385] text-xs font-semibold">Correo</label>
+            <input id="email" type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="nombre@duclaud.com.mx"
+              className="bg-cream rounded-full px-[22px] py-[15px] text-navy text-[15px] focus:outline-none focus:ring-1 focus:ring-gold/40 placeholder:text-[#6b7385]" />
+          </div>
+          <div className="w-full flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-[#6b7385] text-xs font-semibold">Contraseña</label>
+            <input id="password" type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="bg-cream rounded-full px-[22px] py-[15px] text-navy text-[15px] focus:outline-none focus:ring-1 focus:ring-gold/40 placeholder:text-[#6b7385]" />
+          </div>
+          {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
+          <button type="submit" disabled={loading}
+            className="bg-navy hover:bg-navy-mid disabled:opacity-50 text-white font-semibold py-4 rounded-full transition-colors mt-1">
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+
+        <a href="/" className="text-[#6b7385] hover:text-navy text-[13px] font-medium transition-colors">← Volver al sitio</a>
       </div>
     </div>
   );

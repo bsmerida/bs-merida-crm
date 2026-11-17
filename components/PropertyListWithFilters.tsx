@@ -71,8 +71,8 @@ function ZoneAutocomplete({ zones, value, onChange }: { zones: string[]; value: 
   );
 }
 
-const BEDS_OPTIONS  = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1+" }, { v: "2", l: "2+" }, { v: "3", l: "3+" }, { v: "4", l: "4+" }];
-const BATHS_OPTIONS = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1+" }, { v: "2", l: "2+" }, { v: "3", l: "3+" }];
+const BEDS_OPTIONS  = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1" }, { v: "2", l: "2" }, { v: "3", l: "3" }, { v: "4", l: "4+" }];
+const BATHS_OPTIONS = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1" }, { v: "2", l: "2" }, { v: "3", l: "3+" }];
 const SORT_OPTIONS  = [{ v: "recent", l: "Más recientes" }, { v: "price_asc", l: "Menor precio" }, { v: "price_desc", l: "Mayor precio" }];
 
 function FieldDropdown({ label, value, options, onChange, active, onToggle }: {
@@ -130,8 +130,8 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     let result = props.filter((p: Prop) => {
       const matchType  = filterType === "Todos" || p.type === filterType;
       const matchZone  = filterZone === "Todas" || p.zone === filterZone || p.city === filterZone;
-      const matchBeds  = filterBeds === "0"  || p.bedrooms  >= Number(filterBeds);
-      const matchBaths = filterBaths === "0" || p.bathrooms >= Number(filterBaths);
+      const matchBeds  = filterBeds === "0"  || (filterBeds === "4" ? p.bedrooms  >= 4 : p.bedrooms  === Number(filterBeds));
+      const matchBaths = filterBaths === "0" || (filterBaths === "3" ? p.bathrooms >= 3 : p.bathrooms === Number(filterBaths));
       const matchMin   = !priceMin || p.price >= Number(priceMin);
       const matchMax   = !priceMax || p.price <= Number(priceMax);
       return matchType && matchZone && matchBeds && matchBaths && matchMin && matchMax;
@@ -205,7 +205,7 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
             </p>
           </div>
           <div className="flex gap-2.5 flex-wrap justify-center">
-            <button onClick={clear} className="border border-navy/20 text-navy font-semibold px-7 py-3.5 rounded-full hover:bg-cream transition-colors">
+            <button onClick={clear} className="bg-stone hover:bg-stone-dk text-navy font-semibold px-7 py-3.5 rounded-full transition-colors">
               Quitar filtros
             </button>
             <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("sofia:open", { detail: null }))}

@@ -59,7 +59,7 @@ function KPICard({ label, value, sub, color = "text-navy" }: { label: string; va
   );
 }
 
-function HBar({ label, value, max, color = "#5E4B8E" }: { label: string; value: number; max: number; color?: string }) {
+function HBar({ label, value, max, color = "#1C2B4B" }: { label: string; value: number; max: number; color?: string }) {
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">

@@ -245,11 +245,8 @@ export default async function KPIsPage() {
                     </span>
                   </div>
                   <div className="h-2 bg-stone rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${s.pct}%`,
-                        backgroundColor: `hsl(${250 - i * 20}, 60%, ${55 + i * 3}%)`,
-                      }} />
+                    <div className="h-full rounded-full transition-all bg-navy"
+                      style={{ width: `${s.pct}%`, opacity: 1 - i * 0.08 }} />
                   </div>
                 </div>
               ))}

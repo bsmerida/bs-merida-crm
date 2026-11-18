@@ -52,7 +52,7 @@ export function PropertyMapEmbed({ lat, lng, title }: Props) {
       const icon = L.divIcon({
         html: `<div style="
           width:36px;height:36px;
-          background:#5E4B8E;
+          background:#1C2B4B;
           border-radius:50% 50% 50% 0;
           transform:rotate(-45deg);
           border:3px solid white;

@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; bar
   "Cerrado ganado":   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", bar: "#10B981" },
   "Cerrado perdido":  { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-400",     bar: "#EF4444" },
 };
-const DEFAULT_STATUS = { bg: "bg-stone", text: "text-[#6b7385]", dot: "bg-stone-dk", bar: "#9CA3AF" };
+const DEFAULT_STATUS = { bg: "bg-stone", text: "text-[#6b7385]", dot: "bg-stone-dk", bar: "#D4CFC6" };
 
 function StatusBadge({ status }: { status: string }) {
   const c = STATUS_CONFIG[status] || DEFAULT_STATUS;
@@ -39,7 +39,7 @@ function HBarChart({ data, max, colorFn }: { data: [string, number][]; max: numb
           </div>
           <div className="h-2 bg-stone rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${(count / max) * 100}%`, backgroundColor: colorFn?.(label) || "#5E4B8E" }} />
+              style={{ width: `${(count / max) * 100}%`, backgroundColor: colorFn?.(label) || "#1C2B4B" }} />
           </div>
         </div>
       ))}
@@ -48,7 +48,7 @@ function HBarChart({ data, max, colorFn }: { data: [string, number][]; max: numb
 }
 
 // Gráfica de barras vertical
-function VBarChart({ data, color = "#5E4B8E", height = 120 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
+function VBarChart({ data, color = "#1C2B4B", height = 120 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
   const max = Math.max(...data.map(d => d.value), 1);
   const labelH = 18;
   const availH = height - labelH;
@@ -65,7 +65,7 @@ function VBarChart({ data, color = "#5E4B8E", height = 120 }: { data: { label: s
                 </div>
               )}
               <div className="w-full rounded-t-sm transition-all duration-500 hover:opacity-75"
-                style={{ height: barH, backgroundColor: d.value > 0 ? color : "#EAE5F2" }} />
+                style={{ height: barH, backgroundColor: d.value > 0 ? color : "#EDE9E1" }} />
             </div>
           );
         })}
@@ -109,8 +109,8 @@ function DonutChart({ slices }: { slices: { label: string; value: number; color:
           </path>
         ))}
         <circle cx={cx} cy={cy} r={r * 0.55} fill="white" />
-        <text x={cx} y={cy - 6} textAnchor="middle" className="text-lg font-bold" style={{ fontSize: 20, fontWeight: 700, fill: "#2A2640" }}>{total}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" style={{ fontSize: 10, fill: "#6E6987" }}>total</text>
+        <text x={cx} y={cy - 6} textAnchor="middle" className="text-lg font-bold" style={{ fontSize: 20, fontWeight: 700, fill: "#1C2B4B" }}>{total}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" style={{ fontSize: 10, fill: "#6b7385" }}>total</text>
       </svg>
       <div className="space-y-2 flex-1 min-w-[120px]">
         {paths.map(p => (
@@ -207,7 +207,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
   const statusSlices = byStatus.map(([label, value]) => ({
     label, value: value as number,
-    color: STATUS_CONFIG[label]?.bar || "#9CA3AF",
+    color: STATUS_CONFIG[label]?.bar || "#D4CFC6",
   }));
 
   // Por origen
@@ -257,8 +257,8 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
       return acc;
     }, {})
   ) as [string, number][];
-  const genderColors: Record<string, string> = { "Hombre": "#5E4B8E", "Mujer": "#EC4899", "Otro": "#F59E0B" };
-  const genderSlices = byGender.map(([label, value]) => ({ label, value, color: genderColors[label] || "#9CA3AF" }));
+  const genderColors: Record<string, string> = { "Hombre": "#1C2B4B", "Mujer": "#C4956A", "Otro": "#D4CFC6" };
+  const genderSlices = byGender.map(([label, value]) => ({ label, value, color: genderColors[label] || "#D4CFC6" }));
 
   // Por estado (geografía)
   const byClientState = Object.entries(
@@ -297,8 +297,8 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
   // Por operación buscada
   const byOperation = [
-    { label: "Comprar", value: leads.filter((l: any) => l.search_operation === "Comprar").length, color: "#5E4B8E" },
-    { label: "Rentar",  value: leads.filter((l: any) => l.search_operation === "Rentar").length,  color: "#10B981" },
+    { label: "Comprar", value: leads.filter((l: any) => l.search_operation === "Comprar").length, color: "#1C2B4B" },
+    { label: "Rentar",  value: leads.filter((l: any) => l.search_operation === "Rentar").length,  color: "#C4956A" },
     { label: "Sin definir", value: leads.filter((l: any) => !l.search_operation).length, color: "#D1D5DB" },
   ].filter(x => x.value > 0);
 
@@ -595,7 +595,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                   </div>
                   {leadsWithAge === 0
                     ? <div className="text-sm text-[#6b7385] text-center py-8">Sin datos de edad</div>
-                    : <VBarChart data={byAge} color="#5E4B8E" height={120} />}
+                    : <VBarChart data={byAge} color="#1C2B4B" height={120} />}
                   {leadsWithAge > 0 && <div className="text-xs text-[#6b7385] mt-2">{leadsWithAge} de {total} clientes con edad registrada</div>}
                 </div>
 
@@ -613,7 +613,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                 <h3 className="font-serif text-navy text-[28px] mb-5">Distribución por presupuesto</h3>
                 {byBudget.every(b => b.value === 0)
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
-                  : <VBarChart data={byBudget} color="#5E4B8E" height={140} />}
+                  : <VBarChart data={byBudget} color="#1C2B4B" height={140} />}
               </div>
 
               {/* Por estado geográfico */}
@@ -630,7 +630,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                 <h3 className="font-serif text-navy text-[28px] mb-5">Zonas de interés</h3>
                 {byZona.length === 0
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de zona. Llena el campo “Zonas de interés” en el perfil de cada cliente.</div>
-                  : <HBarChart data={byZona} max={maxZona} colorFn={() => "#5E4B8E"} />}
+                  : <HBarChart data={byZona} max={maxZona} colorFn={() => "#1C2B4B"} />}
               </div>
 
             </div>

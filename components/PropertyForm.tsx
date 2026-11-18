@@ -227,6 +227,8 @@ export function PropertyForm({ property }: Props) {
 
   return (
     <form onSubmit={submit} className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="lg:col-span-2 space-y-6">
 
       <div className="bg-white rounded-[28px] shadow-float p-6 space-y-4">
         <h3 className="font-serif text-navy text-[28px]">Información básica</h3>
@@ -241,7 +243,7 @@ export function PropertyForm({ property }: Props) {
                 type="button"
                 onClick={generateDescription}
                 disabled={generando}
-                className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 text-xs font-medium text-gold border border-gold/30 bg-white rounded-full px-3 py-1.5 hover:bg-cream disabled:opacity-40 transition shadow-sm"
+                className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 text-xs font-medium text-gold bg-white rounded-full px-3 py-1.5 hover:bg-cream disabled:opacity-40 transition shadow-float"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"/>
@@ -272,47 +274,11 @@ export function PropertyForm({ property }: Props) {
           <div className="flex gap-2">
             <input value={form.reference} onChange={e => set("reference", e.target.value)} placeholder="Ej. DLC-2505-001" className={`${inp} flex-1`} />
             <button type="button" onClick={generateReference}
-              className="px-4 py-2.5 bg-cream hover:bg-cream border border-gold/30 text-navy rounded-xl text-sm whitespace-nowrap">
+              className="px-4 py-2.5 bg-cream hover:bg-stone text-navy rounded-xl text-sm whitespace-nowrap">
               Generar
             </button>
           </div>
         </Field>
-      </div>
-
-      <div className="bg-white rounded-[28px] shadow-float p-6 space-y-4">
-        <h3 className="font-serif text-navy text-[28px]">Precio</h3>
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#6b7385]">Tipo:</span>
-            {(["total", "m2", "lineal"] as const).map(t => (
-              <button key={t} type="button" onClick={() => set("price_type", t)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                  form.price_type === t ? "bg-navy text-white border-navy" : "bg-white text-navy border-stone hover:border-navy/30"
-                }`}>
-                {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#6b7385]">Moneda:</span>
-            {(["MXN", "USD"] as const).map(c => (
-              <button key={c} type="button" onClick={() => set("currency", c)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                  form.currency === c ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-navy border-stone hover:border-emerald-300"
-                }`}>
-                {c === "MXN" ? "🇲🇽 MXN" : "🇺🇸 USD"}
-              </button>
-            ))}
-          </div>
-        </div>
-        <Field label={priceLabel}>
-          <input required type="number" min="0" value={form.price} onChange={e => set("price", e.target.value)} className={inp} />
-        </Field>
-        {form.price_type !== "total" && form.price && (
-          <p className="text-xs text-[#6b7385] bg-stone rounded-lg px-3 py-2">
-            Se mostrará como <strong>{fmtPrice(form.price, form.price_type, form.currency)}</strong> en el sitio y la ficha.
-          </p>
-        )}
       </div>
 
       <div className="bg-white rounded-[28px] shadow-float p-6 space-y-4">
@@ -332,7 +298,7 @@ export function PropertyForm({ property }: Props) {
           </Field>
         </div>
         <button type="button" onClick={geocode} disabled={geocoding}
-          className="flex items-center gap-2 px-4 py-2.5 bg-cream hover:bg-cream border border-gold/30 text-navy rounded-xl text-sm disabled:opacity-50">
+          className="flex items-center gap-2 px-4 py-2.5 bg-cream hover:bg-stone text-navy rounded-xl text-sm disabled:opacity-50">
           {geocoding ? "⏳ Buscando..." : "📍 Ubicar en el mapa"}
         </button>
         {form.lat && form.lng && (
@@ -383,6 +349,44 @@ export function PropertyForm({ property }: Props) {
           )}
         </div>
       )}
+
+    </div>
+
+    <div className="space-y-6">
+
+      <div className="bg-white rounded-[28px] shadow-float p-6 space-y-4">
+        <h3 className="font-serif text-navy text-[28px]">Precio</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[#6b7385] w-full">Tipo</span>
+          {(["total", "m2", "lineal"] as const).map(t => (
+            <button key={t} type="button" onClick={() => set("price_type", t)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition ${
+                form.price_type === t ? "bg-navy text-white" : "bg-stone text-navy hover:bg-stone-dk"
+              }`}>
+              {t === "total" ? "Total" : t === "m2" ? "Por m²" : "Por metro lineal"}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[#6b7385] w-full">Moneda</span>
+          {(["MXN", "USD"] as const).map(c => (
+            <button key={c} type="button" onClick={() => set("currency", c)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition ${
+                form.currency === c ? "bg-navy text-white" : "bg-stone text-navy hover:bg-stone-dk"
+              }`}>
+              {c === "MXN" ? "🇲🇽 MXN" : "🇺🇸 USD"}
+            </button>
+          ))}
+        </div>
+        <Field label={priceLabel}>
+          <input required type="number" min="0" value={form.price} onChange={e => set("price", e.target.value)} className={inp} />
+        </Field>
+        {form.price_type !== "total" && form.price && (
+          <p className="text-xs text-[#6b7385] bg-stone rounded-lg px-3 py-2">
+            Se mostrará como <strong>{fmtPrice(form.price, form.price_type, form.currency)}</strong> en el sitio y la ficha.
+          </p>
+        )}
+      </div>
 
       <div className="bg-white rounded-[28px] shadow-float p-6 space-y-3">
         <h3 className="font-serif text-navy text-[28px]">Publicación</h3>
@@ -490,6 +494,9 @@ export function PropertyForm({ property }: Props) {
         </div>
       </div>
 
+    </div>
+    </div>
+
       {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{error}</div>}
 
       <div className="flex items-center justify-between">
@@ -500,7 +507,7 @@ export function PropertyForm({ property }: Props) {
         )}
         <div className="flex gap-2 ml-auto">
           <button type="button" onClick={() => router.back()}
-            className="px-5 py-2.5 bg-white border border-stone text-navy rounded-full text-sm hover:border-stone">
+            className="px-5 py-2.5 bg-white shadow-float text-navy rounded-full text-sm hover:bg-cream transition-colors">
             Cancelar
           </button>
           <button type="submit" disabled={submitting || uploading}

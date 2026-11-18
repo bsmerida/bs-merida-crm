@@ -139,6 +139,19 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
     totalEncontradas = count ?? props?.length ?? 0;
     if (zona && props) props = props.slice(0, MAX_INVENTARIO);
 
+    // Créditos aceptados: nota interna que deja el agente de fuentes. Sofía
+    // solo la usa para responder si el cliente pregunta por financiamiento,
+    // nunca la mete en la descripción general de la propiedad.
+    const creditosPorProp: Record<string, string> = {};
+    if (props?.length) {
+      const { data: notas } = await db
+        .from("property_notes")
+        .select("property_id, content")
+        .in("property_id", props.map(p => p.id))
+        .ilike("content", "Créditos aceptados%");
+      for (const n of notas || []) creditosPorProp[n.property_id] ??= n.content;
+    }
+
     inventario = (props || [])
       .map(p => {
         const amenidades = Array.isArray(p.amenities) && p.amenities.length
@@ -154,6 +167,7 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
           `${p.bedrooms ? `${p.bedrooms} rec` : ""}${p.bathrooms ? ` · ${p.bathrooms} baños` : ""}${p.m2_construction ? ` · ${p.m2_construction}m²` : ""}${p.parking ? ` · ${p.parking} est` : ""}`,
           p.development ? `Desarrollo: ${p.development}` : "",
           amenidades,
+          creditosPorProp[p.id] || "",
           desc,
         ].filter(Boolean).join(" | ");
       })
@@ -199,6 +213,7 @@ REGLAS PARA MOSTRAR PROPIEDADES:
 4. Si el cliente pregunta si es todo, di el total exacto.
 5. NUNCA inventes datos. Si no está en el inventario, no existe.
 6. Si no hay resultados, díselo y sugiere ajustar los criterios.
+7. "Créditos aceptados" (cuando aparece en una propiedad) solo lo mencionas si el cliente pregunta por financiamiento, crédito, Infonavit, Fovissste o forma de pago — nunca de forma proactiva ni en la descripción general.
 `}
 
 ${propCtxBlock}

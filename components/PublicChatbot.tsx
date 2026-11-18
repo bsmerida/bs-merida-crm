@@ -65,6 +65,7 @@ export function PublicChatbot() {
   const [typing, setTyping]         = useState(false);
   const [sessionId, setSessionId]   = useState<string | null>(null);
   const [leadSaved, setLeadSaved]   = useState(false);
+  const [lastLead, setLastLead]     = useState<Record<string, string> | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const businessWa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
 
@@ -122,6 +123,7 @@ export function PublicChatbot() {
     }).catch(() => null);
     if (!res?.ok) return; // se reintenta si Sofía vuelve a capturar los datos
     setLeadSaved(true);
+    setLastLead(leadData);
   };
 
   const send = async () => {
@@ -162,8 +164,16 @@ export function PublicChatbot() {
     setOpen(true); setShowTeaser(false); setTeaserDismissed(true);
   };
 
+  // Contexto que ya capturó Sofía, para que el asesor no tenga que preguntar
+  // todo de nuevo cuando la conversación sigue por WhatsApp.
+  const contextoLead = [
+    propertyCtx ? `me interesa: ${propertyCtx.title}` : lastLead?.zona ? `busco en ${lastLead.zona}` : "",
+    lastLead?.operacion ? lastLead.operacion.toLowerCase() : "",
+    lastLead?.presupuesto ? `presupuesto ${lastLead.presupuesto}` : "",
+  ].filter(Boolean).join(", ");
+
   const waLink = `https://wa.me/${businessWa}?text=${encodeURIComponent(
-    `Hola, vengo del sitio de Duclaud${propertyCtx ? ` y me interesa: ${propertyCtx.title}` : ""}. Me atendió Sofía.`
+    `Hola, vengo del sitio de Duclaud${contextoLead ? ` — ${contextoLead}` : ""}. Me atendió Sofía${lastLead?.nombre ? `, soy ${lastLead.nombre}` : ""}.`
   )}`;
 
   const fmtText = (text: string) =>

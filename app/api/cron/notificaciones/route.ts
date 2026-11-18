@@ -5,6 +5,7 @@ import { timingSafeEqual } from "crypto";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendPush } from "@/lib/push";
 import { addDaysYmd, isVisitInNextHourWindow, meridaParts, meridaSlotToDate } from "@/lib/time";
+import { enviarWhatsapp } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,45 @@ export async function GET(req: NextRequest) {
         url:   "/admin/leads",
       });
       results.push(`seguimiento: ${userId} (${leads.length})`);
+    }
+  }
+
+  // ── 6. Seguimiento de Sofía a leads que se enfriaron (cada corrida) ──────
+  // Entre 3 y 48 hrs después de platicar con Sofía, sin agendar visita y sin
+  // que nadie los haya movido de "Nuevo": les mandamos un WhatsApp de check-in.
+  // Mientras no haya Twilio conectado, enviarWhatsapp() no manda nada y no se
+  // marca como atendido, así que se reintenta solo en cuanto quede configurado.
+  {
+    const desde = new Date(now.getTime() - 48 * 3600_000).toISOString();
+    const hasta = new Date(now.getTime() - 3  * 3600_000).toISOString();
+    const { data: candidatos } = await db
+      .from("leads")
+      .select("id, name, phone, interest")
+      .ilike("source", "Sofía%")
+      .eq("status", "Nuevo")
+      .gte("created_at", desde)
+      .lte("created_at", hasta);
+
+    if (candidatos?.length) {
+      const ids = candidatos.map(l => l.id);
+      const [{ data: yaSeguidos }, { data: conCita }] = await Promise.all([
+        db.from("activities").select("lead_id").eq("type", "whatsapp").in("lead_id", ids),
+        db.from("appointment_requests").select("lead_id").in("lead_id", ids),
+      ]);
+      const excluir = new Set([...(yaSeguidos || []), ...(conCita || [])].map(r => r.lead_id));
+
+      for (const lead of candidatos.filter(l => !excluir.has(l.id))) {
+        const primerNombre = lead.name?.split(" ")[0] || "";
+        const mensaje = `Hola${primerNombre ? ` ${primerNombre}` : ""}, soy del equipo de Duclaud. Vi que platicaste con Sofía${lead.interest ? ` sobre ${lead.interest}` : ""} — ¿sigues buscando? Con gusto te muestro opciones o agendamos una visita.`;
+        const { sent } = await enviarWhatsapp(lead.phone, mensaje);
+        if (sent) {
+          await db.from("activities").insert({
+            lead_id: lead.id, type: "whatsapp",
+            description: "Seguimiento automático enviado por WhatsApp (Twilio)",
+          });
+        }
+        results.push(`seguimiento-sofia: ${lead.id} (${sent ? "enviado" : "pendiente, falta Twilio"})`);
+      }
     }
   }
 

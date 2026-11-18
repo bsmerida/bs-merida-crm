@@ -43,7 +43,9 @@ export default async function FuentesPage() {
   return (
     <div className="p-6 md:p-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-navy tracking-tight">Fuentes</h1>
+        <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+          Fuentes<em className="italic font-serif text-gold">.</em>
+        </h1>
         <p className="text-sm text-[#6b7385] mt-0.5">
           {lista.length} fuentes · {pendientes.length} {pendientes.length === 1 ? "borrador" : "borradores"} por revisar
           {totalCambios ? ` · ${totalCambios} cambios en archivos` : ""}

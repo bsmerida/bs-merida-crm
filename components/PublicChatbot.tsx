@@ -9,7 +9,7 @@ type PropCard = {
   bedrooms: number; bathrooms: number; m2: number | null;
   cover: string | null; url: string;
 };
-type DisplayMsg = { from_bot: boolean; text: string; cards?: PropCard[] };
+type DisplayMsg = { from_bot: boolean; text: string; cards?: PropCard[]; appointmentRequested?: boolean };
 type PropertyContext = { id: string; title: string; operation: string } | null;
 
 const fmt = (n: number, cur = "MXN") =>
@@ -140,11 +140,15 @@ export function PublicChatbot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages, propertyCtx, sessionId }),
       });
-      const { reply, leadData, propertyCards, error } = await res.json();
+      const { reply, leadData, propertyCards, appointmentRequested, error } = await res.json();
       setTyping(false);
       const botText = error ? "Lo siento, hubo un error. Intente de nuevo." : reply;
       setMessages(prev => [...prev, { role: "assistant", content: botText }]);
-      setDisplayMsgs(prev => [...prev, { from_bot: true, text: botText, cards: propertyCards?.length ? propertyCards : undefined }]);
+      setDisplayMsgs(prev => [...prev, {
+        from_bot: true, text: botText,
+        cards: propertyCards?.length ? propertyCards : undefined,
+        appointmentRequested: !!appointmentRequested,
+      }]);
       if (leadData?.nombre && leadData?.telefono) await saveLead(leadData, sessionId);
     } catch {
       setTyping(false);
@@ -240,6 +244,11 @@ export function PublicChatbot() {
                 {m.cards && m.cards.length > 0 && (
                   <div className="w-full space-y-2">
                     {m.cards.map(card => <PropCard key={card.id} card={card} />)}
+                  </div>
+                )}
+                {m.appointmentRequested && (
+                  <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-medium px-3.5 py-2 rounded-full">
+                    <Icon name="calendar" className="w-3.5 h-3.5" /> Solicitud de visita enviada
                   </div>
                 )}
               </div>

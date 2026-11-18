@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanFilterNumber, cleanFilterText, sanitizeChatMessages, validateEmail, validateName, validateOptions, validatePhone } from "@/lib/validation";
+import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages, validateEmail, validateName, validateOptions, validatePhone } from "@/lib/validation";
 
 describe("validatePhone", () => {
   it.each([
@@ -73,5 +73,14 @@ describe("filtros de Sofía", () => {
     expect(cleanFilterNumber("$3,500,000")).toBe(3500000);
     expect(cleanFilterNumber("mucho")).toBeNull();
     expect(cleanFilterNumber(-5)).toBeNull();
+  });
+});
+
+describe("normalizeSearch", () => {
+  it("quita acentos y pasa a minúsculas, para que \"merida\" encuentre \"Mérida\"", () => {
+    expect(normalizeSearch("Mérida")).toBe("merida");
+    expect(normalizeSearch("merida")).toBe("merida");
+    expect(normalizeSearch("Hunucmá")).toBe(normalizeSearch("hunucma"));
+    expect(normalizeSearch("Dzidzantún")).toContain("dzidzantun");
   });
 });

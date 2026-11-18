@@ -238,6 +238,36 @@ describe("GET /api/cron/notificaciones", () => {
     const res = await GET(new NextRequest("http://x"));
     expect(res.status).toBe(401);
   });
+
+  it("sigue a los leads de Sofía enfriados, pero no a los que ya tienen cita o seguimiento", async () => {
+    process.env.CRON_SECRET = "s3cret";
+    const horas = (n: number) => new Date(Date.now() - n * 3600_000).toISOString();
+    const FRIO = "00000000-0000-4000-8000-0000000000f1";   // 10h, sin cita ni seguimiento → debe seguirse
+    const CON_CITA = "00000000-0000-4000-8000-0000000000f2"; // 10h, pero ya agendó → se ignora
+    const YA_SEGUIDO = "00000000-0000-4000-8000-0000000000f3"; // 10h, ya tiene actividad whatsapp → se ignora
+    const MUY_NUEVO = "00000000-0000-4000-8000-0000000000f4"; // 1h, muy reciente → se ignora
+    db = createFakeDb({
+      leads: [
+        { id: FRIO,       name: "Ana López", phone: "9991234567", interest: "Casa en Cholul", source: "Sofía IA", status: "Nuevo", created_at: horas(10) },
+        { id: CON_CITA,   name: "Luis",       phone: "9990000000", interest: null, source: "Sofía IA – propiedad", status: "Nuevo", created_at: horas(10) },
+        { id: YA_SEGUIDO, name: "Karla",      phone: "9991111111", interest: null, source: "Sofía IA", status: "Nuevo", created_at: horas(10) },
+        { id: MUY_NUEVO,  name: "Pedro",      phone: "9992222222", interest: null, source: "Sofía IA", status: "Nuevo", created_at: horas(1) },
+      ],
+      appointment_requests: [{ id: "req-1", lead_id: CON_CITA }],
+      activities: [{ id: "act-1", lead_id: YA_SEGUIDO, type: "whatsapp" }],
+    });
+
+    const { GET } = await import("@/app/api/cron/notificaciones/route");
+    const res = await GET(new NextRequest("http://x", { headers: { "x-cron-secret": "s3cret" } }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ran.some((r: string) => r.startsWith(`seguimiento-sofia: ${FRIO}`))).toBe(true);
+    expect(body.ran.some((r: string) => r.includes(CON_CITA))).toBe(false);
+    expect(body.ran.some((r: string) => r.includes(YA_SEGUIDO))).toBe(false);
+    expect(body.ran.some((r: string) => r.includes(MUY_NUEVO))).toBe(false);
+    // Sin Twilio configurado, no se marca como atendido (para reintentar en cuanto se conecte).
+    expect(db.writes.some(w => w.table === "activities" && w.op === "insert")).toBe(false);
+  });
 });
 
 describe("middleware: secciones solo-admin", () => {

@@ -8,17 +8,18 @@ type Prop = {
   id: string; title: string; type: string; operation: string; status: string;
   price: number; zone: string | null; city: string; reference: string | null;
   development: string | null; agent?: { full_name: string | null } | null;
-  cover?: string | null;
+  cover?: string | null; portales?: string[];
   views_count?: number; inquiries_count?: number;
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  Disponible: "bg-emerald-50 text-emerald-700",
-  Reservada:  "bg-amber-50 text-amber-700",
-  Vendida:    "bg-red-50 text-red-700",
-  Rentada:    "bg-blue-50 text-blue-700",
-  Pausada:    "bg-stone text-[#6b7385]",
-};
+const ESTADOS = ["Disponible", "Reservada", "Vendida", "Rentada", "Pausada"];
+
+// Degradados de portada cuando no hay foto — mismo tono que usa Figma para las tarjetas.
+const GRADIENTES = [
+  "linear-gradient(146deg, #2B3F68 0%, #1C2B4B 71%)",
+  "linear-gradient(146deg, #3B5586 0%, #1C2B4B 71%)",
+  "linear-gradient(146deg, #22345A 0%, #1C2B4B 71%)",
+];
 
 type SortKey = "reciente" | "precio_asc" | "precio_desc" | "vistas";
 const SORT_OPTIONS: { v: SortKey; l: string }[] = [
@@ -52,11 +53,44 @@ function Dropdown({ value, options, onChange, active, onToggle, width = "w-[200p
   );
 }
 
+function PropCard({ p, idx }: { p: Prop; idx: number }) {
+  const esRenta = p.operation === "Renta";
+  return (
+    <Link href={`/admin/propiedades/${p.id}`}
+      className="bg-white rounded-[30px] p-2 flex flex-col gap-3 hover:shadow-float transition-shadow">
+      <div className="h-[170px] rounded-[22px] overflow-hidden relative flex items-start p-3"
+        style={p.cover ? undefined : { backgroundImage: GRADIENTES[idx % GRADIENTES.length] }}>
+        {p.cover && <img src={p.cover} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+        <span className="relative bg-white text-navy text-[11px] font-semibold px-2.5 py-1.5 rounded-full flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${p.status === "Disponible" ? "bg-emerald-500" : "bg-navy/30"}`} />
+          {p.status}
+        </span>
+      </div>
+      <div className="flex flex-col gap-0.5 px-2.5 pb-2">
+        <p className="font-semibold text-navy text-[22px] tracking-[-0.22px]">
+          {fmtMXN(Number(p.price))}{esRenta ? " / mes" : ""}
+        </p>
+        <p className="text-navy text-sm truncate">{p.title}</p>
+        <div className="flex items-center justify-between pt-1.5">
+          <p className="text-[#6b7385] text-xs">{p.views_count || 0} vistas{p.agent?.full_name ? ` · ${p.agent.full_name}` : ""}</p>
+          {!!p.portales?.length && (
+            <div className="flex gap-1 shrink-0">
+              {p.portales.slice(0, 3).map(ab => (
+                <span key={ab} className="bg-stone text-navy text-[10px] font-medium px-2 py-0.5 rounded-full">{ab}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export function AdminPropiedadesList({ props }: { props: Prop[] }) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("Todos los tipos");
   const [filterOp, setFilterOp] = useState("Venta y renta");
-  const [filterStatus, setFilterStatus] = useState("Todos los estados");
+  const [filterStatus, setFilterStatus] = useState("Todas");
   const [filterZone, setFilterZone] = useState("Todas las zonas");
   const [sortBy, setSortBy] = useState<SortKey>("reciente");
   const [priceMin, setPriceMin] = useState("");
@@ -73,7 +107,6 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
   }, []);
 
   const types = ["Todos los tipos", ...Array.from(new Set(props.map(p => p.type)))];
-  const statuses = ["Todos los estados", ...Array.from(new Set(props.map(p => p.status)))];
   const zones = ["Todas las zonas", ...Array.from(new Set(props.map(p => p.zone || p.city).filter(Boolean)))];
 
   const filtered = useMemo(() => {
@@ -87,7 +120,7 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
         (p.development || "").toLowerCase().includes(q);
       const matchType = filterType === "Todos los tipos" || p.type === filterType;
       const matchOp = filterOp === "Venta y renta" || p.operation === filterOp;
-      const matchStatus = filterStatus === "Todos los estados" || p.status === filterStatus;
+      const matchStatus = filterStatus === "Todas" || p.status === filterStatus;
       const matchZone = filterZone === "Todas las zonas" || p.zone === filterZone || p.city === filterZone;
       const matchMin = !priceMin || Number(p.price) >= Number(priceMin);
       const matchMax = !priceMax || Number(p.price) <= Number(priceMax);
@@ -101,11 +134,11 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
     return result;
   }, [props, search, filterType, filterOp, filterStatus, filterZone, sortBy, priceMin, priceMax]);
 
-  const hasFilters = search || filterType !== "Todos los tipos" || filterOp !== "Venta y renta" || filterStatus !== "Todos los estados" || filterZone !== "Todas las zonas" || priceMin || priceMax;
+  const hasFilters = search || filterType !== "Todos los tipos" || filterOp !== "Venta y renta" || filterStatus !== "Todas" || filterZone !== "Todas las zonas" || priceMin || priceMax;
 
   const clearFilters = () => {
     setSearch(""); setFilterType("Todos los tipos"); setFilterOp("Venta y renta");
-    setFilterStatus("Todos los estados"); setFilterZone("Todas las zonas"); setPriceMin(""); setPriceMax("");
+    setFilterStatus("Todas"); setFilterZone("Todas las zonas"); setPriceMin(""); setPriceMax("");
   };
 
   const toggle = (k: string) => setActiveFilter(a => (a === k ? null : k));
@@ -120,24 +153,34 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
           className="w-full pl-11 pr-5 py-3 bg-white rounded-full text-sm text-navy focus:outline-none focus:ring-1 focus:ring-gold/40 placeholder:text-[#6b7385]" />
       </div>
 
-      {/* Filtros */}
-      <div ref={filtersRef} className="flex flex-wrap items-center gap-2">
-        <Dropdown value={filterType} options={types} active={activeFilter === "type"} onToggle={() => toggle("type")} onChange={v => { setFilterType(v); setActiveFilter(null); }} />
-        <Dropdown value={filterOp} options={["Venta y renta", "Venta", "Renta"]} active={activeFilter === "op"} onToggle={() => toggle("op")} onChange={v => { setFilterOp(v); setActiveFilter(null); }} width="w-[160px]" />
-        <Dropdown value={filterStatus} options={statuses} active={activeFilter === "status"} onToggle={() => toggle("status")} onChange={v => { setFilterStatus(v); setActiveFilter(null); }} />
-        <Dropdown value={filterZone} options={zones} active={activeFilter === "zone"} onToggle={() => toggle("zone")} onChange={v => { setFilterZone(v); setActiveFilter(null); }} />
-        <input type="number" placeholder="Precio mín." value={priceMin} onChange={e => setPriceMin(e.target.value)}
-          className="bg-white rounded-full px-5 py-2.5 text-sm text-navy focus:outline-none w-32 placeholder:text-[#6b7385]" />
-        <input type="number" placeholder="Precio máx." value={priceMax} onChange={e => setPriceMax(e.target.value)}
-          className="bg-white rounded-full px-5 py-2.5 text-sm text-navy focus:outline-none w-32 placeholder:text-[#6b7385]" />
-        <Dropdown value={SORT_OPTIONS.find(s => s.v === sortBy)?.l || "Más recientes"} options={SORT_OPTIONS.map(s => s.l)}
-          active={activeFilter === "sort"} onToggle={() => toggle("sort")}
-          onChange={l => { setSortBy(SORT_OPTIONS.find(s => s.l === l)?.v || "reciente"); setActiveFilter(null); }} />
-        {hasFilters && (
-          <button onClick={clearFilters} className="text-xs text-[#6b7385] hover:text-navy bg-white rounded-full px-4 py-2.5">
-            Limpiar ×
-          </button>
-        )}
+      {/* Herramientas: estados en pills (como Figma) + el resto de filtros */}
+      <div ref={filtersRef} className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {["Todas", ...ESTADOS].map(s => (
+            <button key={s} onClick={() => setFilterStatus(s)}
+              className={`text-[13px] font-semibold px-[18px] py-[9px] rounded-full transition-colors ${
+                filterStatus === s ? "bg-navy text-white" : "bg-white text-navy hover:bg-cream"}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Dropdown value={filterType} options={types} active={activeFilter === "type"} onToggle={() => toggle("type")} onChange={v => { setFilterType(v); setActiveFilter(null); }} />
+          <Dropdown value={filterOp} options={["Venta y renta", "Venta", "Renta"]} active={activeFilter === "op"} onToggle={() => toggle("op")} onChange={v => { setFilterOp(v); setActiveFilter(null); }} width="w-[160px]" />
+          <Dropdown value={filterZone} options={zones} active={activeFilter === "zone"} onToggle={() => toggle("zone")} onChange={v => { setFilterZone(v); setActiveFilter(null); }} />
+          <input type="number" placeholder="Precio mín." value={priceMin} onChange={e => setPriceMin(e.target.value)}
+            className="bg-white rounded-full px-5 py-2.5 text-sm text-navy focus:outline-none w-32 placeholder:text-[#6b7385]" />
+          <input type="number" placeholder="Precio máx." value={priceMax} onChange={e => setPriceMax(e.target.value)}
+            className="bg-white rounded-full px-5 py-2.5 text-sm text-navy focus:outline-none w-32 placeholder:text-[#6b7385]" />
+          <Dropdown value={SORT_OPTIONS.find(s => s.v === sortBy)?.l || "Más recientes"} options={SORT_OPTIONS.map(s => s.l)}
+            active={activeFilter === "sort"} onToggle={() => toggle("sort")}
+            onChange={l => { setSortBy(SORT_OPTIONS.find(s => s.l === l)?.v || "reciente"); setActiveFilter(null); }} />
+          {hasFilters && (
+            <button onClick={clearFilters} className="text-xs text-[#6b7385] hover:text-navy bg-white rounded-full px-4 py-2.5">
+              Limpiar ×
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="text-xs text-[#6b7385] px-1">{filtered.length} de {props.length} propiedades</div>
@@ -147,68 +190,8 @@ export function AdminPropiedadesList({ props }: { props: Prop[] }) {
           Sin resultados para esa búsqueda.
         </div>
       ) : (
-        <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
-          <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-stone bg-cream">
-              <tr>
-                {["", "Propiedad", "Tipo", "Precio", "Estado", "Estadísticas", "Asesor", ""].map((h, i) => (
-                  <th key={i} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(p => (
-                <tr key={p.id} className="border-b border-stone last:border-0 hover:bg-cream">
-                  {/* Thumbnail */}
-                  <td className="pl-4 pr-2 py-3 w-16">
-                    <div className="w-14 h-10 rounded-[14px] overflow-hidden bg-stone flex items-center justify-center">
-                      {p.cover
-                        ? <img src={p.cover} alt="" className="w-full h-full object-cover" />
-                        : <span className="text-base">🏠</span>}
-                    </div>
-                  </td>
-                  {/* Título + código + zona */}
-                  <td className="px-3 py-3 max-w-[220px]">
-                    <div className="font-medium text-sm text-navy leading-tight truncate">{p.title}</div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      {p.reference && (
-                        <span className="text-[10px] font-mono bg-cream text-gold px-1.5 py-0.5 rounded">{p.reference}</span>
-                      )}
-                      <span className="text-xs text-[#6b7385]">{p.zone || p.city}</span>
-                    </div>
-                    {p.development && <div className="text-[10px] text-[#6b7385] mt-0.5">{p.development}</div>}
-                  </td>
-                  <td className="px-3 py-3 text-sm text-navy">
-                    {p.type}
-                    <div className="text-xs text-[#6b7385]">{p.operation}</div>
-                  </td>
-                  <td className="px-3 py-3 text-sm font-semibold text-navy whitespace-nowrap">
-                    {fmtMXN(Number(p.price))}
-                  </td>
-                  <td className="px-3 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[p.status] || "bg-stone text-[#6b7385]"}`}>
-                      {p.status}
-                    </span>
-                  </td>
-                  {/* Estadísticas */}
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-3 text-xs text-[#6b7385]">
-                      <span title="Vistas">👁 {p.views_count || 0}</span>
-                      <span title="Solicitudes">✉️ {p.inquiries_count || 0}</span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-sm text-[#6b7385]">{p.agent?.full_name || "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/admin/propiedades/${p.id}`} className="text-xs text-gold hover:text-gold-dk font-medium whitespace-nowrap">
-                      Editar →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+          {filtered.map((p, i) => <PropCard key={p.id} p={p} idx={i} />)}
         </div>
       )}
     </div>

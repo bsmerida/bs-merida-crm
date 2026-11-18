@@ -3,6 +3,7 @@ import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { countByProperty } from "@/lib/stats";
 import { Icon } from "@/components/Icon";
 import { AdminPropiedadesList } from "@/components/AdminPropiedadesList";
+import { PORTALES } from "@/lib/portales";
 
 export default async function AdminPropiedades() {
   const supabase = createAdminClient();
@@ -13,9 +14,10 @@ export default async function AdminPropiedades() {
   const isAdmin = profile?.role === "admin";
 
   // Admin ve todas, asesor solo las suyas
+  const portalCols = PORTALES.map(p => p.clave).join(", ");
   const query = supabase
     .from("properties")
-    .select("*, agent:profiles(full_name), property_images(url, is_cover, position)")
+    .select(`*, ${portalCols}, agent:profiles(full_name), property_images(url, is_cover, position)`)
     .order("created_at", { ascending: false });
 
   if (!isAdmin) {
@@ -32,10 +34,11 @@ export default async function AdminPropiedades() {
   const props = (properties || []).map((p: any) => {
     const imgs = (p.property_images || []) as { url: string; is_cover: boolean; position: number }[];
     const cover = imgs.find(i => i.is_cover)?.url || imgs.sort((a, b) => a.position - b.position)[0]?.url || null;
+    const portales = PORTALES.filter(portal => p[portal.clave]).map(portal => portal.abrev);
     return {
       id: p.id, title: p.title, type: p.type, operation: p.operation,
       status: p.status, price: p.price, zone: p.zone, city: p.city,
-      reference: p.reference, development: p.development, agent: p.agent, cover,
+      reference: p.reference, development: p.development, agent: p.agent, cover, portales,
       views_count: viewsMap.get(p.id) || 0,
       inquiries_count: inquiriesMap.get(p.id) || 0,
     };

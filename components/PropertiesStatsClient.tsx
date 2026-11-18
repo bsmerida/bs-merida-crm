@@ -10,7 +10,7 @@ type Prop = {
 };
 
 // Gráfica de barras horizontal
-function HBar({ data, max, color = "#5E4B8E" }: { data: [string, number][]; max: number; color?: string }) {
+function HBar({ data, max, color = "#1C2B4B" }: { data: [string, number][]; max: number; color?: string }) {
   return (
     <div className="space-y-2.5">
       {data.map(([label, value]) => (
@@ -29,7 +29,7 @@ function HBar({ data, max, color = "#5E4B8E" }: { data: [string, number][]; max:
 }
 
 // Gráfica de barras vertical — alturas en píxeles para que sean proporcionales
-function VBar({ data, color = "#5E4B8E", chartHeight = 140 }: { data: { label: string; value: number }[]; color?: string; chartHeight?: number }) {
+function VBar({ data, color = "#1C2B4B", chartHeight = 140 }: { data: { label: string; value: number }[]; color?: string; chartHeight?: number }) {
   const max = Math.max(...data.map(d => d.value), 1);
   const labelH = 20;
   const availH = chartHeight - labelH;
@@ -47,7 +47,7 @@ function VBar({ data, color = "#5E4B8E", chartHeight = 140 }: { data: { label: s
               )}
               <div
                 className="w-full rounded-t-sm transition-all duration-500 hover:opacity-75"
-                style={{ height: barH, backgroundColor: d.value > 0 ? color : "#EAE5F2" }}
+                style={{ height: barH, backgroundColor: d.value > 0 ? color : "#EDE9E1" }}
               />
             </div>
           );
@@ -92,8 +92,8 @@ function DonutChart({ slices }: { slices: { label: string; value: number; color:
           </path>
         ))}
         <circle cx={cx} cy={cy} r={r * 0.55} fill="white" />
-        <text x={cx} y={cy - 4} textAnchor="middle" style={{ fontSize: 18, fontWeight: 700, fill: "#2A2640" }}>{total}</text>
-        <text x={cx} y={cy + 12} textAnchor="middle" style={{ fontSize: 9, fill: "#6E6987" }}>total</text>
+        <text x={cx} y={cy - 4} textAnchor="middle" style={{ fontSize: 18, fontWeight: 700, fill: "#1C2B4B" }}>{total}</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" style={{ fontSize: 9, fill: "#6b7385" }}>total</text>
       </svg>
       <div className="space-y-1.5 flex-1 min-w-[100px]">
         {paths.map(p => (
@@ -110,12 +110,12 @@ function DonutChart({ slices }: { slices: { label: string; value: number; color:
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  "Casa": "#5E4B8E", "Departamento": "#8B5CF6", "Terreno": "#10B981",
-  "Oficina": "#F59E0B", "Local": "#EC4899", "Bodega": "#6B7280",
+  "Casa": "#1C2B4B", "Departamento": "#C4956A", "Terreno": "#3D5278",
+  "Oficina": "#8C6040", "Local": "#263650", "Bodega": "#D4CFC6",
 };
 const STATUS_COLORS: Record<string, string> = {
-  "Disponible": "#10B981", "Reservada": "#F59E0B", "Vendida": "#EF4444",
-  "Rentada": "#3B82F6", "Pausada": "#9CA3AF",
+  "Disponible": "#1C2B4B", "Reservada": "#C4956A", "Vendida": "#8C6040",
+  "Rentada": "#3D5278", "Pausada": "#D4CFC6",
 };
 const PRICE_RANGES = [
   { label: "<1M",   min: 0,           max: 1_000_000 },
@@ -273,22 +273,22 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Por tipo</h3>
-              <DonutChart slices={byType.map(([label, value]) => ({ label, value, color: TYPE_COLORS[label] || "#9CA3AF" }))} />
+              <DonutChart slices={byType.map(([label, value]) => ({ label, value, color: TYPE_COLORS[label] || "#D4CFC6" }))} />
             </div>
             <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Por operación</h3>
-              <DonutChart slices={byOp.map(([label, value]) => ({ label, value, color: label === "Venta" ? "#5E4B8E" : "#10B981" }))} />
+              <DonutChart slices={byOp.map(([label, value]) => ({ label, value, color: label === "Venta" ? "#1C2B4B" : "#C4956A" }))} />
             </div>
             <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Por estado</h3>
-              <DonutChart slices={byStatus.map(([label, value]) => ({ label, value, color: STATUS_COLORS[label] || "#9CA3AF" }))} />
+              <DonutChart slices={byStatus.map(([label, value]) => ({ label, value, color: STATUS_COLORS[label] || "#D4CFC6" }))} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Distribución por precio</h3>
-              <VBar data={byPrice} color="#5E4B8E" chartHeight={140} />
+              <VBar data={byPrice} color="#1C2B4B" chartHeight={140} />
             </div>
             <div className="bg-white rounded-[28px] shadow-float p-6">
               <h3 className="font-serif text-navy text-[28px] mb-5">Por estado</h3>

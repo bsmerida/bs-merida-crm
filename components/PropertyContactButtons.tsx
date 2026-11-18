@@ -10,9 +10,11 @@ type Props = {
   waNumber: string;
   waMsg: string;
   agentId?: string | null;
+  propertyCover?: string | null;
+  propertyPriceLabel?: string | null;
 };
 
-export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl, propertyOperation, waNumber, waMsg, agentId = null }: Props) {
+export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl, propertyOperation, waNumber, waMsg, agentId = null, propertyCover = null, propertyPriceLabel = null }: Props) {
   const [showModal, setShowModal] = useState(false);
 
   const openSofia = () => {
@@ -45,11 +47,11 @@ export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl,
         <div className="flex gap-2">
           <a href={`/api/propiedad/${propertyId}/pdf?mode=cliente`}
             className="flex-1 bg-cream hover:bg-stone text-navy text-center font-medium py-2.5 rounded-full transition-colors text-sm">
-            📄 Para cliente
+            Para cliente
           </a>
           <a href={`/api/propiedad/${propertyId}/pdf?mode=asesor`}
             className="flex-1 bg-cream hover:bg-stone text-navy text-center font-medium py-2.5 rounded-full transition-colors text-sm">
-            📄 Para asesor
+            Para asesor
           </a>
         </div>
       </div>
@@ -60,6 +62,8 @@ export function PropertyContactButtons({ propertyId, propertyTitle, propertyUrl,
           propertyTitle={propertyTitle}
           agentId={agentId}
           onClose={() => setShowModal(false)}
+          propertyCover={propertyCover}
+          propertyPriceLabel={propertyPriceLabel}
         />
       )}
     </>

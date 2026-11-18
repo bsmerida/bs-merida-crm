@@ -6,7 +6,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { CountUpStat } from "@/components/CountUpStat";
 import { SofiaTeaser } from "@/components/SofiaTeaser";
 import { PropertyCardV3 } from "@/components/PropertyCardV3";
-import { NAV_V3 } from "@/components/PublicHeaderV3";
+import { NAV_V3 } from "@/lib/public-nav";
 import { PublicFooterV3 } from "@/components/PublicFooterV3";
 
 export default async function HomePage() {

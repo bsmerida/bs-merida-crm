@@ -50,8 +50,8 @@ export default function ContactoPage() {
 
       <section className="px-5 md:px-8 pb-12 md:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Formulario */}
-          <div className="lg:col-span-3 bg-white rounded-[32px] md:rounded-[40px] p-6 md:p-11">
+          {/* Formulario — en móvil va después de los datos de contacto, como en Figma */}
+          <div className="order-2 lg:order-none lg:col-span-3 bg-white rounded-[32px] md:rounded-[40px] p-6 md:p-11">
             {sent ? (
               <div className="flex flex-col items-center text-center gap-4 py-10">
                 <div className="w-14 h-14 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center">
@@ -105,7 +105,7 @@ export default function ContactoPage() {
           </div>
 
           {/* Info */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="order-1 lg:order-none lg:col-span-2 flex flex-col gap-4">
             <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="bg-navy hover:bg-navy-mid transition-colors rounded-[24px] md:rounded-[32px] px-6 md:px-8 py-5 md:py-6.5 block">
               <p className="text-gold text-[11px] font-semibold tracking-[2.2px]">WHATSAPP</p>
               <p className="font-medium text-white text-2xl md:text-[28px] md:tracking-[-0.28px] mt-1">{phone}</p>
@@ -121,7 +121,7 @@ export default function ContactoPage() {
               <p className="font-medium text-navy text-2xl md:text-[28px] md:tracking-[-0.28px] mt-1">Lun – Vie · 9:00 a 18:00</p>
               <p className="text-[#6b7385] text-sm mt-1.5">Sáb · 10:00 a 14:00</p>
             </div>
-            <div className="bg-stone rounded-[24px] md:rounded-[32px] h-[200px] md:h-[260px] relative overflow-hidden flex items-center justify-center">
+            <div className="hidden lg:flex bg-stone rounded-[24px] md:rounded-[32px] h-[200px] md:h-[260px] relative overflow-hidden items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-[160%] h-px bg-white/60 rotate-[10deg]" />
                 <div className="w-px h-[160%] bg-white/60 -rotate-[14deg] absolute" />

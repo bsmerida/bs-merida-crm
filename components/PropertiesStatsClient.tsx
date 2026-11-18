@@ -351,7 +351,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
                       <div className="text-xs text-[#6b7385]">{p.reference || p.city}</div>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <div className="text-sm font-semibold text-navy">👁 {p.views_count}</div>
+                      <div className="text-sm font-semibold text-navy">{p.views_count}</div>
                     </div>
                     <div className="w-24 h-1.5 bg-stone rounded-full overflow-hidden">
                       <div className="h-full bg-gold rounded-full" style={{ width: `${(p.views_count / maxViews) * 100}%` }} />
@@ -377,7 +377,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
                       <div className="text-xs text-[#6b7385]">{p.reference || p.city}</div>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <div className="text-sm font-semibold text-emerald-600">✉️ {p.inquiries_count}</div>
+                      <div className="text-sm font-semibold text-emerald-600">{p.inquiries_count}</div>
                     </div>
                     <div className="w-24 h-1.5 bg-stone rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${(p.inquiries_count / maxInq) * 100}%` }} />
@@ -391,7 +391,7 @@ export function PropertiesStatsClient({ props, viewsTrend, totalViews, totalInqu
           {/* Propiedades sin vistas */}
           {sinVistas.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
-              <h3 className="font-semibold text-amber-800 mb-1">⚠️ Propiedades publicadas sin vistas</h3>
+              <h3 className="font-semibold text-amber-800 mb-1">Propiedades publicadas sin vistas</h3>
               <p className="text-xs text-amber-700 mb-4">Estas propiedades están publicadas pero nadie las ha visitado. Considera mejorar sus fotos, descripción o precio.</p>
               <div className="space-y-2">
                 {sinVistas.map(p => (

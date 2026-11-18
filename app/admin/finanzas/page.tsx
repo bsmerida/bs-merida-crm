@@ -721,13 +721,7 @@ export default function FinanzasPage() {
 
           {/* Gráfica de barras entradas vs salidas */}
           <div className="bg-white rounded-[28px] shadow-float p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-serif text-navy text-[28px]">Entradas vs Salidas — últimos 12 meses</h3>
-              <div className="flex items-center gap-4 text-xs text-[#6b7385]">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block"></span>Entradas</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400 inline-block"></span>Salidas</span>
-              </div>
-            </div>
+            <h3 className="font-serif text-navy text-[28px] mb-6">Entradas vs Salidas — últimos 12 meses</h3>
             <div className="flex items-end gap-1" style={{ height: 160 }}>
               {flujoMeses.map(m => (
                 <div key={m.mes} className="flex-1 flex items-end gap-[2px] group relative">
@@ -748,6 +742,14 @@ export default function FinanzasPage() {
                 </div>
               ))}
             </div>
+            <div className="flex items-center gap-2 mt-5">
+              <span className="flex items-center gap-1.5 text-xs text-navy bg-cream rounded-full px-3 py-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>Entradas
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-navy bg-cream rounded-full px-3 py-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span>Salidas
+              </span>
+            </div>
           </div>
 
           {/* Tabla detalle mensual */}
@@ -758,7 +760,7 @@ export default function FinanzasPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b border-stone">
-                  <tr>{["Mes", "Entradas", "Salidas", "Flujo neto", "Flujo acumulado"].map(h => (
+                  <tr>{["Mes", "Entradas", "Salidas", "Neto", "Acumulado"].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-5 py-3">{h}</th>
                   ))}</tr>
                 </thead>
@@ -781,7 +783,7 @@ export default function FinanzasPage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-3 text-sm text-blue-800">
+          <div className="bg-stone rounded-2xl px-5 py-3 text-sm text-navy">
             Las <strong>entradas</strong> se calculan con los montos cobrados de tus operaciones. Las <strong>salidas</strong> con los gastos registrados. Registra todo en <strong>Comisiones</strong> y <strong>Gastos</strong> para mantener este flujo actualizado.
           </div>
         </div>

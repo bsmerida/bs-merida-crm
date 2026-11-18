@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { meridaParts } from "@/lib/time";
+import { meridaParts, addDaysYmd } from "@/lib/time";
 import { Select } from "@/components/Select";
 
 type Task = {
@@ -31,11 +31,18 @@ const PRIORITY_MAP: Record<string, [string, string]> = {
 
 const CATEGORY_OPTIONS = ["Seguimiento","Administración","Operaciones","Marketing","Otro"];
 
-const STATUS_COLS: { key: Task["status"]; label: string; color: string }[] = [
-  { key: "todo",        label: "Por hacer",   color: "bg-stone"       },
-  { key: "in_progress", label: "En progreso", color: "bg-amber-50"    },
-  { key: "done",        label: "Completado",  color: "bg-emerald-50"  },
-];
+// Figma agrupa las tareas por fecha límite (Hoy / Esta semana / Después),
+// no por estado — las vencidas caen en "Hoy" para que no se pierdan.
+const DATE_COLS = ["hoy", "semana", "despues"] as const;
+type DateCol = (typeof DATE_COLS)[number];
+const DATE_COL_LABEL: Record<DateCol, string> = { hoy: "Hoy", semana: "Esta semana", despues: "Después" };
+
+function dueBucket(task: Task, hoy: string, limiteSemana: string): DateCol {
+  if (!task.due_at) return "despues";
+  if (task.due_at <= hoy) return "hoy";
+  if (task.due_at <= limiteSemana) return "semana";
+  return "despues";
+}
 
 // due_at es fecha sin hora (YYYY-MM-DD): comparar como string contra el día
 // de hoy en Mérida, no con new Date() (interpreta "YYYY-MM-DD" como medianoche
@@ -54,17 +61,8 @@ function PriorityBadge({ p }: { p: string }) {
   return <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
 }
 
-function Avatar({ name, initials }: { name: string | null; initials: string | null }) {
-  const i = initials || name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "?";
-  return (
-    <div className="w-6 h-6 rounded-full bg-navy/10 flex items-center justify-center text-[10px] font-semibold text-navy shrink-0" title={name || ""}>
-      {i}
-    </div>
-  );
-}
-
 function TaskModal({
-  task, profiles, currentUserId, leadId, onSave, onClose,
+  task, profiles, currentUserId, leadId, onSave, onClose, onDelete,
 }: {
   task?: Task | null;
   profiles: Profile[];
@@ -72,6 +70,7 @@ function TaskModal({
   leadId?: string | null;
   onSave: (t: Task) => void;
   onClose: () => void;
+  onDelete: (id: string) => void;
 }) {
   const [title,       setTitle]       = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
@@ -175,6 +174,12 @@ function TaskModal({
 
           {err && <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-2">{err}</p>}
 
+          {task && (
+            <button onClick={() => onDelete(task.id)} className="text-xs text-red-400 hover:text-red-600 transition">
+              Eliminar tarea
+            </button>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button onClick={onClose}
               className="flex-1 bg-stone text-navy font-medium py-3 rounded-full hover:bg-stone-dk transition text-sm">
@@ -191,110 +196,54 @@ function TaskModal({
   );
 }
 
-function TaskCard({
-  task, onEdit, onDelete, onStatusChange,
-}: {
+function TaskCard({ task, onEdit, onToggleDone }: {
   task: Task;
   onEdit: (t: Task) => void;
-  onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: Task["status"]) => void;
+  onToggleDone: (t: Task) => void;
 }) {
   const overdue = isOverdue(task);
-  const [confirmDel, setConfirmDel] = useState(false);
-
-  const nextStatus: Record<Task["status"], Task["status"]> = {
-    todo: "in_progress", in_progress: "done", done: "todo",
-  };
-  const nextLabel = { todo: "Iniciar", in_progress: "Completar", done: "Reabrir" };
+  const subtitulo = task.lead?.name || task.assignee?.full_name?.split(" ")[0] || task.category || "";
 
   return (
-    <div className="bg-white rounded-[22px] shadow-float p-4 space-y-3">
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium leading-snug ${task.status === "done" ? "line-through text-[#6b7385]" : "text-navy"}`}>
-            {task.title}
-          </p>
-          {task.description && (
-            <p className="text-xs text-[#6b7385] mt-1 line-clamp-2">{task.description}</p>
-          )}
-        </div>
-        <PriorityBadge p={task.priority}/>
+    <div onClick={() => onEdit(task)}
+      className="bg-white rounded-[20px] p-3.5 flex items-center gap-3 cursor-pointer hover:shadow-float transition">
+      <button onClick={e => { e.stopPropagation(); onToggleDone(task); }}
+        className={`w-5 h-5 rounded-full border-2 shrink-0 transition ${
+          task.status === "done" ? "bg-navy border-navy" : overdue ? "border-red-400" : "border-stone-dk"}`} />
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium leading-snug truncate ${task.status === "done" ? "line-through text-[#6b7385]" : "text-navy"}`}>
+          {task.title}
+        </p>
+        {subtitulo && <p className="text-xs text-[#6b7385] truncate mt-0.5">{subtitulo}</p>}
       </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {task.category && (
-          <span className="text-[10px] text-[#6b7385] bg-cream px-2 py-0.5 rounded-full capitalize">{task.category}</span>
-        )}
-        {task.lead && (
-          <span className="text-[10px] text-gold bg-cream px-2 py-0.5 rounded-full truncate max-w-[120px]">
-            👤 {task.lead.name}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3 text-[11px]">
-        {task.starts_at && <span className="text-[#6b7385]">Inicio: {formatDate(task.starts_at)}</span>}
-        {task.due_at && (
-          <span className={overdue ? "text-red-500 font-semibold" : "text-[#6b7385]"}>
-            {overdue ? "⚠ " : ""}Límite: {formatDate(task.due_at)}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pt-1 border-t border-stone">
-        <div className="flex items-center gap-2">
-          {task.assignee && <Avatar name={task.assignee.full_name} initials={task.assignee.initials}/>}
-          <span className="text-[11px] text-[#6b7385] truncate max-w-[100px]">{task.assignee?.full_name?.split(" ")[0] || ""}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => onStatusChange(task.id, nextStatus[task.status])}
-            className="text-[10px] font-medium text-gold hover:text-navy px-2.5 py-1 rounded-lg hover:bg-cream transition">
-            {nextLabel[task.status]} →
-          </button>
-          <button onClick={() => onEdit(task)}
-            className="p-1.5 text-[#6b7385] hover:text-navy rounded-lg hover:bg-cream transition">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </button>
-          {!confirmDel ? (
-            <button onClick={() => setConfirmDel(true)}
-              className="p-1.5 text-[#6b7385] hover:text-red-400 rounded-lg hover:bg-red-50 transition">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          ) : (
-            <div className="flex items-center gap-1">
-              <button onClick={() => setConfirmDel(false)} className="text-[10px] text-[#6b7385] px-1.5 py-1 rounded hover:bg-cream">No</button>
-              <button onClick={() => onDelete(task.id)} className="text-[10px] text-white bg-red-500 px-2 py-1 rounded-lg">Sí</button>
-            </div>
-          )}
-        </div>
-      </div>
+      {task.due_at && (
+        <span className={`text-[11px] shrink-0 ${overdue && task.status !== "done" ? "text-red-500 font-semibold" : "text-[#6b7385]"}`}>
+          {formatDate(task.due_at)}
+        </span>
+      )}
+      <PriorityBadge p={task.priority}/>
     </div>
   );
 }
 
-function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
+function BoardView({ tasks, onEdit, onToggleDone }: {
   tasks: Task[];
   onEdit: (t: Task) => void;
-  onDelete: (id: string) => void;
-  onStatusChange: (id: string, s: Task["status"]) => void;
+  onToggleDone: (t: Task) => void;
 }) {
+  const hoy = meridaParts(new Date()).ymd;
+  const limiteSemana = addDaysYmd(hoy, 7);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {STATUS_COLS.map(col => {
-        const colTasks = tasks.filter(t => t.status === col.key);
+      {DATE_COLS.map(col => {
+        const colTasks = tasks.filter(t => dueBucket(t, hoy, limiteSemana) === col);
         return (
-          <div key={col.key} className={`rounded-[28px] p-4 ${col.color}`}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-semibold text-navy uppercase tracking-[0.1em]">{col.label}</p>
-              <span className="text-xs text-[#6b7385] bg-white rounded-full px-2 py-0.5">{colTasks.length}</span>
-            </div>
-            <div className="space-y-3">
+          <div key={col} className="bg-cream rounded-[28px] p-4">
+            <p className="font-serif text-navy text-xl mb-3">{DATE_COL_LABEL[col]}</p>
+            <div className="space-y-2.5">
               {colTasks.length === 0 && <p className="text-xs text-[#6b7385] text-center py-6">Sin tareas</p>}
-              {colTasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>)}
+              {colTasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onToggleDone={onToggleDone}/>)}
             </div>
           </div>
         );
@@ -303,16 +252,15 @@ function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
   );
 }
 
-function ListView({ tasks, onEdit, onDelete, onStatusChange }: {
+function ListView({ tasks, onEdit, onToggleDone }: {
   tasks: Task[];
   onEdit: (t: Task) => void;
-  onDelete: (id: string) => void;
-  onStatusChange: (id: string, s: Task["status"]) => void;
+  onToggleDone: (t: Task) => void;
 }) {
   return (
     <div className="space-y-2">
       {tasks.length === 0 && <div className="text-center py-16"><p className="text-sm text-[#6b7385]">No hay tareas que coincidan.</p></div>}
-      {tasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onDelete={onDelete} onStatusChange={onStatusChange}/>)}
+      {tasks.map(t => <TaskCard key={t.id} task={t} onEdit={onEdit} onToggleDone={onToggleDone}/>)}
     </div>
   );
 }
@@ -353,6 +301,7 @@ export function TareasClient({
   async function handleDelete(id: string) {
     await fetch(`/api/tareas/${id}`, { method: "DELETE" });
     setTasks(prev => prev.filter(t => t.id !== id));
+    setShowModal(false);
   }
 
   async function handleStatusChange(id: string, status: Task["status"]) {
@@ -362,6 +311,10 @@ export function TareasClient({
     });
     const data = await res.json();
     if (data.task) handleSave(data.task);
+  }
+
+  function handleToggleDone(t: Task) {
+    handleStatusChange(t.id, t.status === "done" ? "todo" : "done");
   }
 
   function openNew()        { setEditTask(null); setShowModal(true); }
@@ -380,7 +333,7 @@ export function TareasClient({
           {(["kanban","list"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
               className={`px-3 py-1.5 rounded-full font-medium transition ${view===v?"bg-navy text-white":"text-[#6b7385] hover:text-navy"}`}>
-              {v === "kanban" ? "Kanban" : "Lista"}
+              {v === "kanban" ? "Tablero" : "Lista"}
             </button>
           ))}
         </div>
@@ -399,8 +352,8 @@ export function TareasClient({
       </div>
 
       {view === "kanban"
-        ? <KanbanView tasks={filtered} onEdit={openEdit} onDelete={handleDelete} onStatusChange={handleStatusChange}/>
-        : <ListView   tasks={filtered} onEdit={openEdit} onDelete={handleDelete} onStatusChange={handleStatusChange}/>
+        ? <BoardView tasks={filtered} onEdit={openEdit} onToggleDone={handleToggleDone}/>
+        : <ListView  tasks={filtered} onEdit={openEdit} onToggleDone={handleToggleDone}/>
       }
 
       {showModal && (
@@ -411,6 +364,7 @@ export function TareasClient({
           leadId={leadId}
           onSave={handleSave}
           onClose={() => setShowModal(false)}
+          onDelete={handleDelete}
         />
       )}
     </div>

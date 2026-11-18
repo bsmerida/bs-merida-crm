@@ -484,7 +484,7 @@ export default function FinanzasPage() {
   const cxpTotalMes  = billsProc.filter((b: any) => b.fecha_vencimiento?.startsWith(hoyStr.slice(0,7))).reduce((s: number, b: any) => s + Number(b.monto), 0);
   const ESTADOS_CXP: Record<string, string> = { pendiente: "bg-amber-50 text-amber-700", pagado: "bg-emerald-50 text-emerald-700", vencido: "bg-red-50 text-red-700" };
   const CATS_CXP = ["Renta oficina","Servicios","Marketing","Legal","Nómina","Tecnología","Mantenimiento","Otro"];
-  const cxpInp = "w-full border border-stone rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-navy/30";
+  const cxpInp = "w-full bg-stone border border-transparent rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:bg-white focus:border-navy/30";
   const pagarBill = async (id: string) => { await supabase.from("cuentas_por_pagar").update({ estado: "pagado" }).eq("id", id); setRefresh(r => r + 1); };
   const borrarBill = async (id: string) => { if (!confirm("¿Eliminar?")) return; await supabase.from("cuentas_por_pagar").delete().eq("id", id); setRefresh(r => r + 1); };
   const guardarBill = async () => {
@@ -513,10 +513,10 @@ export default function FinanzasPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Selector de período */}
-          <div className="flex gap-1 bg-stone p-1 rounded-xl">
+          <div className="flex gap-1 bg-stone p-1 rounded-full">
             {PERIODOS.map(p => (
               <button key={p.value} onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${period === p.value ? "bg-white text-navy shadow-card" : "text-[#6b7385] hover:text-navy"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${period === p.value ? "bg-navy text-white" : "text-[#6b7385] hover:text-navy"}`}>
                 {p.label}
               </button>
             ))}
@@ -528,11 +528,11 @@ export default function FinanzasPage() {
             pipelineData: pipelineStages, totalLeads: leads.length, history: historialData,
           }} />
           <a href="/admin/finanzas/historicos"
-            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-stone text-navy rounded-full text-sm hover:border-stone">
+            className="flex items-center gap-1.5 px-4 py-2 bg-white shadow-float text-navy rounded-full text-sm hover:bg-cream transition-colors">
             Históricos
           </a>
           <button onClick={() => setShowExpenseForm(true)}
-            className="px-4 py-2 bg-white border border-stone text-navy rounded-full text-sm hover:border-stone">
+            className="px-4 py-2 bg-white shadow-float text-navy rounded-full text-sm hover:bg-cream transition-colors">
             + Gasto
           </button>
           <button onClick={() => setShowDealForm(true)}
@@ -543,10 +543,10 @@ export default function FinanzasPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-stone p-1 rounded-xl w-fit flex-wrap">
+      <div className="flex gap-1 bg-stone p-1 rounded-full w-fit flex-wrap">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-navy shadow-card" : "text-[#6b7385] hover:text-navy"}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium transition ${tab === t.id ? "bg-navy text-white" : "text-[#6b7385] hover:text-navy"}`}>
             {t.label}
           </button>
         ))}
@@ -569,7 +569,7 @@ export default function FinanzasPage() {
               <button
                 onClick={() => editingMetas ? saveMetas() : setEditingMetas(true)}
                 disabled={savingMetas}
-                className="text-xs text-gold hover:underline px-3 py-1.5 border border-gold/30 rounded-full disabled:opacity-50">
+                className="text-xs text-gold hover:underline px-3 py-1.5 rounded-full disabled:opacity-50">
                 {savingMetas ? "Guardando..." : editingMetas ? (
                   <span className="flex items-center gap-1.5">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -622,7 +622,7 @@ export default function FinanzasPage() {
                           placeholder="Ej. 150000"
                           value={metasMensuales[key] || ""}
                           onChange={e => setMetasMensuales(m => ({ ...m, [key]: Number(e.target.value) }))}
-                          className="w-full text-xs border border-stone rounded-lg px-2 py-1.5 text-navy focus:outline-none focus:border-navy/40"
+                          className="w-full text-xs bg-stone border border-transparent rounded-lg px-2 py-1.5 text-navy focus:outline-none focus:bg-white focus:border-navy/40"
                         />
                         {numMonths > 1 && metasMensuales[key] > 0 && key !== "margen" && (
                           <p className="text-[10px] text-gold mt-1">Total período: {fmtMXN(metasMensuales[key] * numMonths)}</p>
@@ -757,7 +757,7 @@ export default function FinanzasPage() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-stone/40 border-b border-stone">
+                <thead className="border-b border-stone">
                   <tr>{["Mes", "Entradas", "Salidas", "Flujo neto", "Flujo acumulado"].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-5 py-3">{h}</th>
                   ))}</tr>
@@ -806,7 +806,7 @@ export default function FinanzasPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-stone/40 border-b border-stone">
+                  <thead className="border-b border-stone">
                     <tr>{["Propiedad", "Cliente", "Comisión", "Pendiente", "Fecha esperada", "Días vencidos", "Estado"].map(h => (
                       <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                     ))}</tr>
@@ -857,7 +857,7 @@ export default function FinanzasPage() {
           <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <div className="p-5 border-b border-stone flex items-center justify-between">
               <h3 className="font-serif text-navy text-[28px]">Cuentas por pagar</h3>
-              <button onClick={() => setShowBillForm(!showBillForm)} className="text-xs text-gold border border-gold/30 rounded-full px-3 py-1.5 hover:bg-cream">+ Nueva cuenta</button>
+              <button onClick={() => setShowBillForm(!showBillForm)} className="text-xs text-gold rounded-full px-3 py-1.5 hover:bg-cream">+ Nueva cuenta</button>
             </div>
             {showBillForm && (
               <div className="p-5 border-b border-stone bg-stone/20">
@@ -877,7 +877,7 @@ export default function FinanzasPage() {
                     <input value={billForm.notas} onChange={e => setBillForm({...billForm, notas: e.target.value})} placeholder="Opcional" className={cxpInp} /></div>
                 </div>
                 <div className="flex gap-2 justify-end mt-3">
-                  <button onClick={() => setShowBillForm(false)} className="px-4 py-2 text-sm text-[#6b7385] border border-stone rounded-full">Cancelar</button>
+                  <button onClick={() => setShowBillForm(false)} className="px-4 py-2 text-sm text-[#6b7385] hover:text-navy rounded-full">Cancelar</button>
                   <button onClick={guardarBill} disabled={savingBill} className="px-5 py-2 text-sm font-medium bg-navy text-white rounded-full disabled:opacity-50">{savingBill ? "Guardando..." : "Guardar"}</button>
                 </div>
               </div>
@@ -887,7 +887,7 @@ export default function FinanzasPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-stone/40 border-b border-stone">
+                  <thead className="border-b border-stone">
                     <tr>{["Concepto","Proveedor","Categoría","Monto","Vencimiento","Estado",""].map(h => (
                       <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                     ))}</tr>
@@ -945,7 +945,7 @@ export default function FinanzasPage() {
                 </div>
               </div>
               <button onClick={() => setShowDealForm(true)}
-                className="text-xs text-gold border border-gold/30 rounded-full px-3 py-1.5 hover:bg-cream">
+                className="text-xs text-gold rounded-full px-3 py-1.5 hover:bg-cream">
                 + Nueva operación
               </button>
             </div>
@@ -956,7 +956,7 @@ export default function FinanzasPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-stone/40 border-b border-stone">
+                  <thead className="border-b border-stone">
                     <tr>{["Propiedad", "Cliente", "Tipo", "Valor operación", "Com. bruta", "Compartida / Ref.", "Asesores", "Neto empresa", "Cierre", "Estado", ""].map(h => (
                       <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-3 py-3">{h}</th>
                     ))}</tr>
@@ -991,7 +991,7 @@ export default function FinanzasPage() {
                         <td className="px-3 py-3">
                           <div className="flex gap-1.5">
                             <button onClick={() => { setEditingDeal(d); setShowDealForm(true); }}
-                              className="text-xs text-gold border border-gold/30 rounded-full px-2 py-0.5 hover:bg-cream">
+                              className="text-xs text-gold rounded-full px-2 py-0.5 hover:bg-cream">
                               Editar
                             </button>
                             <button onClick={() => deleteDeal(d.id)}
@@ -1024,7 +1024,7 @@ export default function FinanzasPage() {
               </div>
               <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-stone/40 border-b border-stone">
+                  <thead className="border-b border-stone">
                     <tr>{["Asesor", "Leads", "Cierres", "Valor vendido", "Ingresos generados", "Comisión", "Neto empresa", "Conversión"].map(h => (
                       <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                     ))}</tr>
@@ -1068,7 +1068,7 @@ export default function FinanzasPage() {
 
           <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
             <table className="w-full">
-              <thead className="bg-stone/40 border-b border-stone">
+              <thead className="border-b border-stone">
                 <tr>{["Etapa", "Leads", "Prob.", "Valor potencial", "Com. potencial", "Com. ponderada"].map(h => (
                   <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                 ))}</tr>
@@ -1138,7 +1138,7 @@ export default function FinanzasPage() {
               <div className="p-12 text-center text-sm text-[#6b7385]">Sin datos de origen en clientes.</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-stone/40 border-b border-stone">
+                <thead className="border-b border-stone">
                   <tr>{["Canal", "Leads", "Clientes", "Conversión", "Inversión", "Ingresos netos", "ROI", "ROAS", "CAC"].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
@@ -1219,7 +1219,7 @@ export default function FinanzasPage() {
                 <p className="text-xs text-[#6b7385] mt-0.5">Pagos únicos que se distribuyen en el P&L mensualmente</p>
               </div>
               <table className="w-full">
-                <thead className="bg-stone/40 border-b border-stone">
+                <thead className="border-b border-stone">
                   <tr>{["Descripción", "Pago total", "Cobertura", "Impacto mensual", "Estado", ""].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
@@ -1258,7 +1258,7 @@ export default function FinanzasPage() {
                         <td className="px-4 py-3">
                           <div className="flex gap-1.5">
                             <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
-                              className="text-xs text-gold border border-gold/30 rounded-full px-2 py-0.5 hover:bg-cream">
+                              className="text-xs text-gold rounded-full px-2 py-0.5 hover:bg-cream">
                               Editar
                             </button>
                             <button onClick={() => deleteExpense(e.id)}
@@ -1284,11 +1284,11 @@ export default function FinanzasPage() {
               </div>
               <div className="flex items-center gap-2">
                 <a href="/admin/finanzas/historicos"
-                  className="text-xs text-[#6b7385] hover:text-navy border border-stone rounded-full px-3 py-1.5">
+                  className="text-xs text-[#6b7385] hover:text-navy rounded-full px-3 py-1.5 hover:bg-cream transition-colors">
                   Históricos
                 </a>
                 <button onClick={() => setShowExpenseForm(true)}
-                  className="text-xs text-gold border border-gold/30 hover:bg-cream rounded-full px-3 py-1.5">
+                  className="text-xs text-gold hover:bg-cream rounded-full px-3 py-1.5 transition-colors">
                   + Registrar gasto
                 </button>
               </div>
@@ -1297,7 +1297,7 @@ export default function FinanzasPage() {
               <div className="p-12 text-center text-sm text-[#6b7385]">Sin gastos registrados en este período.</div>
             ) : (
               <table className="w-full">
-                <thead className="bg-stone/40 border-b border-stone">
+                <thead className="border-b border-stone">
                   <tr>{["Categoría", "Descripción", "Proveedor", "Monto real", "Impacto mensual P&L", "Fecha", "Tipo", ""].map(h => (
                     <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                   ))}</tr>
@@ -1333,7 +1333,7 @@ export default function FinanzasPage() {
                         <td className="px-4 py-3">
                           <div className="flex gap-1.5">
                             <button onClick={() => { setEditingExpense(e); setShowExpenseForm(true); }}
-                              className="text-xs text-gold border border-gold/30 rounded-full px-2 py-0.5 hover:bg-cream">
+                              className="text-xs text-gold rounded-full px-2 py-0.5 hover:bg-cream">
                               Editar
                             </button>
                             <button onClick={() => deleteExpense(e.id)}

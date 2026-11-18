@@ -68,7 +68,7 @@ export function LogoUploader({ currentLogoUrl }: { currentLogoUrl: string | null
   return (
     <div>
       <div className="flex items-center gap-6">
-        <div className="w-32 h-32 rounded-2xl bg-stone border border-stone flex items-center justify-center overflow-hidden">
+        <div className="w-32 h-32 rounded-2xl bg-stone flex items-center justify-center overflow-hidden">
           {preview ? (
             <img src={preview} alt="Vista previa" className="w-full h-full object-contain p-2" />
           ) : (

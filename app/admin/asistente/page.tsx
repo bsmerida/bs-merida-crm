@@ -123,127 +123,112 @@ ${(profiles.data || []).map(p => `  · ${p.full_name} (${p.role})`).join("\n")}`
   };
 
   return (
-    <div className="flex flex-col bg-cream h-[calc(100vh-56px)] md:h-screen">
-      {/* Header */}
-      <div className="bg-white border-b border-stone px-8 py-5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-navy rounded-xl flex items-center justify-center">
-            <span className="font-serif text-base text-gold">A</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-navy tracking-wide">Asistente IA · Duclaud</h1>
-            <p className="text-[11px] text-[#6b7385] flex items-center gap-1.5 mt-0.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${contextReady ? "bg-emerald-500" : "bg-amber-400"}`}></span>
-              {contextReady ? "Datos cargados · en línea" : "Cargando datos del CRM..."}
-            </p>
-          </div>
+    <div className="p-4 md:p-6 space-y-5 font-dmsans flex flex-col h-[calc(100vh-32px)] md:h-[calc(100vh-48px)]">
+      <div className="flex items-center justify-between flex-wrap gap-3 shrink-0">
+        <div>
+          <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
+            Asistente <em className="italic font-serif text-gold">IA.</em>
+          </h1>
+          <p className="text-[#6b7385] text-[15px] mt-1">Pregunta lo que quieras sobre tu operación</p>
         </div>
         <button onClick={() => { setMessages([]); setError(null); }}
-          className="text-xs text-[#6b7385] hover:text-navy border border-stone rounded-full px-4 py-2 transition-colors">
+          className="text-xs text-[#6b7385] hover:text-navy rounded-full px-4 py-2 bg-white shadow-float hover:bg-cream transition-colors">
           Nueva conversación
         </button>
       </div>
 
-      {/* Context chips */}
-      <div className="bg-white border-b border-stone px-8 py-3 flex items-center gap-2 flex-wrap shrink-0">
-        {["Leads activos","Comisiones del mes","Inventario","Equipo","CxC","Pipeline"].map(c => (
-          <span key={c} className="text-[10px] uppercase tracking-[0.08em] text-navy/60 bg-navy/5 border border-navy/10 px-3 py-1 rounded-full">
-            {c}
-          </span>
-        ))}
-        <span className="ml-auto text-[10px] text-[#6b7385]">Contexto actualizado ahora</span>
-      </div>
+      <div className="bg-white rounded-[28px] shadow-float flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="flex items-center gap-2 px-6 py-3 shrink-0">
+          <span className={`w-1.5 h-1.5 rounded-full ${contextReady ? "bg-emerald-500" : "bg-amber-400"}`}></span>
+          <p className="text-xs text-[#6b7385]">{contextReady ? "Datos cargados · en línea" : "Cargando datos del CRM..."}</p>
+        </div>
 
-      {/* Chat */}
-      <div ref={chatRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
-        {messages.length === 0 && !loading && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-[28px] shadow-float p-8 text-center mb-8">
+        {/* Chat */}
+        <div ref={chatRef} className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+          {messages.length === 0 && !loading && (
+            <div className="max-w-xl mx-auto text-center pt-6">
               <div className="w-14 h-14 bg-navy rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="font-serif text-2xl text-gold">A</span>
               </div>
               <h2 className="font-serif text-xl font-light text-navy mb-2">Asistente de Duclaud</h2>
-              <p className="text-sm text-[#6b7385] leading-relaxed">
+              <p className="text-sm text-[#6b7385] leading-relaxed mb-6">
                 Tengo acceso a los datos en tiempo real del CRM — leads, operaciones, inventario y finanzas. Pregúnteme lo que necesite.
               </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {QUICK.map(q => (
+                  <button key={q} onClick={() => send(q)}
+                    className="text-sm text-navy bg-cream hover:bg-stone rounded-full px-4 py-2 transition-colors">
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-[#6b7385] mb-3 text-center">Preguntas frecuentes</p>
-            <div className="grid grid-cols-2 gap-2">
-              {QUICK.map(q => (
-                <button key={q} onClick={() => send(q)}
-                  className="text-left text-sm text-[#6b7385] bg-white border border-stone hover:border-gold/50 hover:text-navy rounded-xl p-4 transition-all">
-                  {q}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
 
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            {m.role === "assistant" && (
-              <div className="w-7 h-7 bg-navy rounded-lg flex items-center justify-center shrink-0 mr-3 mt-1">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              {m.role === "assistant" && (
+                <div className="w-7 h-7 bg-navy rounded-lg flex items-center justify-center shrink-0 mr-3 mt-1">
+                  <span className="font-serif text-xs text-gold">A</span>
+                </div>
+              )}
+              <div className={`max-w-[70%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                m.role === "user"
+                  ? "bg-navy text-white rounded-br-sm"
+                  : "bg-cream text-navy rounded-bl-sm"}`}>
+                {m.content}
+              </div>
+            </div>
+          ))}
+
+          {loading && (
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 bg-navy rounded-lg flex items-center justify-center shrink-0">
                 <span className="font-serif text-xs text-gold">A</span>
               </div>
-            )}
-            <div className={`max-w-[70%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${
-              m.role === "user"
-                ? "bg-navy text-white rounded-br-sm"
-                : "bg-white text-navy border border-stone rounded-bl-sm"}`}>
-              {m.content}
+              <div className="bg-cream rounded-2xl rounded-bl-sm px-5 py-4 flex gap-1.5">
+                {[0,1,2].map(i => (
+                  <span key={i} className="w-2 h-2 bg-navy/30 rounded-full animate-bounce"
+                    style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )}
 
-        {loading && (
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 bg-navy rounded-lg flex items-center justify-center shrink-0">
-              <span className="font-serif text-xs text-gold">A</span>
+          {error && (
+            <div className="bg-red-50 rounded-2xl px-5 py-4 text-sm text-red-700 flex items-start gap-3">
+              <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              {error}
             </div>
-            <div className="bg-white border border-stone rounded-2xl rounded-bl-sm px-5 py-4 flex gap-1.5">
-              {[0,1,2].map(i => (
-                <span key={i} className="w-2 h-2 bg-navy/30 rounded-full animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700 flex items-start gap-3">
-            <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            {error}
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="bg-white border-t border-stone px-8 py-4 shrink-0">
-        <div className="flex gap-3 items-end max-w-4xl mx-auto">
-          <div className="flex-1 bg-cream border border-stone rounded-2xl px-4 py-3 focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/10 transition-all">
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder={contextReady ? "Pregúnteme sobre clientes, operaciones, finanzas..." : "Cargando datos..."}
-              disabled={loading || !contextReady}
-              rows={1}
-              className="w-full bg-transparent text-sm text-navy resize-none focus:outline-none placeholder:text-[#6b7385] disabled:opacity-50"
-              style={{ maxHeight: "120px" }}
-            />
-          </div>
-          <button onClick={() => send()} disabled={loading || !input.trim() || !contextReady}
-            className="w-11 h-11 bg-navy hover:bg-navy-mid disabled:opacity-40 text-white rounded-full flex items-center justify-center transition-colors shrink-0">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
+          )}
         </div>
-        <p className="text-[10px] text-[#6b7385] text-center mt-2">
-          Enter para enviar · Shift+Enter para nueva línea
-        </p>
+
+        {/* Input */}
+        <div className="px-6 py-4 shrink-0">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 bg-cream rounded-full px-5 py-3 focus-within:ring-2 focus-within:ring-gold/20 transition-all">
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                placeholder={contextReady ? "Escribe tu pregunta..." : "Cargando datos..."}
+                disabled={loading || !contextReady}
+                rows={1}
+                className="w-full bg-transparent text-sm text-navy resize-none focus:outline-none placeholder:text-[#6b7385] disabled:opacity-50"
+                style={{ maxHeight: "120px" }}
+              />
+            </div>
+            <button onClick={() => send()} disabled={loading || !input.trim() || !contextReady}
+              className="px-6 py-3 bg-navy hover:bg-navy-mid disabled:opacity-40 text-white rounded-full text-sm font-medium transition-colors shrink-0">
+              Enviar
+            </button>
+          </div>
+          <p className="text-[10px] text-[#6b7385] text-center mt-2">
+            Enter para enviar · Shift+Enter para nueva línea
+          </p>
+        </div>
       </div>
     </div>
   );

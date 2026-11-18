@@ -96,7 +96,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
         <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-stone bg-stone/40">
+              <thead className="border-b border-stone">
                 <tr>
                   {["Fuente", "Plataforma", "Última revisión", "Estado", "Agente", ""].map((h, k) => (
                     <th key={k} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
@@ -167,7 +167,7 @@ export function FuentesPanel({ fuentes, cambios, totalCambios, lecciones, ultima
                 <span className="text-sm font-medium text-navy flex-1">{f ? `${f.proveedor}${f.alcance ? ` · ${f.alcance}` : ""}` : fuenteId}</span>
                 <span className="text-xs text-[#6b7385]">{items.length} cambios</span>
                 <button onClick={(e) => { e.preventDefault(); marcar(null, fuenteId); }}
-                  className="text-xs text-[#6b7385] hover:text-navy border border-stone rounded-full px-3 py-1 bg-white">Marcar todos revisados</button>
+                  className="text-xs text-[#6b7385] hover:text-navy rounded-full px-3 py-1 bg-white shadow-float">Marcar todos revisados</button>
               </summary>
               <ul className="divide-y divide-stone border-t border-stone">
                 {items.map(c => (

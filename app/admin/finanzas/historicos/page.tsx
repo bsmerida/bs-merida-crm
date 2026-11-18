@@ -154,10 +154,10 @@ export default function HistoricosPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-stone p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-stone p-1 rounded-full w-fit">
         {[{ id: "ver", label: `Ver registros (${records.length})` }, { id: "manual", label: "Captura manual" }, { id: "importar", label: "Importar Excel" }].map((t: any) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${tab === t.id ? "bg-white text-navy shadow-card" : "text-[#6b7385] hover:text-navy"}`}>
+            className={`px-4 py-2 rounded-full text-sm font-medium transition ${tab === t.id ? "bg-navy text-white" : "text-[#6b7385] hover:text-navy"}`}>
             {t.label}
           </button>
         ))}
@@ -178,7 +178,7 @@ export default function HistoricosPage() {
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-stone/40 border-b border-stone">
+              <thead className="border-b border-stone">
                 <tr>{["Período", "Ingresos totales", "Utilidad op.", "Margen", "Operaciones", "Fuente", ""].map(h => (
                   <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-4 py-3">{h}</th>
                 ))}</tr>

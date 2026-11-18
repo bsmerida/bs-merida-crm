@@ -189,7 +189,7 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
   return (
     <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
       {/* Encabezado */}
-      <div className="flex items-center justify-between gap-3 flex-wrap px-6 py-4 border-b border-stone bg-stone/40">
+      <div className="flex items-center justify-between gap-3 flex-wrap px-6 py-4 border-b border-stone">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-semibold text-[#6b7385] uppercase tracking-wide">Borrador {Math.min(i, lista.length - 1) + 1} de {lista.length}</span>
           <span className={`text-xs px-2 py-1 rounded-full font-medium ${nueva ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"}`}>
@@ -388,14 +388,14 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
       </div>
 
       {/* Acciones */}
-      <div className="border-t border-stone px-6 py-4 bg-stone/30">
+      <div className="border-t border-stone px-6 py-4">
         {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">⚠️ {error}</div>}
         {aviso && !error && (
           <div className="mb-3 text-sm text-emerald-700">{aviso.texto} {aviso.href && <Link href={aviso.href} className="underline">Ver →</Link>}</div>
         )}
 
         {nueva && !rechazando && (
-          <div className="mb-4 p-3 rounded-xl border border-stone bg-white space-y-2">
+          <div className="mb-4 p-3 rounded-xl bg-cream space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-navy">
               <input type="checkbox" checked={publicar.sitio} onChange={e => setPublicar({ ...publicar, sitio: e.target.checked })}
                 className="accent-navy" />

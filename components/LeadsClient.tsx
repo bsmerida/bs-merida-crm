@@ -5,14 +5,18 @@ import { createClient } from "@/lib/supabase/client";
 import { fmtMXN } from "@/lib/utils";
 import { LeadsKanban } from "@/components/LeadsKanban";
 
+// bg/text/dot: para las etiquetas de estado (tablero y lista) — un color por
+// estado ayuda a distinguirlos de un vistazo entre 9 posibles.
+// bar: para las gráficas de Estadísticas — ahí sí debe ser la paleta de marca
+// (navy → gold por etapa, verde/rojo solo para el resultado final).
 const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
-  "Nuevo":            { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-500",    bar: "#3B82F6" },
-  "Contactado":       { bg: "bg-indigo-50",  text: "text-indigo-700",  dot: "bg-indigo-500",  bar: "#6366F1" },
-  "Calificado":       { bg: "bg-violet-50",  text: "text-violet-700",  dot: "bg-violet-500",  bar: "#8B5CF6" },
-  "Visita agendada":  { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500",   bar: "#F59E0B" },
-  "Visita realizada": { bg: "bg-orange-50",  text: "text-orange-700",  dot: "bg-orange-500",  bar: "#F97316" },
-  "Oferta":           { bg: "bg-pink-50",    text: "text-pink-700",    dot: "bg-pink-500",    bar: "#EC4899" },
-  "Negociación":      { bg: "bg-rose-50",    text: "text-rose-700",    dot: "bg-rose-500",    bar: "#F43F5E" },
+  "Nuevo":            { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-500",    bar: "#1C2B4B" },
+  "Contactado":       { bg: "bg-indigo-50",  text: "text-indigo-700",  dot: "bg-indigo-500",  bar: "#2C3B5E" },
+  "Calificado":       { bg: "bg-violet-50",  text: "text-violet-700",  dot: "bg-violet-500",  bar: "#3D5278" },
+  "Visita agendada":  { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500",   bar: "#6B6468" },
+  "Visita realizada": { bg: "bg-orange-50",  text: "text-orange-700",  dot: "bg-orange-500",  bar: "#8C6040" },
+  "Oferta":           { bg: "bg-pink-50",    text: "text-pink-700",    dot: "bg-pink-500",    bar: "#AD7A55" },
+  "Negociación":      { bg: "bg-rose-50",    text: "text-rose-700",    dot: "bg-rose-500",    bar: "#C4956A" },
   "Cerrado ganado":   { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", bar: "#10B981" },
   "Cerrado perdido":  { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-400",     bar: "#EF4444" },
 };

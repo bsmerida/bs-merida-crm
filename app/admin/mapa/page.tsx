@@ -1,6 +1,6 @@
 // app/admin/mapa/page.tsx
 import { createAdminClient } from "@/lib/supabase/server";
-import { PropertiesMap } from "@/components/PropertiesMap";
+import { AdminMapaExplorer } from "@/components/AdminMapaExplorer";
 import Link from "next/link";
 import { fotosPorPropiedad } from "@/lib/fotos";
 
@@ -47,9 +47,7 @@ export default async function AdminMapaPage() {
           </Link>
         ) : null}
       </div>
-      <div className="rounded-[32px] overflow-hidden">
-        <PropertiesMap properties={properties} height="75vh"/>
-      </div>
+      <AdminMapaExplorer properties={properties} />
     </div>
   );
 }

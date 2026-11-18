@@ -14,7 +14,7 @@ type MapProperty = {
   images?: string[];  // múltiples imágenes
 };
 
-type Props = { properties: MapProperty[]; height?: string };
+type Props = { properties: MapProperty[]; height?: string; focusId?: string | null };
 
 function formatPrice(price: number) {
   if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(1)}M`;
@@ -118,10 +118,11 @@ function ImageCarousel({ images }: { images: string[] }) {
   );
 }
 
-export function PropertiesMap({ properties, height = "600px" }: Props) {
+export function PropertiesMap({ properties, height = "600px", focusId = null }: Props) {
   const mapRef  = useRef<HTMLDivElement>(null);
   const mapInst = useRef<any>(null);
   const markers = useRef<any[]>([]);
+  const porId   = useRef(new Map<string, { marker: any; prop: MapProperty }>());
   const [loaded,   setLoaded]   = useState(false);
   const [selected, setSelected] = useState<MapProperty | null>(null);
 
@@ -171,6 +172,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
           if (map.getZoom() < 14) map.setZoom(14);
         });
 
+        porId.current.set(prop.id, { marker, prop });
         return marker;
       });
 
@@ -193,12 +195,24 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
     return () => {
       markers.current.forEach(m => m.setMap(null));
       markers.current = [];
+      porId.current.clear();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: solo al montar
   }, []);
 
+  // Permite que una lista externa (ej. el panel de "Propiedades") centre el mapa
+  // en una propiedad y abra su tarjeta, sin duplicar la lógica de selección.
+  useEffect(() => {
+    if (!focusId || !mapInst.current) return;
+    const hit = porId.current.get(focusId);
+    if (!hit) return;
+    handleSelect(hit.prop);
+    mapInst.current.panTo({ lat: hit.prop.lat, lng: hit.prop.lng });
+    if (mapInst.current.getZoom() < 14) mapInst.current.setZoom(14);
+  }, [focusId, loaded, handleSelect]);
+
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-stone" style={{ height }}>
+    <div className="relative w-full rounded-2xl overflow-hidden" style={{ height }}>
       <div ref={mapRef} className="w-full h-full"/>
 
       {/* Leyenda */}
@@ -214,7 +228,7 @@ export function PropertiesMap({ properties, height = "600px" }: Props) {
       {/* Card con carrusel */}
       {selected && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 w-72">
-          <div className="bg-white rounded-2xl shadow-xl border border-stone overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <ImageCarousel images={selected.images || []}/>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">

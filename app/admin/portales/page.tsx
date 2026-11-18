@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { CopyableUrl } from "@/components/CopyableUrl";
+import { PORTALES as FEEDS } from "@/lib/portales";
 
 const PORTALES = [
   {
@@ -76,8 +77,22 @@ const PORTALES = [
   },
 ];
 
+const fechaCorta = (s: string | null) => s
+  ? new Date(s).toLocaleDateString("es-MX", { day: "numeric", month: "short" })
+  : "—";
+
 export default async function PortalesAdminPage() {
   const supabase = createAdminClient();
+
+  const columnas = ["id", "title", "price", "updated_at", ...FEEDS.map(f => f.clave)].join(", ");
+  const { data: propsData } = await supabase
+    .from("properties")
+    .select(columnas)
+    .eq("is_published", true)
+    .order("updated_at", { ascending: false })
+    .limit(300);
+  const props = (propsData || []) as any[];
+
   const { count: propsCount } = await supabase.from("properties").select("*", { count: "exact", head: true }).eq("is_published", true);
 
   const headersList = headers();
@@ -91,15 +106,73 @@ export default async function PortalesAdminPage() {
         <h1 className="font-serif text-navy text-4xl md:text-[52px] md:tracking-[-0.52px]">
           Portales<em className="italic font-serif text-gold">.</em>
         </h1>
-        <p className="text-[#6b7385] text-[15px] mt-1">Cómo conectar tu inventario con los portales más importantes de México</p>
+        <p className="text-[#6b7385] text-[15px] mt-1">Publicación automática en portales inmobiliarios</p>
       </div>
 
-      {/* Feed URL */}
+      {/* Estado por portal */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {FEEDS.map(f => {
+          const n = props.filter(p => p[f.clave]).length;
+          return (
+            <div key={f.clave} className="bg-white rounded-[28px] shadow-float p-5">
+              <h3 className="font-serif text-navy text-xl">{f.nombre}</h3>
+              <div className="text-3xl font-semibold text-navy mt-1">{n}</div>
+              <p className="text-xs text-[#6b7385] mt-1">propiedades incluidas</p>
+              <a href={`/api/feed/${f.clave.replace("publicar_", "")}`} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-gold hover:underline mt-2 inline-block">Ver feed ↗</a>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Estado por propiedad */}
+      <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
+        <div className="p-6 pb-0">
+          <h2 className="font-serif text-navy text-[28px]">Estado por propiedad</h2>
+          <p className="text-xs text-[#6b7385] mt-1">
+            Incluida en el feed de cada portal (según los interruptores de &quot;Publicación&quot; en cada ficha) · {propsCount || 0} propiedades publicadas
+          </p>
+        </div>
+        {props.length === 0 ? (
+          <div className="p-10 text-center text-sm text-[#6b7385]">Sin propiedades publicadas todavía.</div>
+        ) : (
+          <div className="overflow-x-auto p-6 pt-4">
+            <table className="w-full">
+              <thead className="border-b border-stone">
+                <tr>
+                  <th className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-3 py-3">Propiedad</th>
+                  {FEEDS.map(f => (
+                    <th key={f.clave} title={f.nombre} className="text-center text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-2 py-3">{f.abrev}</th>
+                  ))}
+                  <th className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-3 py-3">Actualizada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {props.map(p => (
+                  <tr key={p.id} className="border-b border-stone last:border-0 hover:bg-cream">
+                    <td className="px-3 py-3 text-sm text-navy whitespace-nowrap">{p.title}</td>
+                    {FEEDS.map(f => (
+                      <td key={f.clave} className="text-center px-2 py-3">
+                        {p[f.clave]
+                          ? <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" title="Incluida" />
+                          : <span className="inline-block w-2 h-2 rounded-full bg-stone" title="No incluida" />}
+                      </td>
+                    ))}
+                    <td className="px-3 py-3 text-xs text-[#6b7385] whitespace-nowrap">{fechaCorta(p.updated_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Feed URL general */}
       <div className="bg-navy rounded-2xl p-8 text-white">
-        <div className="text-xs uppercase tracking-wider opacity-70">Tu URL de Feed XML</div>
+        <div className="text-xs uppercase tracking-wider opacity-70">Tu URL de Feed XML general</div>
         <h3 className="text-xl font-semibold tracking-tight mt-2">Esta URL es tu inventario sincronizable</h3>
         <p className="text-sm opacity-80 mt-2 leading-relaxed">
-          La copias y la pegas en cada portal. Ellos la consultan cada 12-24 hrs y mantienen tu inventario sincronizado automáticamente. Cuando publiques una propiedad nueva o pauses una, se reflejará en todos los portales en menos de 1 día.
+          La copias y la pegas en cada portal. Ellos la consultan cada 12-24 hrs y mantienen tu inventario sincronizado automáticamente. Si un portal necesita solo las propiedades marcadas para él, usa el enlace &quot;Ver feed&quot; de su tarjeta arriba en vez de este.
         </p>
         <div className="mt-5">
           <CopyableUrl url={feedUrl} />

@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="bg-cream min-h-screen md:flex md:gap-4 md:p-4 font-dmsans">
       <AdminSidebar profile={profile} leadsNuevos={leadsNuevos || 0} />
-      <main className="flex-1 min-h-screen md:min-h-0 overflow-x-hidden pt-14 md:pt-0 min-w-0">
+      <main className="flex-1 min-h-screen md:min-h-0 overflow-x-hidden pt-14 pb-24 md:pt-0 md:pb-0 min-w-0">
         <PushPermission />
         {children}
       </main>

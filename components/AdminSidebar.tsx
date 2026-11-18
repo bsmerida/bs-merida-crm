@@ -22,6 +22,7 @@ const icons: Record<string, JSX.Element> = {
   logout:    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>,
   menu:      <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>,
   close:     <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+  more:      <><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></>,
 };
 
 function SvgIcon({ name, size = 18 }: { name: string; size?: number }) {
@@ -57,7 +58,17 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
     { href: "/admin/ajustes",  label: "Ajustes",  icon: "settings" },
   ];
 
+  // Barra inferior móvil: solo los 4 destinos principales + "Más" (abre el
+  // mismo menú completo del gorro de hamburguesa, con Mapa/Tareas/Análisis/IA).
+  const bottomTabs = [
+    { href: "/admin",             label: "Inicio",      icon: "home"     },
+    { href: "/admin/leads",       label: "Clientes",    icon: "users"    },
+    { href: "/admin/propiedades", label: "Propiedades", icon: "building" },
+    { href: "/admin/citas",       label: "Citas",       icon: "calendar" },
+  ];
+
   const isActive = (href: string) => pathname === href || (href !== "/admin" && pathname.startsWith(href));
+  const enMas = !bottomTabs.some(t => isActive(t.href));
 
   const item = (href: string, label: string, icon: string, badge?: number | null) => (
     <Link key={href} href={href} onClick={() => setOpen(false)}
@@ -114,14 +125,15 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
   return (
     <>
       {/* ── Móvil: barra superior ──────────────────────────────────────────── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-navy flex items-center justify-between px-4 h-14">
-        <Link href="/admin" className="font-serif text-white text-xl tracking-[1.2px]">D<span className="text-gold">.</span>UCLAUD</Link>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-cream flex items-center justify-between px-4 h-14">
+        <Link href="/admin" className="font-serif text-navy text-xl tracking-[1.2px]">D<span className="text-gold">.</span>UCLAUD</Link>
         <div className="flex items-center gap-3">
           {leadsNuevos > 0 && (
             <span className="bg-gold text-navy text-[10px] font-bold px-1.5 py-0.5 rounded-full">{leadsNuevos}</span>
           )}
-          <button onClick={() => setOpen(o => !o)} className="text-white/70 hover:text-white transition-colors p-1">
-            <SvgIcon name={open ? "close" : "menu"} size={22}/>
+          <button onClick={() => setOpen(o => !o)}
+            className="w-10 h-10 flex items-center justify-center bg-white shadow-float rounded-full text-navy hover:bg-stone transition-colors">
+            <SvgIcon name={open ? "close" : "menu"} size={18}/>
           </button>
         </div>
       </div>
@@ -138,6 +150,27 @@ export function AdminSidebar({ profile, leadsNuevos }: { profile: Profile | null
         open ? "translate-x-0" : "-translate-x-full"}`}>
         {sidebarContent}
       </div>
+
+      {/* ── Móvil: barra inferior ──────────────────────────────────────────── */}
+      <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-navy rounded-full flex items-center justify-around px-1 py-2 shadow-float">
+        {bottomTabs.map(t => (
+          <Link key={t.href} href={t.href} onClick={() => setOpen(false)}
+            className="flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px]">
+            <span className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+              isActive(t.href) ? "bg-white text-navy" : "text-white/60"}`}>
+              <SvgIcon name={t.icon} size={17}/>
+            </span>
+            <span className={`text-[10px] font-medium ${isActive(t.href) ? "text-white" : "text-white/60"}`}>{t.label}</span>
+          </Link>
+        ))}
+        <button onClick={() => setOpen(o => !o)} className="flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px]">
+          <span className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+            open || enMas ? "bg-white text-navy" : "text-white/60"}`}>
+            <SvgIcon name="more" size={17}/>
+          </span>
+          <span className={`text-[10px] font-medium ${open || enMas ? "text-white" : "text-white/60"}`}>Más</span>
+        </button>
+      </nav>
 
       {/* ── Desktop: sidebar fijo ──────────────────────────────────────────── */}
       <aside className="hidden md:flex w-[250px] shrink-0 bg-white rounded-[36px] flex-col p-4 h-[calc(100vh-32px)] sticky top-4">

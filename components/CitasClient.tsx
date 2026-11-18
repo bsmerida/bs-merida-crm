@@ -39,7 +39,7 @@ function WeekCalendar({ requests }: { requests: any[] }) {
     <div className="bg-white rounded-[28px] shadow-float p-6">
       <h2 className="font-serif text-navy text-[28px]">Esta semana</h2>
       <p className="text-sm text-[#6b7385] mb-5">Semana del {rango}</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {dias.map((ymd, i) => {
           const esHoy = ymd === hoy;
           const citas = porDia(ymd);

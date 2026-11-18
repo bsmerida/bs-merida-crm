@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NAV_V3 } from "./PublicHeaderV3";
+import { NAV_V3 } from "@/lib/public-nav";
 
 export function PublicFooterV3() {
   return (

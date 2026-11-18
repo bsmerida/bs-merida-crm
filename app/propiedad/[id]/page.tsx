@@ -6,6 +6,7 @@ import { PublicHeaderV3 } from "@/components/PublicHeaderV3";
 import { PublicFooterV3 } from "@/components/PublicFooterV3";
 import { PublicChatbot } from "@/components/PublicChatbot";
 import { PropertyContactButtons } from "@/components/PropertyContactButtons";
+import { MobileAgendarBar } from "@/components/MobileAgendarBar";
 import { PropertyGallery } from "@/components/PropertyGallery";
 import { PropertyMapEmbed } from "@/components/PropertyMapEmbed";
 import { PropertyViewTracker } from "@/components/PropertyViewTracker";
@@ -79,7 +80,7 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
         <div className="absolute top-8 left-8 md:left-11 z-10 flex gap-2">
           <span className="bg-white text-navy text-[13px] font-semibold px-4 py-2 rounded-full">{property.operation}</span>
           <span className="bg-white text-navy text-[13px] font-medium px-4 py-2 rounded-full flex items-center gap-1.5">
-            <span className="w-[7px] h-[7px] rounded-full bg-emerald-500" />Documentación verificada
+            <span className="w-[7px] h-[7px] rounded-full bg-emerald-500" />Verificada
           </span>
         </div>
         <div className="absolute top-8 right-8 md:right-11 z-10">
@@ -215,6 +216,8 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
                 waNumber={wa}
                 waMsg={waMsg}
                 agentId={p.agent_id || null}
+                propertyCover={images[0]?.url || null}
+                propertyPriceLabel={priceLabel}
               />
 
               <div className="flex items-center gap-3.5 pt-2">
@@ -260,8 +263,16 @@ export default async function PropiedadDetailPage({ params }: { params: { id: st
         </p>
       </section>
 
+      <MobileAgendarBar
+        propertyId={property.id}
+        propertyTitle={property.title}
+        agentId={p.agent_id || null}
+        propertyCover={images[0]?.url || null}
+        priceLabel={priceLabel}
+      />
+
       <PublicFooterV3 />
-      <PublicChatbot />
+      <PublicChatbot liftedOnMobile />
     </div>
   );
 }

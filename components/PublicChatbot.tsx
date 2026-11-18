@@ -223,7 +223,7 @@ export function PublicChatbot() {
 
       {/* Ventana */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-40 w-[400px] max-w-[calc(100vw-3rem)] bg-white rounded-[36px] shadow-float overflow-hidden flex flex-col font-dmsans">
+        <div className="fixed bottom-24 right-6 z-40 w-[400px] max-w-[calc(100vw-3rem)] max-h-[min(640px,calc(100dvh-140px))] bg-white rounded-[36px] shadow-float overflow-hidden flex flex-col font-dmsans">
           {/* Header */}
           <div className="bg-navy text-white p-5 flex items-center gap-3.5">
             <Avatar size="w-11 h-11" text="text-lg" />
@@ -240,7 +240,7 @@ export function PublicChatbot() {
           </div>
 
           {/* Mensajes */}
-          <div ref={chatRef} className="h-[380px] overflow-y-auto p-4 space-y-3 bg-cream">
+          <div ref={chatRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-cream">
             {displayMsgs.map((m, i) => (
               <div key={i} className={`flex flex-col ${!m.from_bot ? "items-end" : "items-start"} gap-2`}>
                 {m.text && (

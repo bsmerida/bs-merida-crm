@@ -68,31 +68,31 @@ function NuevoUsuarioModal({ onSave, onClose }: { onSave: (p: Profile) => void; 
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Nombre completo *</label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre y apellido"
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:bg-white focus:border-navy/30"/>
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Correo *</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@duclaud.com.mx"
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:bg-white focus:border-navy/30"/>
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Contraseña temporal *</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 10 caracteres"
               autoComplete="new-password"
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:border-navy"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-4 py-3 text-sm text-navy focus:outline-none focus:bg-white focus:border-navy/30"/>
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Rol *</label>
             <Select value={role} onChange={setRole}
               options={[{value:"asesor",label:"Asesor"},{value:"admin",label:"Admin"}]}
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-4 py-3 text-sm text-navy text-left focus:outline-none focus:bg-white focus:border-navy/30"/>
           </div>
         </div>
 
         {err && <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-2 mt-3">{err}</p>}
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 border border-stone text-navy font-medium py-3 rounded-full hover:bg-cream transition text-sm">
+          <button onClick={onClose} className="flex-1 bg-stone text-navy font-medium py-3 rounded-full hover:bg-stone-dk transition text-sm">
             Cancelar
           </button>
           <button onClick={handleSave} disabled={saving}
@@ -184,7 +184,7 @@ export function EquipoClient({ profiles: initial, currentUserId }: Props) {
               <Select value={p.role} onChange={v => changeRole(p, v)}
                 disabled={p.id === currentUserId || updating === p.id}
                 options={[{value:"asesor",label:"Asesor"},{value:"admin",label:"Admin"}]}
-                className="border border-stone rounded-lg px-2.5 py-1.5 text-xs text-navy text-left focus:outline-none focus:border-navy disabled:opacity-50"/>
+                className="bg-stone rounded-lg px-2.5 py-1.5 text-xs text-navy text-left focus:outline-none disabled:opacity-50"/>
 
               {/* Estado */}
               <button onClick={() => toggleActive(p)}

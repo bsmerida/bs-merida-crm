@@ -23,18 +23,18 @@ type Task = {
 type Profile = { id: string; full_name: string | null };
 
 const PRIORITY_MAP: Record<string, [string, string]> = {
-  urgent: ["bg-red-100 text-red-700 border-red-200",     "Urgente"],
-  high:   ["bg-amber-100 text-amber-700 border-amber-200","Alta"   ],
-  normal: ["bg-blue-50 text-blue-600 border-blue-200",   "Normal" ],
-  low:    ["bg-stone text-stone-500 border-stone-200","Baja"   ],
+  urgent: ["bg-red-100 text-red-700",     "Urgente"],
+  high:   ["bg-amber-100 text-amber-700", "Alta"   ],
+  normal: ["bg-blue-50 text-blue-600",    "Normal" ],
+  low:    ["bg-stone text-[#6b7385]",     "Baja"   ],
 };
 
 const CATEGORY_OPTIONS = ["Seguimiento","Administración","Operaciones","Marketing","Otro"];
 
 const STATUS_COLS: { key: Task["status"]; label: string; color: string }[] = [
-  { key: "todo",        label: "Por hacer",   color: "border-stone bg-stone-50"        },
-  { key: "in_progress", label: "En progreso", color: "border-amber-200 bg-amber-50"   },
-  { key: "done",        label: "Completado",  color: "border-emerald-200 bg-emerald-50"},
+  { key: "todo",        label: "Por hacer",   color: "bg-stone"       },
+  { key: "in_progress", label: "En progreso", color: "bg-amber-50"    },
+  { key: "done",        label: "Completado",  color: "bg-emerald-50"  },
 ];
 
 // due_at es fecha sin hora (YYYY-MM-DD): comparar como string contra el día
@@ -51,7 +51,7 @@ function formatDate(d: string) {
 
 function PriorityBadge({ p }: { p: string }) {
   const [cls, label] = PRIORITY_MAP[p] || PRIORITY_MAP.normal;
-  return <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${cls}`}>{label}</span>;
+  return <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
 }
 
 function Avatar({ name, initials }: { name: string | null; initials: string | null }) {
@@ -119,14 +119,14 @@ function TaskModal({
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Título *</label>
             <input value={title} onChange={e => setTitle(e.target.value)}
               placeholder="¿Qué hay que hacer?"
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-4 py-3 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:bg-white focus:border-navy/30"/>
           </div>
 
           <div>
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Descripción</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Detalles opcionales..." rows={3}
-              className="w-full border border-stone rounded-xl px-4 py-3 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy resize-none"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-4 py-3 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:bg-white focus:border-navy/30 resize-none"/>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -134,26 +134,26 @@ function TaskModal({
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Prioridad</label>
               <Select value={priority} onChange={v => setPriority(v as "low"|"normal"|"high"|"urgent")}
                 options={[{value:"low",label:"Baja"},{value:"normal",label:"Normal"},{value:"high",label:"Alta"},{value:"urgent",label:"Urgente"}]}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
+                className="w-full bg-stone border border-transparent rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:bg-white focus:border-navy/30"/>
             </div>
 
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Estado</label>
               <Select value={status} onChange={v => setStatus(v as Task["status"])}
                 options={[{value:"todo",label:"Por hacer"},{value:"in_progress",label:"En progreso"},{value:"done",label:"Completado"}]}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
+                className="w-full bg-stone border border-transparent rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:bg-white focus:border-navy/30"/>
             </div>
 
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Fecha inicio</label>
               <input type="date" value={startsAt} onChange={e => setStartsAt(e.target.value)}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy"/>
+                className="w-full bg-stone border border-transparent rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:bg-white focus:border-navy/30"/>
             </div>
 
             <div>
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Fecha límite</label>
               <input type="date" value={dueAt} onChange={e => setDueAt(e.target.value)}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:border-navy"/>
+                className="w-full bg-stone border border-transparent rounded-xl px-3 py-2.5 text-sm text-navy focus:outline-none focus:bg-white focus:border-navy/30"/>
             </div>
           </div>
 
@@ -161,7 +161,7 @@ function TaskModal({
             <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Categoría</label>
             <Select value={category} onChange={setCategory}
               options={[{value:"",label:"Sin categoría"}, ...CATEGORY_OPTIONS.map(c => ({value:c.toLowerCase(),label:c}))]}
-              className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
+              className="w-full bg-stone border border-transparent rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:bg-white focus:border-navy/30"/>
           </div>
 
           {profiles.length > 0 && (
@@ -169,7 +169,7 @@ function TaskModal({
               <label className="text-[10px] uppercase tracking-[0.14em] text-[#6b7385] block mb-1.5">Asignado a</label>
               <Select value={assignedTo} onChange={setAssignedTo}
                 options={profiles.map(p => ({value:p.id,label:p.full_name || "Sin nombre"}))}
-                className="w-full border border-stone rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:border-navy"/>
+                className="w-full bg-stone border border-transparent rounded-xl px-3 py-2.5 text-sm text-navy text-left focus:outline-none focus:bg-white focus:border-navy/30"/>
             </div>
           )}
 
@@ -177,7 +177,7 @@ function TaskModal({
 
           <div className="flex gap-3 pt-2">
             <button onClick={onClose}
-              className="flex-1 border border-stone text-navy font-medium py-3 rounded-full hover:bg-cream transition text-sm">
+              className="flex-1 bg-stone text-navy font-medium py-3 rounded-full hover:bg-stone-dk transition text-sm">
               Cancelar
             </button>
             <button onClick={handleSave} disabled={saving}
@@ -208,7 +208,7 @@ function TaskCard({
   const nextLabel = { todo: "Iniciar", in_progress: "Completar", done: "Reabrir" };
 
   return (
-    <div className={`bg-white rounded-2xl border p-4 space-y-3 ${overdue ? "border-red-200" : "border-stone"}`}>
+    <div className="bg-white rounded-[22px] shadow-float p-4 space-y-3">
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium leading-snug ${task.status === "done" ? "line-through text-[#6b7385]" : "text-navy"}`}>
@@ -287,10 +287,10 @@ function KanbanView({ tasks, onEdit, onDelete, onStatusChange }: {
       {STATUS_COLS.map(col => {
         const colTasks = tasks.filter(t => t.status === col.key);
         return (
-          <div key={col.key} className={`rounded-2xl border-2 p-4 ${col.color}`}>
+          <div key={col.key} className={`rounded-[28px] p-4 ${col.color}`}>
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-semibold text-navy uppercase tracking-[0.1em]">{col.label}</p>
-              <span className="text-xs text-[#6b7385] bg-white rounded-full px-2 py-0.5 border border-stone">{colTasks.length}</span>
+              <span className="text-xs text-[#6b7385] bg-white rounded-full px-2 py-0.5">{colTasks.length}</span>
             </div>
             <div className="space-y-3">
               {colTasks.length === 0 && <p className="text-xs text-[#6b7385] text-center py-6">Sin tareas</p>}
@@ -376,7 +376,7 @@ export function TareasClient({
           Nueva tarea
         </button>
 
-        <div className="flex items-center bg-white border border-stone rounded-full p-0.5 text-xs">
+        <div className="flex items-center bg-stone rounded-full p-1 text-xs">
           {(["kanban","list"] as const).map(v => (
             <button key={v} onClick={() => setView(v)}
               className={`px-3 py-1.5 rounded-full font-medium transition ${view===v?"bg-navy text-white":"text-[#6b7385] hover:text-navy"}`}>
@@ -387,15 +387,15 @@ export function TareasClient({
 
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Buscar tarea..."
-          className="border border-stone rounded-full px-4 py-2 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:border-navy flex-1 min-w-[160px]"/>
+          className="bg-stone rounded-full px-4 py-2 text-sm text-navy placeholder:text-[#6b7385]/60 focus:outline-none focus:bg-white flex-1 min-w-[160px]"/>
 
         <Select value={filterPrio} onChange={setFilterPrio}
           options={[{value:"all",label:"Todas las prioridades"},{value:"urgent",label:"Urgente"},{value:"high",label:"Alta"},{value:"normal",label:"Normal"},{value:"low",label:"Baja"}]}
-          className="border border-stone rounded-full px-4 py-2 text-sm text-navy text-left focus:outline-none"/>
+          className="bg-stone rounded-full px-4 py-2 text-sm text-navy text-left focus:outline-none"/>
 
         <Select value={filterCat} onChange={setFilterCat}
           options={[{value:"all",label:"Todas las categorías"}, ...CATEGORY_OPTIONS.map(c => ({value:c.toLowerCase(),label:c}))]}
-          className="border border-stone rounded-full px-4 py-2 text-sm text-navy text-left focus:outline-none"/>
+          className="bg-stone rounded-full px-4 py-2 text-sm text-navy text-left focus:outline-none"/>
       </div>
 
       {view === "kanban"

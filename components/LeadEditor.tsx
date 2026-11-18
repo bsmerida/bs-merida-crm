@@ -314,7 +314,7 @@ export function LeadEditor({
                 <span>Radio:</span>
                 {[1, 2, 3, 5, 8].map(km => (
                   <button key={km} type="button" onClick={() => setRadiusKm(km)}
-                    className={`px-2.5 py-1 rounded-full border transition ${radiusKm === km ? "bg-navy text-white border-navy" : "bg-white text-navy border-stone hover:border-navy/30"}`}>
+                    className={`px-2.5 py-1 rounded-full transition ${radiusKm === km ? "bg-navy text-white" : "bg-stone text-navy hover:bg-stone-dk"}`}>
                     {km}km
                   </button>
                 ))}
@@ -322,14 +322,18 @@ export function LeadEditor({
             )}
           </div>
 
-          <div className="mt-4">
-            <label className="text-xs text-[#6b7385]">Interés</label>
-            <div className="mt-1.5"><textarea rows={2} value={form.interest} onChange={e => set("interest", e.target.value)} placeholder="Ej. Casa en Cholul, 3 recámaras, presupuesto 3M" className={`${inp} resize-none`} /></div>
-          </div>
-          <div className="mt-4">
-            <label className="text-xs text-[#6b7385]">Notas internas</label>
-            <div className="mt-1.5"><textarea rows={3} value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Solo visible para el equipo" className={`${inp} resize-none`} /></div>
-          </div>
+        </div>
+
+        {/* Interés */}
+        <div className="bg-white rounded-[28px] shadow-float p-6">
+          <h3 className="font-serif text-navy text-[28px] mb-4">Interés</h3>
+          <textarea rows={2} value={form.interest} onChange={e => set("interest", e.target.value)} placeholder="Ej. Casa en Cholul, 3 recámaras, presupuesto 3M" className={`${inp} resize-none`} />
+        </div>
+
+        {/* Notas internas */}
+        <div className="bg-white rounded-[28px] shadow-float p-6">
+          <h3 className="font-serif text-navy text-[28px] mb-4">Notas internas</h3>
+          <textarea rows={3} value={form.notes} onChange={e => set("notes", e.target.value)} placeholder="Solo visible para el equipo" className={`${inp} resize-none`} />
         </div>
 
         {/* Perfil */}
@@ -356,10 +360,10 @@ export function LeadEditor({
           </div>
         </div>
 
-        {/* Bitácora — solo en edición */}
-        {!isNew && (
-          <div className="bg-white rounded-[28px] shadow-float p-6">
-            <h3 className="font-serif text-navy text-[28px] mb-4">Bitácora de actividades</h3>
+        {/* Bitácora */}
+        <div className="bg-white rounded-[28px] shadow-float p-6">
+          <h3 className="font-serif text-navy text-[28px] mb-4">Bitácora de actividades</h3>
+          {!isNew && (
             <div className="flex gap-2 mb-4 flex-wrap">
               <Select value={actType} onChange={setActType}
                 options={TIPOS_ACTIVIDAD.map(t => ({value:t,label:t}))}
@@ -370,51 +374,51 @@ export function LeadEditor({
                 className="flex-1 bg-stone rounded-xl px-4 py-2 text-sm focus:outline-none focus:bg-white min-w-[200px]" />
               <button onClick={addActivity} className="bg-navy hover:bg-navy-mid text-white text-sm px-4 py-2 rounded-xl">Agregar</button>
             </div>
-            {acts.length === 0 ? (
-              <div className="text-sm text-[#6b7385] text-center py-6">Sin actividades. Agrega la primera arriba.</div>
-            ) : (
-              <div className="space-y-3">
-                {acts.map((a: any) => (
-                  <div key={a.id} className="flex gap-3 pb-3 border-b border-stone last:border-0">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cream text-navy flex items-center justify-center text-[11px] font-semibold uppercase">
-                      {a.type.slice(0, 2)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-navy">{a.description}</div>
-                      <div className="text-xs text-[#6b7385] mt-0.5">
-                        {a.user?.full_name || "Sistema"} · {new Date(a.created_at).toLocaleString("es-MX")}
-                      </div>
+          )}
+          {acts.length === 0 ? (
+            <div className="text-sm text-[#6b7385] text-center py-6">
+              {isNew ? "Podrás agregar actividades después de crear el cliente." : "Sin actividades. Agrega la primera arriba."}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {acts.map((a: any) => (
+                <div key={a.id} className="flex gap-3 pb-3 border-b border-stone last:border-0">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cream text-navy flex items-center justify-center text-[11px] font-semibold uppercase">
+                    {a.type.slice(0, 2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-navy">{a.description}</div>
+                    <div className="text-xs text-[#6b7385] mt-0.5">
+                      {a.user?.full_name || "Sistema"} · {new Date(a.created_at).toLocaleString("es-MX")}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sidebar */}
       <div className="space-y-6">
         {/* Cambio rápido de estado */}
-        {!isNew && (
-          <div className="bg-white rounded-[28px] shadow-float p-6">
-            <h3 className="font-serif text-navy text-[28px] mb-4">Cambio rápido de estado</h3>
-            <div className="space-y-1.5">
-              {ESTADOS_LEAD.map(s => (
-                <button key={s}
-                  onClick={() => { set("status", s); setTimeout(save, 100); }}
-                  className={`w-full text-left text-sm px-3 py-2.5 rounded-xl transition flex items-center gap-2 ${
-                    form.status === s
-                      ? `${STATUS_COLORS[s] || "bg-cream text-navy"} font-medium`
-                      : "text-[#6b7385] hover:bg-stone hover:text-navy"
-                  }`}>
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${form.status === s ? "bg-current opacity-60" : "bg-stone"}`}></span>
-                  {s}
-                </button>
-              ))}
-            </div>
+        <div className="bg-white rounded-[28px] shadow-float p-6">
+          <h3 className="font-serif text-navy text-[28px] mb-4">Cambio rápido de estado</h3>
+          <div className="space-y-1.5">
+            {ESTADOS_LEAD.map(s => (
+              <button key={s}
+                onClick={() => { set("status", s); if (!isNew) setTimeout(save, 100); }}
+                className={`w-full text-left text-sm px-3 py-2.5 rounded-xl transition flex items-center gap-2 ${
+                  form.status === s
+                    ? `${STATUS_COLORS[s] || "bg-cream text-navy"} font-medium`
+                    : "text-[#6b7385] hover:bg-stone hover:text-navy"
+                }`}>
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${form.status === s ? "bg-current opacity-60" : "bg-stone"}`}></span>
+                {s}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Info del registro */}
         {!isNew && (
@@ -435,18 +439,6 @@ export function LeadEditor({
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Ayuda para nuevo cliente */}
-        {isNew && (
-          <div className="bg-cream border border-gold/30 rounded-2xl p-5">
-            <div className="text-sm font-semibold text-navy mb-2">Nuevo cliente manual</div>
-            <div className="text-xs text-navy space-y-1">
-              <div>• Solo el nombre es obligatorio</div>
-              <div>• Al crear, podrás agregar actividades y cambiar el estado</div>
-              <div>• El origen quedará registrado como “Manual”</div>
             </div>
           </div>
         )}

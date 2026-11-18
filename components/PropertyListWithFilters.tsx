@@ -75,6 +75,23 @@ const BEDS_OPTIONS  = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1" }, { v: "2"
 const BATHS_OPTIONS = [{ v: "0", l: "Cualquiera" }, { v: "1", l: "1" }, { v: "2", l: "2" }, { v: "3", l: "3+" }];
 const SORT_OPTIONS  = [{ v: "recent", l: "Más recientes" }, { v: "price_asc", l: "Menor precio" }, { v: "price_desc", l: "Mayor precio" }];
 
+// Pills "Recámaras" con el mismo valor que BEDS_OPTIONS, para el cajón de
+// filtros móvil (Figma las muestra como pills, no como dropdown).
+const BEDS_PILLS = [{ v: "0", l: "Todas" }, { v: "1", l: "1+" }, { v: "2", l: "2+" }, { v: "3", l: "3+" }, { v: "4", l: "4+" }];
+
+// Amenidades del cajón de filtros móvil ("Incluye" en Figma). Cada una
+// filtra por subcadenas reales que sí existen en properties.amenities —
+// no son categorías inventadas.
+const AMENITY_FILTERS = [
+  { key: "alberca",   label: "Alberca",        match: ["alberca"] },
+  { key: "jardin",     label: "Jardín",         match: ["jard"] },
+  { key: "pet",        label: "Pet friendly",   match: ["pet", "mascota"] },
+  { key: "seguridad",  label: "Seguridad 24 h", match: ["seguridad"] },
+  { key: "amueblada",  label: "Amueblada",      match: ["amueblad"] },
+];
+const tieneAmenidad = (p: Prop, match: string[]) =>
+  Array.isArray(p.amenities) && p.amenities.some((a: string) => match.some(m => a.toLowerCase().includes(m)));
+
 function FieldDropdown({ label, value, options, onChange, active, onToggle }: {
   label: string; value: string; options: { v: string; l: string }[]; onChange: (v: string) => void;
   active: boolean; onToggle: () => void;
@@ -107,6 +124,7 @@ function FieldDropdown({ label, value, options, onChange, active, onToggle }: {
 type ListaGuardada = {
   filterType: string; filterZone: string; filterBeds: string; filterBaths: string;
   priceMin: string; priceMax: string; sortBy: string; visibles: number; scrollY: number;
+  amenities?: string[];
 };
 const storageKey = (operation: string) => `lista:${operation}`;
 function leerGuardado(operation: string): ListaGuardada | null {
@@ -123,9 +141,14 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const [priceMin, setPriceMin]   = useState(guardado?.priceMin ?? (initialMin || ""));
   const [priceMax, setPriceMax]   = useState(guardado?.priceMax ?? (initialMax || ""));
   const [sortBy, setSortBy]       = useState(guardado?.sortBy ?? "recent");
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(guardado?.amenities ?? []);
   const [activeField, setActiveField] = useState<null | "beds" | "baths" | "sort">(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersRef = useRef<HTMLDivElement>(null);
   const primerRender = useRef(true);
+
+  const toggleAmenity = (key: string) =>
+    setSelectedAmenities(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -149,19 +172,21 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
       const matchBaths = filterBaths === "0" || (filterBaths === "3" ? p.bathrooms >= 3 : p.bathrooms === Number(filterBaths));
       const matchMin   = !priceMin || p.price >= Number(priceMin);
       const matchMax   = !priceMax || p.price <= Number(priceMax);
-      return matchType && matchZone && matchBeds && matchBaths && matchMin && matchMax;
+      const matchAmenities = selectedAmenities.every(key =>
+        tieneAmenidad(p, AMENITY_FILTERS.find(a => a.key === key)!.match));
+      return matchType && matchZone && matchBeds && matchBaths && matchMin && matchMax && matchAmenities;
     });
     if (sortBy === "price_asc")  result = [...result].sort((a,b) => a.price - b.price);
     if (sortBy === "price_desc") result = [...result].sort((a,b) => b.price - a.price);
     return result;
-  }, [props, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
+  }, [props, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, selectedAmenities]);
 
   useEffect(() => {
     // No reiniciar al restaurar desde sessionStorage al montar: solo cuando
     // la persona de verdad cambia un filtro.
     if (primerRender.current) { primerRender.current = false; return; }
     setVisibles(POR_PAGINA);
-  }, [filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy]);
+  }, [filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, selectedAmenities]);
 
   // Guarda filtros + "ver más" en cada cambio, y la posición del scroll antes
   // de salir de la página (al hacer clic en una propiedad, por ejemplo).
@@ -169,14 +194,14 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     const guardar = () => {
       const datos: ListaGuardada = {
         filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, visibles,
-        scrollY: window.scrollY,
+        scrollY: window.scrollY, amenities: selectedAmenities,
       };
       try { sessionStorage.setItem(storageKey(operation), JSON.stringify(datos)); } catch { /* ignorar: modo privado u otro bloqueo */ }
     };
     guardar();
     window.addEventListener("pagehide", guardar);
     return () => window.removeEventListener("pagehide", guardar);
-  }, [operation, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, visibles]);
+  }, [operation, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, visibles, selectedAmenities]);
 
   // Al volver (atrás del navegador), restaura el scroll una sola vez, después
   // de que ya se dibujaron las tarjetas restauradas (si no, no hay a dónde bajar).
@@ -187,8 +212,10 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
   }, []);
 
-  const hasFilters = filterType !== "Todos" || filterZone !== "Todas" || filterBeds !== "0" || filterBaths !== "0" || priceMin || priceMax;
-  const clear = () => { setFilterType("Todos"); setFilterZone("Todas"); setFilterBeds("0"); setFilterBaths("0"); setPriceMin(""); setPriceMax(""); };
+  const hasFilters = filterType !== "Todos" || filterZone !== "Todas" || filterBeds !== "0" || filterBaths !== "0" || !!priceMin || !!priceMax || selectedAmenities.length > 0;
+  const clear = () => { setFilterType("Todos"); setFilterZone("Todas"); setFilterBeds("0"); setFilterBaths("0"); setPriceMin(""); setPriceMax(""); setSelectedAmenities([]); };
+  const countActivos = (filterType !== "Todos" ? 1 : 0) + (filterZone !== "Todas" ? 1 : 0) + (filterBeds !== "0" ? 1 : 0)
+    + (filterBaths !== "0" ? 1 : 0) + (priceMin || priceMax ? 1 : 0) + selectedAmenities.length;
 
   const field = "bg-cream rounded-[24px] px-6 py-3 flex flex-col gap-0.5 min-w-0 flex-1";
   const label = "text-[#6b7385] text-[11px] font-semibold tracking-[1.1px] uppercase";
@@ -205,7 +232,25 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
         ))}
       </div>
 
-      <div ref={filtersRef} className="bg-white rounded-[28px] shadow-float p-3 flex flex-wrap gap-2 items-stretch">
+      {/* Móvil: ubicación siempre visible + botón que abre el cajón de filtros
+          (Figma no muestra los 6 campos expandidos de golpe en una pantalla
+          de 390px — un solo campo + un botón "Filtros"). */}
+      <div className="md:hidden flex gap-2 items-stretch">
+        <div className="flex-1 min-w-0">
+          <ZoneAutocomplete zones={zones} value={filterZone} onChange={setFilterZone} />
+        </div>
+        <button type="button" onClick={() => setFiltersOpen(true)}
+          className="relative shrink-0 bg-navy hover:bg-navy-mid text-white text-[15px] font-semibold px-6 rounded-[24px] transition-colors">
+          Filtros
+          {countActivos > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-gold text-navy text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              {countActivos}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div ref={filtersRef} className="hidden md:flex bg-white rounded-[28px] shadow-float p-3 flex-wrap gap-2 items-stretch">
         <ZoneAutocomplete zones={zones} value={filterZone} onChange={setFilterZone} />
         <FieldDropdown label="Recámaras" value={filterBeds} options={BEDS_OPTIONS} onChange={v => { setFilterBeds(v); setActiveField(null); }}
           active={activeField === "beds"} onToggle={() => setActiveField(activeField === "beds" ? null : "beds")} />
@@ -224,6 +269,106 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
         <FieldDropdown label="Ordenar" value={sortBy} options={SORT_OPTIONS} onChange={v => { setSortBy(v); setActiveField(null); }}
           active={activeField === "sort"} onToggle={() => setActiveField(activeField === "sort" ? null : "sort")} />
       </div>
+
+      {/* Cajón de filtros móvil — Tipo, Precio, Recámaras y Amenidades, como en Figma.
+          Baños y Ordenar no están en el mockup, pero ya existen y son reales: se
+          agregan al final del cajón en vez de quitarlos. */}
+      {filtersOpen && (
+        <div className="md:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-navy/40" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-cream rounded-t-[32px] max-h-[88vh] overflow-y-auto">
+            <div className="w-11 h-1.5 bg-stone-dk rounded-full mx-auto mt-3" />
+            <div className="px-6 pt-4 pb-3 flex items-center justify-between">
+              <h2 className="font-serif text-navy text-4xl">Filtros</h2>
+              {hasFilters && (
+                <button onClick={clear} className="text-sm text-[#6b7385] hover:text-navy">Limpiar</button>
+              )}
+            </div>
+
+            <div className="px-6 pb-6 space-y-6">
+              <div>
+                <p className={`${label} mb-2.5`}>Tipo</p>
+                <div className="flex flex-wrap gap-2">
+                  {(types as string[]).map(t => (
+                    <button key={t} onClick={() => setFilterType(t)}
+                      className={`text-[14px] font-medium px-4 py-2.5 rounded-full transition-colors ${
+                        filterType === t ? "bg-navy text-white" : "bg-white text-navy hover:bg-stone"}`}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={`${label} mb-2.5`}>Precio</p>
+                <div className="flex gap-2">
+                  <input type="number" placeholder="Mínimo" value={priceMin} onChange={e => setPriceMin(e.target.value)}
+                    className="flex-1 min-w-0 bg-white rounded-[20px] px-5 py-3 text-navy text-[16px] focus:outline-none placeholder:text-navy/40" />
+                  <input type="number" placeholder="Máximo" value={priceMax} onChange={e => setPriceMax(e.target.value)}
+                    className="flex-1 min-w-0 bg-white rounded-[20px] px-5 py-3 text-navy text-[16px] focus:outline-none placeholder:text-navy/40" />
+                </div>
+              </div>
+
+              <div>
+                <p className={`${label} mb-2.5`}>Recámaras</p>
+                <div className="flex flex-wrap gap-2">
+                  {BEDS_PILLS.map(o => (
+                    <button key={o.v} onClick={() => setFilterBeds(o.v)}
+                      className={`text-[14px] font-medium px-4 py-2.5 rounded-full transition-colors ${
+                        filterBeds === o.v ? "bg-navy text-white" : "bg-white text-navy hover:bg-stone"}`}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={`${label} mb-2.5`}>Baños</p>
+                <div className="flex flex-wrap gap-2">
+                  {BATHS_OPTIONS.map(o => (
+                    <button key={o.v} onClick={() => setFilterBaths(o.v)}
+                      className={`text-[14px] font-medium px-4 py-2.5 rounded-full transition-colors ${
+                        filterBaths === o.v ? "bg-navy text-white" : "bg-white text-navy hover:bg-stone"}`}>
+                      {o.l === "Cualquiera" ? "Todos" : o.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={`${label} mb-2.5`}>Incluye</p>
+                <div className="flex flex-wrap gap-2">
+                  {AMENITY_FILTERS.map(a => (
+                    <button key={a.key} onClick={() => toggleAmenity(a.key)}
+                      className={`text-[14px] font-medium px-4 py-2.5 rounded-full transition-colors ${
+                        selectedAmenities.includes(a.key) ? "bg-navy text-white" : "bg-white text-navy hover:bg-stone"}`}>
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={`${label} mb-2.5`}>Ordenar</p>
+                <div className="flex flex-wrap gap-2">
+                  {SORT_OPTIONS.map(o => (
+                    <button key={o.v} onClick={() => setSortBy(o.v)}
+                      className={`text-[14px] font-medium px-4 py-2.5 rounded-full transition-colors ${
+                        sortBy === o.v ? "bg-navy text-white" : "bg-white text-navy hover:bg-stone"}`}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={() => setFiltersOpen(false)}
+                className="w-full bg-navy hover:bg-navy-mid text-white font-semibold py-4 rounded-full transition-colors">
+                Ver {filtered.length} {filtered.length === 1 ? "propiedad" : "propiedades"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         {hasFilters ? (

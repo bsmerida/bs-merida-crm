@@ -135,6 +135,37 @@ function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
 }
 
 const fechaCorta = (s: string) => new Date(s).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+
+// En móvil, Figma no muestra el tablero (kanban) ni la tabla de Lista — una
+// sola lista de tarjetas filtrable por estado, para las dos pestañas.
+function subtituloLead(l: any) {
+  const tipos = Array.isArray(l.search_types) ? l.search_types.join(", ") : l.search_types;
+  const presupuesto = l.budget_max ? `hasta $${(Number(l.budget_max) / 1_000_000).toFixed(1)}M` : null;
+  return [tipos, presupuesto].filter(Boolean).join(" · ") || l.interest || "Sin detalles";
+}
+
+function MobileLeadList({ leads }: { leads: any[] }) {
+  if (leads.length === 0) {
+    return <div className="bg-white rounded-[28px] p-10 text-center text-sm text-[#6b7385]">Sin resultados.</div>;
+  }
+  return (
+    <div className="space-y-2.5">
+      {leads.map(l => (
+        <Link key={l.id} href={`/admin/leads/${l.id}`}
+          className="flex items-center gap-3 bg-white rounded-[22px] p-4 hover:shadow-float transition-shadow">
+          <div className="w-11 h-11 rounded-full bg-cream text-navy flex items-center justify-center text-sm font-semibold shrink-0">
+            {l.name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "?"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-navy truncate">{l.name}</p>
+            <p className="text-xs text-[#6b7385] truncate">{subtituloLead(l)}</p>
+          </div>
+          <StatusBadge status={l.status} />
+        </Link>
+      ))}
+    </div>
+  );
+}
 const BUDGET_RANGES = [
   { label: "<1M",    min: 0,         max: 1_000_000 },
   { label: "1-2M",   min: 1_000_000, max: 2_000_000 },
@@ -334,6 +365,26 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
     { id: "perfil", label: "Perfil del cliente" },
   ] as const;
 
+  // Móvil: una sola vista de lista filtrable por estado, para Tablero y Lista
+  // por igual — Figma no ofrece el kanban ni la tabla en pantallas chicas.
+  const mobileToolbarAndList = (
+    <div className="md:hidden space-y-3">
+      <input value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="Buscar por nombre, teléfono, interés..."
+        className="w-full px-5 py-3 bg-white rounded-full text-sm text-navy focus:outline-none focus:ring-1 focus:ring-gold/40 placeholder:text-[#6b7385]" />
+      <div className="flex flex-wrap gap-2">
+        {statuses.map(s => (
+          <button key={s} onClick={() => setFilterStatus(s)}
+            className={`text-[13px] font-medium px-4 py-2 rounded-full transition-colors ${
+              filterStatus === s ? "bg-navy text-white" : "bg-white text-navy hover:bg-cream"}`}>
+            {s === "Todos" ? "Todos" : s}
+          </button>
+        ))}
+      </div>
+      <MobileLeadList leads={filtered} />
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {/* Tabs principales */}
@@ -349,15 +400,19 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
       {/* ── TABLERO ── */}
       {tab === "tablero" && (
         <>
-          <p className="text-sm text-[#6b7385]">Arrastra una tarjeta para cambiar su etapa</p>
-          <LeadsKanban leads={leads} setLeads={setLeads} />
+          {mobileToolbarAndList}
+          <div className="hidden md:block">
+            <p className="text-sm text-[#6b7385] mb-3">Arrastra una tarjeta para cambiar su etapa</p>
+            <LeadsKanban leads={leads} setLeads={setLeads} />
+          </div>
         </>
       )}
 
       {/* ── LISTA ── */}
       {tab === "lista" && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
+          {mobileToolbarAndList}
+          <div className="hidden md:flex flex-wrap items-center gap-3">
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nombre, teléfono, interés..."
               className="flex-1 min-w-[220px] px-5 py-3 bg-white rounded-full text-sm text-navy focus:outline-none focus:ring-1 focus:ring-gold/40 placeholder:text-[#6b7385]" />
@@ -385,52 +440,54 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
               </button>
             )}
           </div>
-          <div className="text-xs text-[#6b7385] px-1">{filtered.length} de {leads.length} clientes</div>
+          <div className="hidden md:block">
+            <div className="text-xs text-[#6b7385] px-1 mb-3">{filtered.length} de {leads.length} clientes</div>
 
-          {filtered.length === 0 ? (
-            <div className="bg-white rounded-[28px] p-16 text-center">
-              <h3 className="font-semibold text-navy">Sin resultados</h3>
-            </div>
-          ) : (
-            <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
-              <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-stone bg-cream">
-                  <tr>{["Cliente", "Contacto", "Interés", "Estado", "Asesor", "Fecha", ""].map(h => (
-                    <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-5 py-3">{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {filtered.map((l: any) => (
-                    <tr key={l.id} className="border-b border-stone last:border-0 hover:bg-cream">
-                      <td className="px-5 py-4">
-                        <Link href={`/admin/leads/${l.id}`} className="font-medium text-sm text-navy hover:text-gold">{l.name}</Link>
-                        {l.source && <div className="text-xs text-[#6b7385] mt-0.5">{l.source}</div>}
-                      </td>
-                      <td className="px-5 py-4 text-sm text-[#6b7385]">
-                        <div>{l.phone || "—"}</div>
-                        {l.email && <div className="text-xs">{l.email}</div>}
-                      </td>
-                      <td className="px-5 py-4 text-xs text-[#6b7385] max-w-[180px] truncate">{l.interest || "—"}</td>
-                      <td className="px-5 py-4"><StatusBadge status={l.status} /></td>
-                      <td className="px-5 py-4 text-sm text-[#6b7385]">{l.agent?.full_name || "Sin asignar"}</td>
-                      <td className="px-5 py-4 text-xs text-[#6b7385]">{fechaCorta(l.created_at)}</td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <Link href={`/admin/leads/${l.id}`} className="text-xs text-gold hover:underline">Ver →</Link>
-                          <button onClick={() => deleteLead(l.id, l.name)} disabled={deleting === l.id}
-                            className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40">
-                            {deleting === l.id ? "..." : "Eliminar"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {filtered.length === 0 ? (
+              <div className="bg-white rounded-[28px] p-16 text-center">
+                <h3 className="font-semibold text-navy">Sin resultados</h3>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
+                <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="border-b border-stone bg-cream">
+                    <tr>{["Cliente", "Contacto", "Interés", "Estado", "Asesor", "Fecha", ""].map(h => (
+                      <th key={h} className="text-left text-[11px] font-semibold text-[#6b7385] uppercase tracking-wide px-5 py-3">{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((l: any) => (
+                      <tr key={l.id} className="border-b border-stone last:border-0 hover:bg-cream">
+                        <td className="px-5 py-4">
+                          <Link href={`/admin/leads/${l.id}`} className="font-medium text-sm text-navy hover:text-gold">{l.name}</Link>
+                          {l.source && <div className="text-xs text-[#6b7385] mt-0.5">{l.source}</div>}
+                        </td>
+                        <td className="px-5 py-4 text-sm text-[#6b7385]">
+                          <div>{l.phone || "—"}</div>
+                          {l.email && <div className="text-xs">{l.email}</div>}
+                        </td>
+                        <td className="px-5 py-4 text-xs text-[#6b7385] max-w-[180px] truncate">{l.interest || "—"}</td>
+                        <td className="px-5 py-4"><StatusBadge status={l.status} /></td>
+                        <td className="px-5 py-4 text-sm text-[#6b7385]">{l.agent?.full_name || "Sin asignar"}</td>
+                        <td className="px-5 py-4 text-xs text-[#6b7385]">{fechaCorta(l.created_at)}</td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <Link href={`/admin/leads/${l.id}`} className="text-xs text-gold hover:underline">Ver →</Link>
+                            <button onClick={() => deleteLead(l.id, l.name)} disabled={deleting === l.id}
+                              className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40">
+                              {deleting === l.id ? "..." : "Eliminar"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
 

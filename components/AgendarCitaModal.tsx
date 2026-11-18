@@ -2,7 +2,10 @@
 import { useState } from "react";
 
 type Option = { date: string; time: string };
-type Props  = { propertyId: string; propertyTitle: string; agentId: string | null; onClose: () => void; };
+type Props  = {
+  propertyId: string; propertyTitle: string; agentId: string | null; onClose: () => void;
+  propertyCover?: string | null; propertyPriceLabel?: string | null;
+};
 
 const DAYS   = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
@@ -38,9 +41,10 @@ function validateName(n: string) {
 
 type Step = "options" | "form" | "success";
 
-export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }: Props) {
+export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose, propertyCover, propertyPriceLabel }: Props) {
   const today = new Date();
   const [step, setStep]   = useState<Step>("options");
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [options, setOptions] = useState<(Option | null)[]>([null, null, null]);
   const [picking, setPicking] = useState<number | null>(0); // cuál opción se está armando
   const [pickDate, setPickDate] = useState<string | null>(null);
@@ -103,7 +107,7 @@ export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }
     const pe = validatePhone(phone);
     const ee = validateEmail(email);
     setNameErr(ne); setPhoneErr(pe); setEmailErr(ee);
-    if (ne||pe||ee) return;
+    if (ne||pe||ee||!acceptPrivacy) return;
 
     setSubmitErr(""); setSubmitting(true);
     try {
@@ -128,21 +132,41 @@ export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }
     } finally { setSubmitting(false); }
   }
 
+  const stepIdx = step === "options" ? 0 : step === "form" ? 1 : 2;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/60 backdrop-blur-sm font-dmsans" onClick={onClose}>
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-navy/60 backdrop-blur-sm font-dmsans" onClick={onClose}>
+      <div className="bg-white rounded-none sm:rounded-[32px] shadow-2xl w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-7 py-5 border-b border-stone">
-          <div className="min-w-0">
-            <h2 className="font-serif text-navy text-2xl">Solicitar visita</h2>
-            <p className="text-sm text-[#6b7385] mt-0.5 truncate max-w-xs">{propertyTitle}</p>
+        <div className="px-7 pt-6 pb-5">
+          <div className="flex items-center justify-between mb-5">
+            <p className="font-serif text-navy text-2xl tracking-[1px]">D<span className="text-gold">.</span>UCLAUD</p>
+            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-stone text-navy/50 hover:text-navy transition-colors shrink-0">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
-          <button onClick={onClose} className="text-navy/40 hover:text-navy transition-colors p-1 shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
+
+          {/* Progreso */}
+          <div className="flex gap-1.5 mb-5">
+            {[0,1,2].map(i => (
+              <div key={i} className={`flex-1 h-1 rounded-full ${i <= stepIdx ? "bg-navy" : "bg-stone"}`} />
+            ))}
+          </div>
+
+          {/* Visita a… */}
+          <div className="flex items-center gap-3.5 bg-cream rounded-[20px] p-3">
+            <div className="w-12 h-12 rounded-[14px] bg-stone shrink-0 overflow-hidden">
+              {propertyCover && <img src={propertyCover} alt="" className="w-full h-full object-cover" />}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[1.3px] text-gold">Visita a</p>
+              <p className="text-[15px] font-medium text-navy truncate">{propertyTitle}</p>
+              {propertyPriceLabel && <p className="text-sm text-[#6b7385]">{propertyPriceLabel}</p>}
+            </div>
+          </div>
         </div>
 
         {/* ── STEP 1: elegir 3 opciones ───────────────────────────────────── */}
@@ -157,9 +181,9 @@ export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }
               {[0,1,2].map(i => (
                 <div key={i}
                   onClick={() => { if (!options[i]) { setPicking(i); setPickDate(null); } }}
-                  className={`flex items-center gap-3 rounded-[20px] border px-4 py-3 transition-all
-                    ${picking === i ? "border-navy bg-navy/5" : "border-stone"}
-                    ${!options[i] ? "cursor-pointer hover:border-navy/40" : ""}
+                  className={`flex items-center gap-3 rounded-[20px] px-4 py-3 transition-all
+                    ${picking === i ? "bg-navy/10" : "bg-stone"}
+                    ${!options[i] ? "cursor-pointer hover:bg-navy/5" : ""}
                   `}>
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-all
                     ${options[i] ? "bg-gold text-white" : picking===i ? "bg-navy text-white" : "bg-stone text-navy/50"}`}>
@@ -234,8 +258,8 @@ export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }
                         const used = options.some((o,oi)=>oi!==picking&&o?.date===pickDate&&o?.time===h);
                         return (
                           <button key={h} onClick={()=>selectTime(h)} disabled={used}
-                            className={`py-2 rounded-full text-xs font-medium border transition-colors
-                              ${used?"border-stone text-navy/20 cursor-not-allowed opacity-40":"border-navy/20 hover:border-navy hover:bg-navy hover:text-white text-navy"}`}>
+                            className={`py-2 rounded-full text-xs font-medium transition-colors
+                              ${used?"bg-stone text-navy/20 cursor-not-allowed opacity-40":"bg-white shadow-float hover:bg-navy hover:text-white text-navy"}`}>
                             {h}
                           </button>
                         );
@@ -294,14 +318,22 @@ export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }
               </div>
             </div>
 
+            <label className="flex items-start gap-2.5 mt-4 cursor-pointer">
+              <input type="checkbox" checked={acceptPrivacy} onChange={e => setAcceptPrivacy(e.target.checked)}
+                className="mt-0.5 accent-navy shrink-0" />
+              <span className="text-xs text-[#6b7385]">
+                Acepto el <a href="/aviso-privacidad" target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">aviso de privacidad</a>
+              </span>
+            </label>
+
             {submitErr && <p className="mt-3 text-xs text-red-600 bg-red-50 rounded-[16px] px-4 py-3">{submitErr}</p>}
 
             <div className="flex gap-2.5 mt-6">
               <button onClick={()=>setStep("options")}
-                className="flex-1 border border-navy/20 text-navy font-semibold py-[15px] rounded-full hover:bg-cream transition-colors text-sm">
+                className="flex-1 bg-stone text-navy font-semibold py-[15px] rounded-full hover:bg-stone-dk transition-colors text-sm">
                 ← Atrás
               </button>
-              <button onClick={handleSubmit} disabled={submitting||!!nameErr||!!phoneErr||!!emailErr}
+              <button onClick={handleSubmit} disabled={submitting||!!nameErr||!!phoneErr||!!emailErr||!acceptPrivacy}
                 className="flex-1 bg-navy hover:bg-navy-mid text-white font-semibold py-[15px] rounded-full disabled:opacity-50 transition-colors text-sm">
                 {submitting ? "Enviando..." : "Solicitar visita"}
               </button>
@@ -315,7 +347,7 @@ export function AgendarCitaModal({ propertyId, propertyTitle, agentId, onClose }
         {/* ── STEP 3: éxito ──────────────────────────────────────────────── */}
         {step === "success" && (
           <div className="p-10 text-center">
-            <div className="w-16 h-16 bg-gold/10 border border-gold/30 rounded-full flex items-center justify-center mx-auto mb-5">
+            <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-5">
               <svg className="w-7 h-7 text-gold" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>

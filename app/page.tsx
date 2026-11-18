@@ -6,8 +6,9 @@ import { SearchBox } from "@/components/SearchBox";
 import { CountUpStat } from "@/components/CountUpStat";
 import { SofiaTeaser } from "@/components/SofiaTeaser";
 import { PropertyCardV3 } from "@/components/PropertyCardV3";
-import { NAV_V3 } from "@/components/PublicHeaderV3";
+import { NAV_V3 } from "@/lib/public-nav";
 import { PublicFooterV3 } from "@/components/PublicFooterV3";
+import { PublicMobileMenu } from "@/components/PublicMobileMenu";
 
 export default async function HomePage() {
   const supabase = createClient();
@@ -54,10 +55,13 @@ export default async function HomePage() {
               </Link>
             ))}
           </nav>
-          <a href={waLink} target="_blank" rel="noopener noreferrer"
-            className="bg-white text-navy px-4 md:px-[26px] py-3 md:py-[14px] rounded-full text-sm md:text-[15px] font-semibold hover:bg-stone transition-colors whitespace-nowrap">
-            Agendar consulta
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <a href={waLink} target="_blank" rel="noopener noreferrer"
+              className="bg-white text-navy px-4 md:px-[26px] py-3 md:py-[14px] rounded-full text-sm md:text-[15px] font-semibold hover:bg-stone transition-colors whitespace-nowrap">
+              Agendar consulta
+            </a>
+            <PublicMobileMenu active="/" dark />
+          </div>
         </div>
 
         <div className="mt-10 md:mt-20 flex flex-col gap-5 md:gap-7">

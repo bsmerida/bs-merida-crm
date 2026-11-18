@@ -54,7 +54,10 @@ function PropCard({ card }: { card: PropCard }) {
   );
 }
 
-export function PublicChatbot() {
+// liftedOnMobile: la ficha de propiedad tiene una barra fija de "Agendar
+// visita" al pie en celular (ver MobileAgendarBar) — sube el widget para
+// que no se encimen.
+export function PublicChatbot({ liftedOnMobile = false }: { liftedOnMobile?: boolean } = {}) {
   const [open, setOpen]             = useState(false);
   const [showTeaser, setShowTeaser] = useState(false);
   const [teaserDismissed, setTeaserDismissed] = useState(false);
@@ -185,7 +188,7 @@ export function PublicChatbot() {
     <>
       {/* Teaser */}
       {showTeaser && !open && (
-        <div className="fixed bottom-28 right-6 z-40 max-w-[300px] font-dmsans">
+        <div className={`fixed ${liftedOnMobile ? "bottom-44 lg:bottom-28" : "bottom-28"} right-6 z-40 max-w-[300px] font-dmsans`}>
           <div className="bg-white rounded-[28px] shadow-float p-5 relative">
             <button onClick={() => { setShowTeaser(false); setTeaserDismissed(true); }}
               className="absolute top-3.5 right-3.5 text-navy/30 hover:text-navy transition-colors">
@@ -210,7 +213,8 @@ export function PublicChatbot() {
       )}
 
       {/* Botón flotante */}
-      <button onClick={() => open ? setOpen(false) : openChat()} className="fixed bottom-6 right-6 z-40">
+      <button onClick={() => open ? setOpen(false) : openChat()}
+        className={`fixed ${liftedOnMobile ? "bottom-24 lg:bottom-6" : "bottom-6"} right-6 z-40`}>
         <div className="relative">
           <div className="w-16 h-16 bg-navy hover:bg-navy-mid text-white shadow-float flex items-center justify-center transition-colors rounded-full">
             {open
@@ -223,7 +227,7 @@ export function PublicChatbot() {
 
       {/* Ventana */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-40 w-[400px] max-w-[calc(100vw-3rem)] max-h-[min(640px,calc(100dvh-140px))] bg-white rounded-[36px] shadow-float overflow-hidden flex flex-col font-dmsans">
+        <div className={`fixed ${liftedOnMobile ? "bottom-40 lg:bottom-24" : "bottom-24"} right-6 z-40 w-[400px] max-w-[calc(100vw-3rem)] max-h-[min(640px,calc(100dvh-140px))] bg-white rounded-[36px] shadow-float overflow-hidden flex flex-col font-dmsans`}>
           {/* Header */}
           <div className="bg-navy text-white p-5 flex items-center gap-3.5">
             <Avatar size="w-11 h-11" text="text-lg" />

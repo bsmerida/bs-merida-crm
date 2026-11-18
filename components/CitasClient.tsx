@@ -2,10 +2,94 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Select } from "@/components/Select";
+import { meridaParts, addDaysYmd } from "@/lib/time";
 
 const DAYS   = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DIAS_SEMANA = ["Lun","Mar","Mié","Jue","Vie","Sáb"];
 const MONTHS = ["enero","febrero","marzo","abril","mayo","junio",
                 "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+// Lunes (YYYY-MM-DD) de la semana que contiene esa fecha.
+function lunesDe(ymd: string) {
+  const dow = new Date(`${ymd}T12:00:00Z`).getUTCDay(); // 0=Dom..6=Sáb
+  return addDaysYmd(ymd, dow === 0 ? -6 : -(dow - 1));
+}
+
+const hace = (iso: string) => {
+  const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000);
+  if (h < 1) return "Hace unos min";
+  if (h < 24) return `Hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? "Ayer" : `Hace ${d} días`;
+};
+
+function WeekCalendar({ requests }: { requests: any[] }) {
+  const hoy = meridaParts(new Date()).ymd;
+  const lunes = lunesDe(hoy);
+  const dias = Array.from({ length: 6 }, (_, i) => addDaysYmd(lunes, i));
+  const confirmadas = requests.filter(r => r.status === "confirmed" && r.confirmed_option?.date);
+  const porDia = (ymd: string) => confirmadas
+    .filter(r => r.confirmed_option.date === ymd)
+    .sort((a, b) => a.confirmed_option.time.localeCompare(b.confirmed_option.time));
+
+  const diaMes = (ymd: string) => Number(ymd.slice(8, 10));
+  const rango = `${diaMes(lunes)} al ${diaMes(dias[5])} de ${MONTHS[Number(lunes.slice(5, 7)) - 1]}`;
+
+  return (
+    <div className="bg-white rounded-[28px] shadow-float p-6">
+      <h2 className="font-serif text-navy text-[28px]">Esta semana</h2>
+      <p className="text-sm text-[#6b7385] mb-5">Semana del {rango}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {dias.map((ymd, i) => {
+          const esHoy = ymd === hoy;
+          const citas = porDia(ymd);
+          return (
+            <div key={ymd} className={`rounded-[22px] p-3 min-h-[160px] ${esHoy ? "bg-navy" : "bg-cream"}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${esHoy ? "text-white" : "text-navy"}`}>
+                {DIAS_SEMANA[i]} {diaMes(ymd)}
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {citas.map(c => (
+                  <div key={c.id} className={`rounded-[14px] px-2.5 py-2 ${esHoy ? "bg-white/10" : "bg-white"}`}>
+                    <p className={`text-[11px] font-semibold ${esHoy ? "text-gold-lt" : "text-gold"}`}>{c.confirmed_option.time}</p>
+                    <p className={`text-xs font-medium truncate ${esHoy ? "text-white" : "text-navy"}`}>{c.property_title}</p>
+                    <p className={`text-[11px] truncate ${esHoy ? "text-white/60" : "text-[#6b7385]"}`}>{c.client_name}</p>
+                  </div>
+                ))}
+                {citas.length === 0 && <p className={`text-[11px] ${esHoy ? "text-white/40" : "text-[#6b7385]/50"}`}>—</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PorConfirmarSidebar({ pending }: { pending: any[] }) {
+  return (
+    <div className="bg-white rounded-[28px] shadow-float p-6">
+      <h2 className="font-serif text-navy text-[28px] mb-4">Por confirmar</h2>
+      {pending.length === 0 ? (
+        <p className="text-sm text-[#6b7385]">Sin solicitudes pendientes.</p>
+      ) : (
+        <div className="space-y-1">
+          {pending.map(r => (
+            <div key={r.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-navy truncate">{r.client_name}</p>
+                <p className="text-xs text-[#6b7385] truncate">
+                  {r.client_options?.length ? `${r.client_options.length} horario${r.client_options.length > 1 ? "s" : ""} enviado${r.client_options.length > 1 ? "s" : ""}` : "Sin respuesta"}
+                </p>
+              </div>
+              <span className="text-xs text-[#6b7385] shrink-0">{hace(r.created_at)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function labelDate(iso: string) {
   const [y,m,d] = iso.split("-").map(Number);
@@ -15,14 +99,14 @@ function labelDate(iso: string) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, [string,string]> = {
-    pending:     ["bg-amber-50 text-amber-700 border-amber-200",   "Pendiente"   ],
-    confirmed:   ["bg-emerald-50 text-emerald-700 border-emerald-200","Confirmada"],
-    rescheduled: ["bg-blue-50 text-blue-600 border-blue-200",      "Reagendada"  ],
-    cancelled:   ["bg-red-50 text-red-600 border-red-200",         "Cancelada"   ],
+    pending:     ["bg-amber-50 text-amber-700",   "Pendiente"   ],
+    confirmed:   ["bg-emerald-50 text-emerald-700","Confirmada"],
+    rescheduled: ["bg-blue-50 text-blue-600",      "Reagendada"  ],
+    cancelled:   ["bg-red-50 text-red-600",         "Cancelada"   ],
   };
   const [cls,label] = map[status] || map.pending;
   return (
-    <span className={`text-[10px] uppercase tracking-[0.1em] font-medium px-2.5 py-1 rounded-full border ${cls}`}>
+    <span className={`text-[10px] uppercase tracking-[0.1em] font-medium px-2.5 py-1 rounded-full ${cls}`}>
       {label}
     </span>
   );
@@ -58,23 +142,23 @@ function RejectForm({ requestId, onDone }: { requestId: string; onDone: (r: any)
   }
 
   return (
-    <div className="mt-4 border border-blue-100 bg-blue-50 rounded-2xl p-4 space-y-3">
+    <div className="mt-4 bg-blue-50 rounded-2xl p-4 space-y-3">
       <p className="text-xs font-semibold text-blue-700">Proponer nuevas opciones al cliente</p>
       {agentOptions.map((o,i) => (
         <div key={i} className="flex gap-2 items-center">
           <span className="text-[10px] text-blue-500 w-16 shrink-0">Opción {i+1}</span>
           <input type="date" value={o.date} min={toYMD(today)}
             onChange={e=>updateOpt(i,"date",e.target.value)}
-            className="flex-1 border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none focus:border-navy"/>
+            className="flex-1 bg-white rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none focus:ring-1 focus:ring-navy/30"/>
           <Select value={o.time} onChange={v=>updateOpt(i,"time",v)}
             options={[{value:"",label:"Hora"}, ...HOURS.map(h => ({value:h,label:h}))]}
-            className="border border-blue-200 rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none focus:border-navy text-left"/>
+            className="bg-white rounded-lg px-2 py-1.5 text-xs text-navy focus:outline-none text-left"/>
         </div>
       ))}
       <textarea value={message} onChange={e=>setMessage(e.target.value)}
         placeholder="Mensaje opcional para el cliente (ej. estoy en junta, por eso no puedo esa semana)"
         rows={2}
-        className="w-full border border-blue-200 rounded-xl px-3 py-2 text-xs text-navy placeholder:text-blue-300 focus:outline-none focus:border-navy resize-none"/>
+        className="w-full bg-white rounded-xl px-3 py-2 text-xs text-navy placeholder:text-blue-300 focus:outline-none focus:ring-1 focus:ring-navy/30 resize-none"/>
       {err && <p className="text-xs text-red-500">{err}</p>}
       <button onClick={submit} disabled={saving}
         className="w-full bg-blue-600 text-white text-xs font-semibold py-2 rounded-full hover:bg-blue-700 transition disabled:opacity-50">
@@ -120,8 +204,7 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
   }
 
   return (
-    <div className={`bg-white rounded-2xl border p-5 space-y-4
-      ${isPending ? "border-amber-200 shadow-sm" : "border-stone"}`}>
+    <div className="bg-white rounded-2xl shadow-float p-5 space-y-4">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
@@ -151,7 +234,7 @@ function RequestCard({ req, isAdmin }: { req: any; isAdmin: boolean }) {
           <p className="text-[10px] uppercase tracking-[0.12em] text-[#6b7385] mb-2">Opciones del cliente</p>
           <div className="space-y-2">
             {options.map((o,i) => (
-              <div key={i} className="flex items-center justify-between gap-2 border border-stone rounded-xl px-3 py-2">
+              <div key={i} className="flex items-center justify-between gap-2 bg-stone rounded-xl px-3 py-2">
                 <div>
                   <p className="text-xs font-medium text-navy">{labelDate(o.date)}</p>
                   <p className="text-[11px] text-[#6b7385]">a las {o.time} hrs</p>
@@ -230,6 +313,13 @@ export function CitasClient({ requests, isAdmin }: { requests: any[]; isAdmin: b
 
   return (
     <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <WeekCalendar requests={all} />
+        </div>
+        <PorConfirmarSidebar pending={pending} />
+      </div>
+
       {pending.length > 0 && (
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] text-amber-600 mb-3">

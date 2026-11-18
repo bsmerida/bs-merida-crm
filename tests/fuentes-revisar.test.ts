@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { arbolCarpetas, compararInventario, dentroDe, firmaArchivos } from "../scripts/fuentes/lib/inventario.mjs";
 import {
   driveFolderId, dropboxArg, dropboxSharedUrl, listarDrive, listarDropbox, segmento,
@@ -110,6 +110,28 @@ describe("listarDrive", () => {
   it("explica cuando la carpeta no es pública", async () => {
     const fetchImpl = async () => json({ error: { message: "File not found" } }, 404);
     await expect(listarDrive("x", "KEY", { fetchImpl: fetchImpl as any })).rejects.toThrow(/sin acceso público/);
+  });
+
+  it("reintenta un 403 sin cuerpo (típico de límite de solicitudes) hasta que se recupera", async () => {
+    vi.useFakeTimers();
+    let llamada = 0;
+    const fetchImpl = async () => {
+      llamada++;
+      if (llamada < 3) return new Response("", { status: 403 }); // sin cuerpo JSON, como manda Google al limitar
+      return json({ files: [] });
+    };
+    const promesa = listarDrive("root", "KEY", { fetchImpl: fetchImpl as any });
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(promesa).resolves.toEqual([]);
+    expect(llamada).toBe(3);
+    vi.useRealTimers();
+  });
+
+  it("no reintenta un 403 con motivo explícito que no es de límite (permiso negado real)", async () => {
+    let llamada = 0;
+    const fetchImpl = async () => { llamada++; return json({ error: { message: "The caller does not have permission" } }, 403); };
+    await expect(listarDrive("x", "KEY", { fetchImpl: fetchImpl as any })).rejects.toThrow(/Drive negó el acceso/);
+    expect(llamada).toBe(1);
   });
 });
 

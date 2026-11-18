@@ -34,16 +34,21 @@ const EXT_MIME = {
 };
 export const mimePorNombre = (nombre) => EXT_MIME[String(nombre).split(".").pop()?.toLowerCase()] || "application/octet-stream";
 
-async function conReintentos(fn, intentos = 3) {
+async function conReintentos(fn, { intentos = 3, baseMs = 1000 } = {}) {
   for (let i = 1; ; i++) {
     try { return await fn(); } catch (e) {
       if (i >= intentos || e.noReintentar) throw e;
-      await new Promise(r => setTimeout(r, 1000 * 2 ** i));
+      await new Promise(r => setTimeout(r, baseMs * 2 ** i));
     }
   }
 }
 
 // ── Google Drive ────────────────────────────────────────────────────────────
+// Un 403 de la API de Drive casi siempre es el límite de solicitudes por minuto
+// (se agota al revisar miles de archivos de todos los proveedores antes de llegar
+// a leer documentos). Google no siempre manda el motivo en el cuerpo: si no lo manda,
+// se trata igual como límite momentáneo. Solo se da por permiso negado de verdad
+// cuando sí hay un mensaje explícito y claramente no es de límite/cuota.
 async function driveGet(url, fetchImpl) {
   return conReintentos(async () => {
     const res = await fetchImpl(url);
@@ -52,11 +57,12 @@ async function driveGet(url, fetchImpl) {
     try { detalle = (await res.json())?.error?.message || ""; } catch { /* sin cuerpo */ }
     const err = new Error(
       res.status === 404 ? "Carpeta no encontrada o sin acceso público (compártela con 'cualquier persona con el enlace')"
-      : res.status === 403 ? `Drive negó el acceso: ${detalle || "revisa la API key"}`
+      : res.status === 403 ? `Drive negó el acceso: ${detalle || "límite de solicitudes (reintentando)"}`
       : `Drive respondió ${res.status} ${detalle}`.trim());
-    err.noReintentar = res.status === 404 || res.status === 400 || (res.status === 403 && !/rate|quota/i.test(detalle));
+    err.noReintentar = res.status === 404 || res.status === 400
+      || (res.status === 403 && !!detalle && !/rate|quota|limit/i.test(detalle));
     throw err;
-  });
+  }, { intentos: 6, baseMs: 1500 });
 }
 
 export async function listarDrive(folderId, apiKey, { fetchImpl = fetch } = {}) {

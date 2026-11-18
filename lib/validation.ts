@@ -69,3 +69,10 @@ export function cleanFilterNumber(v: unknown): number | null {
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.replace(/[^\d.]/g, "")) : NaN;
   return Number.isFinite(n) && n > 0 ? n : null;
 }
+
+// Sin acentos ni mayúsculas, para comparar zonas/ciudades escritas por el
+// cliente ("merida") contra lo que hay en la base ("Mérida"): ILIKE de
+// Postgres no ignora acentos, así que "merida" nunca encontraba nada.
+export function normalizeSearch(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}

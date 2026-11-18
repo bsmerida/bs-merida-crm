@@ -5,13 +5,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
+import { crearSolicitudCita, parseCitaTag } from "@/lib/citas";
 import { clientIp, isUuid, rateLimit } from "@/lib/security";
-import { cleanFilterNumber, cleanFilterText, sanitizeChatMessages } from "@/lib/validation";
+import { meridaParts } from "@/lib/time";
+import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MAX_INVENTARIO = 40; // propiedades que se pasan al modelo (el total se cuenta aparte)
+const MAX_CANDIDATOS = 600; // antes de filtrar zona/ciudad sin acentos en JS
 
 const fmtPrice = (p: number) => `$${Number(p).toLocaleString("es-MX")}`;
 
@@ -119,15 +122,22 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
       query = query.ilike("operation", `%${opNorm}%`);
     }
     if (tipo)      query = query.ilike("type", `%${tipo}%`);
-    if (zona)      query = query.or(`zone.ilike.%${zona}%,city.ilike.%${zona}%,state.ilike.%${zona}%`);
     if (precioMin) query = query.gte("price", precioMin);
     if (precioMax) query = query.lte("price", precioMax);
     if (recMin)    query = query.gte("bedrooms", recMin);
 
-    // Total real con count; al modelo solo se le pasan las primeras MAX_INVENTARIO
-    // (antes "muéstrame todo" mandaba el inventario completo en cada mensaje).
-    const { data: props, count } = await query.limit(MAX_INVENTARIO);
+    // La zona se filtra aparte, en JS, sin acentos: ILIKE de Postgres no
+    // ignora acentos y "merida" (como casi todos escriben en el teléfono)
+    // nunca encontraba nada contra "Mérida" guardado en la base.
+    let { data: props, count } = await query.limit(zona ? MAX_CANDIDATOS : MAX_INVENTARIO);
+    if (zona && props) {
+      const zonaNorm = normalizeSearch(zona);
+      props = props.filter(p =>
+        [p.zone, p.city, p.state].some(v => v && normalizeSearch(v).includes(zonaNorm)));
+      count = props.length;
+    }
     totalEncontradas = count ?? props?.length ?? 0;
+    if (zona && props) props = props.slice(0, MAX_INVENTARIO);
 
     inventario = (props || [])
       .map(p => {
@@ -155,6 +165,7 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
     : "";
 
   const detectedFilters = { operacion, tipo, zona, precio_min: precioMin, precio_max: precioMax, recamaras_min: recMin };
+  const hoyMerida = meridaParts(new Date()).ymd;
 
   // ── Fase 3: Responder ──────────────────────────────────────────────────────
   const system = `Eres Sofía, asistente virtual de Duclaud — firma de consultoría inmobiliaria.
@@ -195,6 +206,15 @@ ${propCtxBlock}
 CAPTURAR LEAD:
 - Cuando tengas nombre + teléfono → incluye [LEAD|nombre=X|telefono=Y|presupuesto=Z|zona=W|operacion=V]
 - Pide teléfono de forma natural después de 2-3 intercambios si hay interés real.
+
+AGENDAR VISITA:
+- Si el cliente quiere visitar una propiedad (la que está viendo, o alguna de las que le mostraste — usa el [id] con el que aparece en el inventario de arriba), ofrécele proponer hasta 3 opciones de fecha y hora.
+- Hoy es ${hoyMerida} (zona horaria de Mérida). Las fechas que agendes deben ser futuras, horario de 09:00 a 18:00.
+- Cuando tengas el id de esa propiedad + nombre + teléfono + al menos una fecha y hora, incluye al final (sin corchetes extra, solo este formato):
+  [CITA|propiedad=ID|nombre=X|telefono=Y|correo=Z|fecha1=YYYY-MM-DD|hora1=HH:MM|fecha2=YYYY-MM-DD|hora2=HH:MM|fecha3=YYYY-MM-DD|hora3=HH:MM]
+  correo es opcional (omítelo si no lo dio); omite fecha2/hora2 y fecha3/hora3 si solo propuso una o dos opciones.
+- No muestres este formato al cliente ni lo menciones; después de incluirlo, dile en tu propio texto que ya quedó la solicitud y que un consultor Duclaud confirmará el horario a la brevedad por WhatsApp o llamada.
+- Si ya tiene cita pendiente en esta conversación, no la repitas.
 
 FORMATO: Respuestas cortas y directas.`;
 
@@ -264,6 +284,22 @@ FORMATO: Respuestas cortas y directas.`;
     }
   }
 
+  // Agendar visita: Sofía propuso fecha(s) y ya tiene propiedad + nombre + teléfono.
+  // crearSolicitudCita vuelve a validar la propiedad contra la base (publicada y
+  // existente), así que un id inventado por el modelo simplemente no encuentra nada.
+  let appointmentRequested = false;
+  const cita = parseCitaTag(reply);
+  reply = cita.clean;
+  if (cita.data) {
+    const result = await crearSolicitudCita(db, {
+      ...cita.data,
+      source:   "Sofía IA — Cita",
+      adminUrl: `${siteUrl}/admin/citas`,
+    });
+    appointmentRequested = result.ok;
+    if (!result.ok) console.error("[sofia cita]", result.error);
+  }
+
   // Guardar la pregunta del visitante y la respuesta de Sofía (antes la pregunta
   // la insertaba el navegador con la llave anónima)
   if (sessionId) {
@@ -273,5 +309,5 @@ FORMATO: Respuestas cortas y directas.`;
     ]);
   }
 
-  return NextResponse.json({ reply, leadData, propertyCards });
+  return NextResponse.json({ reply, leadData, propertyCards, appointmentRequested });
 }

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/server";
 import { crearSolicitudCita, parseCitaTag } from "@/lib/citas";
+import { generarEmbedding } from "@/lib/embeddings";
 import { clientIp, isUuid, rateLimit } from "@/lib/security";
 import { meridaParts } from "@/lib/time";
 import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages } from "@/lib/validation";
@@ -73,6 +74,7 @@ Responde SOLO con JSON válido:
   "precio_min": null,
   "precio_max": null,
   "recamaras_min": null,
+  "descripcion_deseada": null,
   "tiene_suficiente_contexto": false,
   "faltan": []
 }
@@ -81,7 +83,8 @@ Responde SOLO con JSON válido:
 - El cliente mencionó zona O presupuesto (aunque sea uno solo), O
 - El cliente dice variantes de "muestrame todo/todas/todas las opciones/todo lo que tengas/quiero ver todo/sin filtro".
 Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver más, "tiene_suficiente_contexto" es SIEMPRE true.
-"faltan" solo incluye campos que el cliente NUNCA mencionó y que son críticos.`,
+"faltan" solo incluye campos que el cliente NUNCA mencionó y que son críticos.
+"descripcion_deseada" es SOLO para lo que el cliente describe con palabras vagas sobre ambiente/uso/estilo (ej. "tranquilo", "buena vista", "espacio para trabajar desde casa", "para una familia joven") — nunca para zona/precio/recámaras/tipo, eso va en sus propios campos. Si no describió nada así, usa null.`,
       }],
     });
     const parsed = JSON.parse(textOf(filterMsg).replace(/```json|```/g, "").trim());
@@ -103,6 +106,7 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
   const precioMin = cleanFilterNumber(filters.precio_min);
   const precioMax = cleanFilterNumber(filters.precio_max);
   const recMin    = cleanFilterNumber(filters.recamaras_min);
+  const descripcionDeseada = cleanFilterText(filters.descripcion_deseada, 300);
 
   // ── Fase 2: Buscar propiedades solo si hay suficiente contexto ─────────────
   let inventario = "";
@@ -129,15 +133,45 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
     // La zona se filtra aparte, en JS, sin acentos: ILIKE de Postgres no
     // ignora acentos y "merida" (como casi todos escriben en el teléfono)
     // nunca encontraba nada contra "Mérida" guardado en la base.
-    let { data: props, count } = await query.limit(zona ? MAX_CANDIDATOS : MAX_INVENTARIO);
+    const traerMuchas = Boolean(zona || descripcionDeseada);
+    let { data: props, count } = await query.limit(traerMuchas ? MAX_CANDIDATOS : MAX_INVENTARIO);
     if (zona && props) {
       const zonaNorm = normalizeSearch(zona);
       props = props.filter(p =>
         [p.zone, p.city, p.state].some(v => v && normalizeSearch(v).includes(zonaNorm)));
-      count = props.length;
+      count = props.length; // el conteo exacto de SQL no sabe de este filtro en JS
     }
     totalEncontradas = count ?? props?.length ?? 0;
-    if (zona && props) props = props.slice(0, MAX_INVENTARIO);
+
+    // Búsqueda semántica: solo cuando el cliente describió algo vago (ambiente,
+    // uso, estilo) que no es un filtro exacto. Reordena por significado entre
+    // los candidatos ya filtrados por zona/precio/tipo/recámaras; nunca trae
+    // propiedades fuera de esos criterios exactos. Si Voyage no está
+    // configurada o algo falla, sigue con el orden normal (featured primero).
+    if (descripcionDeseada && props && props.length > 1) {
+      try {
+        const queryEmbedding = await generarEmbedding(descripcionDeseada, "query");
+        if (queryEmbedding) {
+          const { data: matches } = await db.rpc("match_properties", {
+            query_embedding: queryEmbedding,
+            candidate_ids: props.map(p => p.id),
+            match_count: props.length,
+          });
+          if (matches?.length) {
+            const orden = new Map<string, number>(matches.map((m: { id: string }, i: number) => [m.id, i]));
+            props = [...props].sort((a, b) => {
+              const oa = orden.has(a.id) ? orden.get(a.id)! : Infinity;
+              const ob = orden.has(b.id) ? orden.get(b.id)! : Infinity;
+              return oa - ob;
+            });
+          }
+        }
+      } catch (e) {
+        console.error("[sofia embeddings]", (e as Error)?.message);
+      }
+    }
+
+    if (traerMuchas && props) props = props.slice(0, MAX_INVENTARIO);
 
     // Créditos aceptados: nota interna que deja el agente de fuentes. Sofía
     // solo la usa para responder si el cliente pregunta por financiamiento,

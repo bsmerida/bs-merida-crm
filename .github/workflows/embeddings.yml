@@ -1,0 +1,32 @@
+name: Embeddings de propiedades
+
+on:
+  schedule:
+    - cron: '0 13 * * *'        # 7:00 en Mérida (una hora después del agente de fuentes)
+  workflow_dispatch:            # Botón "Run workflow" para correrlo a mano
+
+# No se topa con el agente de fuentes: solo lee properties, nunca escribe ahí.
+concurrency:
+  group: embeddings-propiedades
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Generar embeddings pendientes
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+        run: node scripts/generar-embeddings.mjs

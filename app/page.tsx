@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { PUBLIC_PROPERTY_COLUMNS, conPortada } from "@/lib/public-property";
 import { PublicChatbot } from "@/components/PublicChatbot";
@@ -97,15 +98,17 @@ export default async function HomePage() {
       <section className="px-5 md:px-8 py-12 md:py-[110px] flex flex-col items-center gap-8 md:gap-14">
         <h2 className="font-serif text-navy text-4xl md:text-[80px] md:leading-[80px] text-center min-w-0">Dos estados. Un solo estándar.</h2>
         <div className="flex flex-col md:flex-row gap-4 w-full">
-          <Link href="/comprar?zone=Mérida" className="flex-1 h-[420px] md:h-[580px] rounded-[40px] p-9 flex flex-col justify-end text-white"
-            style={{ backgroundImage: "linear-gradient(135deg, #2B3F68 0%, #1C2B4B 71%)" }}>
-            <p className="font-serif text-4xl md:text-[48px] md:leading-[50px]">Mérida</p>
-            <p className="text-white/75 mt-1.5 md:text-[16px]">Yucatán</p>
+          <Link href="/comprar?zone=Mérida" className="relative flex-1 h-[420px] md:h-[580px] rounded-[40px] p-9 flex flex-col justify-end text-white overflow-hidden">
+            <Image src="/images/ciudades/merida.jpg" alt="Mérida" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+            <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(135deg, rgba(43,63,104,0.55) 0%, rgba(28,43,75,0.75) 71%)" }} />
+            <p className="relative font-serif text-4xl md:text-[48px] md:leading-[50px]">Mérida</p>
+            <p className="relative text-white/75 mt-1.5 md:text-[16px]">Yucatán</p>
           </Link>
-          <Link href="/comprar?zone=Monterrey" className="flex-1 h-[420px] md:h-[580px] rounded-[40px] p-9 flex flex-col justify-end text-white"
-            style={{ backgroundImage: "linear-gradient(135deg, #22345A 0%, #1C2B4B 71%)" }}>
-            <p className="font-serif text-4xl md:text-[48px] md:leading-[50px]">Monterrey</p>
-            <p className="text-white/75 mt-1.5 md:text-[16px]">Nuevo León</p>
+          <Link href="/comprar?zone=Monterrey" className="relative flex-1 h-[420px] md:h-[580px] rounded-[40px] p-9 flex flex-col justify-end text-white overflow-hidden">
+            <Image src="/images/ciudades/monterrey.jpg" alt="Monterrey" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+            <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(135deg, rgba(34,52,90,0.55) 0%, rgba(28,43,75,0.75) 71%)" }} />
+            <p className="relative font-serif text-4xl md:text-[48px] md:leading-[50px]">Monterrey</p>
+            <p className="relative text-white/75 mt-1.5 md:text-[16px]">Nuevo León</p>
           </Link>
         </div>
       </section>

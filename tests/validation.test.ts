@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages, validateEmail, validateName, validateOptions, validatePhone } from "@/lib/validation";
+import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages, validateEmail, validateName, validateOptions, validatePhone, zonaCoincide } from "@/lib/validation";
 
 describe("validatePhone", () => {
   it.each([
@@ -82,5 +82,22 @@ describe("normalizeSearch", () => {
     expect(normalizeSearch("merida")).toBe("merida");
     expect(normalizeSearch("Hunucmá")).toBe(normalizeSearch("hunucma"));
     expect(normalizeSearch("Dzidzantún")).toContain("dzidzantun");
+  });
+});
+
+describe("zonaCoincide", () => {
+  it("encuentra por palabra aunque el orden no coincida (bug real de Sofía)", () => {
+    expect(zonaCoincide("norte de merida", ["Temozón Norte", "Mérida", "Yucatán"])).toBe(true);
+    expect(zonaCoincide("norte de Mérida", ["San Ramón Norte", "Mérida", null])).toBe(true);
+  });
+  it("sigue funcionando para nombres exactos de zona", () => {
+    expect(zonaCoincide("yucatan country club", ["Yucatán Country Club", "Mérida", "Yucatán"])).toBe(true);
+    expect(zonaCoincide("Yucatán Country Club", ["Chablekal (zona Yucatán Country Club)", "Mérida", "Yucatán"])).toBe(true);
+  });
+  it("no matchea si falta una palabra clave", () => {
+    expect(zonaCoincide("norte de Monterrey", ["Temozón Norte", "Mérida", "Yucatán"])).toBe(false);
+  });
+  it("sin palabras significativas, no filtra nada (deja pasar todo)", () => {
+    expect(zonaCoincide("en la", ["Cualquier zona", "Mérida", "Yucatán"])).toBe(true);
   });
 });

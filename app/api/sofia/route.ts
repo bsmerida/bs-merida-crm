@@ -9,7 +9,7 @@ import { crearSolicitudCita, parseCitaTag } from "@/lib/citas";
 import { generarEmbedding } from "@/lib/embeddings";
 import { clientIp, isUuid, rateLimit } from "@/lib/security";
 import { meridaParts } from "@/lib/time";
-import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages } from "@/lib/validation";
+import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages, zonaCoincide } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +84,8 @@ Responde SOLO con JSON válido:
 - El cliente dice variantes de "muestrame todo/todas/todas las opciones/todo lo que tengas/quiero ver todo/sin filtro".
 Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver más, "tiene_suficiente_contexto" es SIEMPRE true.
 "faltan" solo incluye campos que el cliente NUNCA mencionó y que son críticos.
-"descripcion_deseada" es SOLO para lo que el cliente describe con palabras vagas sobre ambiente/uso/estilo (ej. "tranquilo", "buena vista", "espacio para trabajar desde casa", "para una familia joven") — nunca para zona/precio/recámaras/tipo, eso va en sus propios campos. Si no describió nada así, usa null.`,
+"descripcion_deseada" es SOLO para lo que el cliente describe con palabras vagas sobre ambiente/uso/estilo (ej. "tranquilo", "buena vista", "espacio para trabajar desde casa", "para una familia joven") — nunca para zona/precio/recámaras/tipo, eso va en sus propios campos. Si no describió nada así, usa null.
+"operacion" es SOLO "Venta" o "Renta" (o null). Si el cliente dice "para vivir" o "para invertir", eso es el USO que le dará a la propiedad, NO es la operación — no lo pongas en "operacion" (puede ir en "descripcion_deseada" si aporta algo).`,
       }],
     });
     const parsed = JSON.parse(textOf(filterMsg).replace(/```json|```/g, "").trim());
@@ -122,23 +123,26 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
 
     if (operacion) {
       const op = operacion.toLowerCase();
-      const opNorm = op.includes("rent") ? "Renta" : (op.includes("compr") || op.includes("vent")) ? "Venta" : operacion;
-      query = query.ilike("operation", `%${opNorm}%`);
+      // Si el modelo mandó algo que no es claramente renta/venta (ej. "vivir",
+      // "invertir" — confundió el USO con la OPERACIÓN), se ignora en vez de
+      // filtrar con ese texto: un ilike contra un valor así nunca matchea nada
+      // y tumbaba la búsqueda completa a 0 resultados.
+      const opNorm = op.includes("rent") ? "Renta" : (op.includes("compr") || op.includes("vent")) ? "Venta" : null;
+      if (opNorm) query = query.ilike("operation", `%${opNorm}%`);
     }
     if (tipo)      query = query.ilike("type", `%${tipo}%`);
     if (precioMin) query = query.gte("price", precioMin);
     if (precioMax) query = query.lte("price", precioMax);
     if (recMin)    query = query.gte("bedrooms", recMin);
 
-    // La zona se filtra aparte, en JS, sin acentos: ILIKE de Postgres no
-    // ignora acentos y "merida" (como casi todos escriben en el teléfono)
-    // nunca encontraba nada contra "Mérida" guardado en la base.
+    // La zona se filtra aparte, en JS, sin acentos y por palabra (ver
+    // zonaCoincide): ILIKE de Postgres no ignora acentos, y exigir la frase
+    // completa como substring fallaba con descripciones como "norte de
+    // Mérida" contra una zona guardada como "Temozón Norte".
     const traerMuchas = Boolean(zona || descripcionDeseada);
     let { data: props, count } = await query.limit(traerMuchas ? MAX_CANDIDATOS : MAX_INVENTARIO);
     if (zona && props) {
-      const zonaNorm = normalizeSearch(zona);
-      props = props.filter(p =>
-        [p.zone, p.city, p.state].some(v => v && normalizeSearch(v).includes(zonaNorm)));
+      props = props.filter(p => zonaCoincide(zona, [p.zone, p.city, p.state]));
       count = props.length; // el conteo exacto de SQL no sabe de este filtro en JS
     }
     totalEncontradas = count ?? props?.length ?? 0;
@@ -242,11 +246,11 @@ ${inventario || "No se encontraron propiedades con esos criterios."}
 REGLAS PARA MOSTRAR PROPIEDADES:
 1. SIEMPRE di cuántas encontraste en total ANTES de mostrar las más relevantes.
    Ejemplo: "Encontré 9 propiedades en esa zona, le muestro las más relevantes:"
-2. Muestra máximo 3 con [PROPS|id1,id2,id3] al final.
+2. Muestra máximo 3 con [PROPS|id1,id2,id3] al final — esto es OBLIGATORIO: si tu texto describe o menciona propiedades específicas, [PROPS|...] debe incluir el [id] de cada una (tal como aparece entre corchetes en el INVENTARIO de arriba); si no incluyes esta etiqueta, el cliente no ve ninguna tarjeta aunque tu texto las haya descrito.
 3. NUNCA digas que solo hay las que muestras si hay más.
 4. Si el cliente pregunta si es todo, di el total exacto.
 5. NUNCA inventes datos. Si no está en el inventario, no existe.
-6. Si no hay resultados, díselo y sugiere ajustar los criterios.
+6. El número en "INVENTARIO (N propiedades encontradas...)" de arriba es un hecho, no una sugerencia: si N es 0, dilo y sugiere ajustar los criterios; si N es mayor a 0, SIEMPRE hay resultados que mostrar — nunca digas "no encontramos" ni "no tenemos disponibilidad" cuando N > 0.
 7. "Créditos aceptados" (cuando aparece en una propiedad) solo lo mencionas si el cliente pregunta por financiamiento, crédito, Infonavit, Fovissste o forma de pago — nunca de forma proactiva ni en la descripción general.
 `}
 
@@ -272,6 +276,7 @@ FORMATO: Respuestas cortas y directas.`;
     const response = await anthropic.messages.create({
       model:      "claude-sonnet-4-6",
       max_tokens: 800,
+      temperature: 0.4, // menos variación al leer el inventario — ya vimos casos donde con temperatura alta decía "no hay" habiendo resultados
       system,
       messages,
     });

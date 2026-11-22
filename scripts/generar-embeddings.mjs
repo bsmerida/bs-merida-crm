@@ -23,7 +23,11 @@ if (!process.env.VOYAGE_API_KEY) {
   process.exit(0);
 }
 
-const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+// Misma limpieza que revisar-fuentes.mjs: el secreto SUPABASE_URL en GitHub
+// Actions a veces trae espacio/slash de más, y eso rompe la URL de la API
+// ("Invalid path specified in request URL") aunque localmente funcione bien.
+const url = (process.env.SUPABASE_URL || "").trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
+const db = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const textoDe = (p) => {
   const amenidades = Array.isArray(p.amenities) && p.amenities.length ? `Amenidades: ${p.amenities.join(", ")}.` : "";

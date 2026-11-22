@@ -5,7 +5,9 @@ on:
     - cron: '0 13 * * *'        # 7:00 en Mérida (una hora después del agente de fuentes)
   workflow_dispatch:            # Botón "Run workflow" para correrlo a mano
 
-# No se topa con el agente de fuentes: solo lee properties, nunca escribe ahí.
+# Sí escribe en properties (solo la columna description_embedding, nunca el
+# contenido que gestiona el agente de fuentes) — este group evita que dos
+# corridas se empalmen y dupliquen llamadas a Voyage por las mismas filas.
 concurrency:
   group: embeddings-propiedades
   cancel-in-progress: false

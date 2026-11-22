@@ -13,10 +13,12 @@
 // falta la llave de un servicio externo (Twilio, VAPID…): se corre solo
 // cuando ya esté configurada, sin tocar código.
 import { createClient } from "@supabase/supabase-js";
+import { textoParaEmbedding } from "../lib/embeddings.ts";
 
 const TODAS = process.argv.includes("--todas");
 const MODELO = process.env.VOYAGE_EMBED_MODEL || "voyage-3.5";
 const LOTE = 20; // Voyage acepta varios textos por solicitud
+const PAGINA = 1000; // Supabase: máx. 1000 filas por consulta — hay que paginar
 
 if (!process.env.VOYAGE_API_KEY) {
   console.log("Sin VOYAGE_API_KEY configurada todavía: nada que hacer.");
@@ -27,12 +29,9 @@ if (!process.env.VOYAGE_API_KEY) {
 // Actions a veces trae espacio/slash de más, y eso rompe la URL de la API
 // ("Invalid path specified in request URL") aunque localmente funcione bien.
 const url = (process.env.SUPABASE_URL || "").trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
-const db = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-const textoDe = (p) => {
-  const amenidades = Array.isArray(p.amenities) && p.amenities.length ? `Amenidades: ${p.amenities.join(", ")}.` : "";
-  return [p.description?.trim(), amenidades].filter(Boolean).join(" ");
-};
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!url || !key) { console.error("Faltan SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY"); process.exit(1); }
+const db = createClient(url, key);
 
 async function embeber(textos) {
   const res = await fetch("https://api.voyageai.com/v1/embeddings", {
@@ -45,18 +44,23 @@ async function embeber(textos) {
   return data.data.map(d => d.embedding);
 }
 
-let query = db.from("properties").select("id, description, amenities");
-if (!TODAS) query = query.is("description_embedding", null);
-const { data: props, error } = await query;
-if (error) { console.error("Error leyendo propiedades:", error.message); process.exit(1); }
+const props = [];
+for (let desde = 0; ; desde += PAGINA) {
+  let query = db.from("properties").select("id, description, amenities").order("id").range(desde, desde + PAGINA - 1);
+  if (!TODAS) query = query.is("description_embedding", null);
+  const { data, error } = await query;
+  if (error) { console.error("Error leyendo propiedades:", error.message); process.exit(1); }
+  props.push(...(data || []));
+  if (!data || data.length < PAGINA) break;
+}
 
-const pendientes = (props || []).filter(p => textoDe(p).length > 0);
+const pendientes = props.filter(p => textoParaEmbedding(p).length > 0);
 console.log(`${pendientes.length} propiedades por generar${TODAS ? " (--todas)" : ""}.`);
 
 let hechas = 0;
 for (let i = 0; i < pendientes.length; i += LOTE) {
   const lote = pendientes.slice(i, i + LOTE);
-  const textos = lote.map(textoDe);
+  const textos = lote.map(textoParaEmbedding);
   try {
     const vectores = await embeber(textos);
     for (let j = 0; j < lote.length; j++) {

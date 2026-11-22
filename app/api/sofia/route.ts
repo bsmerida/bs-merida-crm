@@ -9,7 +9,7 @@ import { crearSolicitudCita, parseCitaTag } from "@/lib/citas";
 import { generarEmbedding } from "@/lib/embeddings";
 import { clientIp, isUuid, rateLimit } from "@/lib/security";
 import { meridaParts } from "@/lib/time";
-import { cleanFilterNumber, cleanFilterText, normalizeSearch, sanitizeChatMessages, zonaCoincide } from "@/lib/validation";
+import { cleanFilterNumber, cleanFilterText, cleanFreeText, normalizeSearch, sanitizeChatMessages, zonaCoincide } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +107,10 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
   const precioMin = cleanFilterNumber(filters.precio_min);
   const precioMax = cleanFilterNumber(filters.precio_max);
   const recMin    = cleanFilterNumber(filters.recamaras_min);
-  const descripcionDeseada = cleanFilterText(filters.descripcion_deseada, 300);
+  // cleanFreeText (no cleanFilterText): esto nunca entra a un filtro .ilike(),
+  // solo se usa como entrada de un embedding — quitarle comas/paréntesis
+  // (como hace cleanFilterText) degradaría el significado sin necesidad.
+  const descripcionDeseada = cleanFreeText(filters.descripcion_deseada, 300);
 
   // ── Fase 2: Buscar propiedades solo si hay suficiente contexto ─────────────
   let inventario = "";
@@ -156,11 +159,12 @@ Si el cliente ya dio zona y operacion en mensajes anteriores y ahora pide ver m�
       try {
         const queryEmbedding = await generarEmbedding(descripcionDeseada, "query");
         if (queryEmbedding) {
-          const { data: matches } = await db.rpc("match_properties", {
+          const { data: matches, error: matchError } = await db.rpc("match_properties", {
             query_embedding: queryEmbedding,
             candidate_ids: props.map(p => p.id),
             match_count: props.length,
           });
+          if (matchError) console.error("[sofia match_properties]", matchError.message);
           if (matches?.length) {
             const orden = new Map<string, number>(matches.map((m: { id: string }, i: number) => [m.id, i]));
             props = [...props].sort((a, b) => {

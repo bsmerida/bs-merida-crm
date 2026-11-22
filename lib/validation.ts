@@ -65,6 +65,16 @@ export function cleanFilterText(v: unknown, max = 60): string | null {
   return s || null;
 }
 
+// Para texto libre que solo se usa como entrada de un embedding (nunca entra
+// a un filtro .ilike()/.or()), así que no hay que quitarle puntuación como a
+// cleanFilterText — comas y paréntesis son parte del significado que el
+// embedding necesita leer.
+export function cleanFreeText(v: unknown, max = 300): string | null {
+  if (typeof v !== "string") return null;
+  const s = v.replace(/\s+/g, " ").trim().slice(0, max);
+  return s || null;
+}
+
 export function cleanFilterNumber(v: unknown): number | null {
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.replace(/[^\d.]/g, "")) : NaN;
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -85,9 +95,16 @@ const STOPWORDS_ZONA = new Set(["de", "del", "la", "el", "los", "las", "en", "zo
 // inventario ahí. Aquí se compara por palabra: todas las palabras relevantes
 // de la zona pedida deben aparecer en alguna parte del texto (zona/ciudad/
 // estado de la propiedad), sin importar el orden.
+// Separa en palabras ignorando puntuación (paréntesis, comas, etc. — algunas
+// zonas en la base vienen como "Chablekal (zona Yucatán Country Club)").
+const palabrasDe = (s: string) => normalizeSearch(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
 export function zonaCoincide(zonaPedida: string, candidatos: (string | null | undefined)[]): boolean {
-  const palabras = normalizeSearch(zonaPedida).split(/\s+/).filter(w => w.length > 2 && !STOPWORDS_ZONA.has(w));
+  const palabras = palabrasDe(zonaPedida).filter(w => w.length > 2 && !STOPWORDS_ZONA.has(w));
   if (!palabras.length) return true;
-  const texto = normalizeSearch(candidatos.filter(Boolean).join(" "));
-  return palabras.every(w => texto.includes(w));
+  // Palabra completa, no substring: si no, "sur" o "bello" podrían matchear
+  // dentro de otra palabra que los contenga por coincidencia, mostrando
+  // propiedades de una zona distinta a la pedida.
+  const palabrasTexto = new Set(palabrasDe(candidatos.filter(Boolean).join(" ")));
+  return palabras.every(w => palabrasTexto.has(w));
 }

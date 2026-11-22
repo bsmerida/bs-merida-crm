@@ -76,3 +76,18 @@ export function cleanFilterNumber(v: unknown): number | null {
 export function normalizeSearch(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
+
+const STOPWORDS_ZONA = new Set(["de", "del", "la", "el", "los", "las", "en", "zona"]);
+
+// El cliente describe la zona como "norte de Mérida" pero en la base se llama
+// "Temozón Norte, Mérida" — el orden de las palabras no coincide, así que
+// buscar la frase completa como substring daba 0 resultados aunque sí hubiera
+// inventario ahí. Aquí se compara por palabra: todas las palabras relevantes
+// de la zona pedida deben aparecer en alguna parte del texto (zona/ciudad/
+// estado de la propiedad), sin importar el orden.
+export function zonaCoincide(zonaPedida: string, candidatos: (string | null | undefined)[]): boolean {
+  const palabras = normalizeSearch(zonaPedida).split(/\s+/).filter(w => w.length > 2 && !STOPWORDS_ZONA.has(w));
+  if (!palabras.length) return true;
+  const texto = normalizeSearch(candidatos.filter(Boolean).join(" "));
+  return palabras.every(w => texto.includes(w));
+}

@@ -143,12 +143,17 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     [initialLat, initialLng]
   );
   const guardado = useRef(leerGuardado(operation)).current;
-  const [filterType, setFilterType] = useState(guardado?.filterType ?? (initialType || "Todos"));
-  const [filterZone, setFilterZone] = useState(guardado?.filterZone ?? (initialZone || "Todas"));
+  // Si vienes de una búsqueda nueva (el buscador del Home manda type/zone/
+  // min/max por la URL), eso debe ganarle a un filtro guardado de una visita
+  // anterior — si no, la búsqueda nueva se ve ignorada silenciosamente y la
+  // página parece que no filtró nada. "guardado" solo debe reaparecer cuando
+  // NO hay una búsqueda nueva explícita (ej. navegación normal "atrás").
+  const [filterType, setFilterType] = useState(initialType || guardado?.filterType || "Todos");
+  const [filterZone, setFilterZone] = useState(initialZone || guardado?.filterZone || "Todas");
   const [filterBeds, setFilterBeds] = useState(guardado?.filterBeds ?? "0");
   const [filterBaths, setFilterBaths] = useState(guardado?.filterBaths ?? "0");
-  const [priceMin, setPriceMin]   = useState(guardado?.priceMin ?? (initialMin || ""));
-  const [priceMax, setPriceMax]   = useState(guardado?.priceMax ?? (initialMax || ""));
+  const [priceMin, setPriceMin]   = useState(initialMin || guardado?.priceMin || "");
+  const [priceMax, setPriceMax]   = useState(initialMax || guardado?.priceMax || "");
   const [sortBy, setSortBy]       = useState(guardado?.sortBy ?? "recent");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(guardado?.amenities ?? []);
   const [activeField, setActiveField] = useState<null | "beds" | "baths" | "sort">(null);

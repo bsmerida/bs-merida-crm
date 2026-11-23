@@ -149,13 +149,11 @@ const fechaLlegada = (l: any): Date => new Date(l.lead_date || l.created_at);
 // doble eje). La moda (rango más repetido) es categórica, no un valor en la
 // misma escala de dinero, así que se muestra aparte como etiqueta por periodo
 // en vez de forzarla como una tercera línea numérica.
-const fmtCorto = (n: number) => (n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : `$${Math.round(n / 1000)}k`);
-
 function BudgetTrendChart({ data, max }: {
   data: { label: string; media: number | null; mediana: number | null; moda: string | null; n: number }[];
   max: number;
 }) {
-  const W = 600, H = 190, padX = 14, padTop = 24, padBottom = 30;
+  const W = 600, H = 160, padX = 14, padTop = 22, padBottom = 10;
   const plotW = W - padX * 2, plotH = H - padTop - padBottom;
   const n = data.length;
   const x = (i: number) => padX + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
@@ -166,8 +164,29 @@ function BudgetTrendChart({ data, max }: {
     return pts.length > 1 ? `M ${pts.join(" L ")}` : "";
   };
 
+  // Último periodo con datos — las tres cifras grandes arriba son de ese mes.
+  const ultimo = [...data].reverse().find(d => d.n > 0) || null;
+
   return (
     <div>
+      {ultimo && (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            { label: "Media", value: fmtMXN(ultimo.media!), color: "text-navy" },
+            { label: "Mediana", value: fmtMXN(ultimo.mediana!), color: "text-[#8C6040]" },
+            { label: "Moda (rango)", value: ultimo.moda || "Sin datos", color: "text-navy" },
+          ].map(k => (
+            <div key={k.label} className="bg-cream rounded-[20px] px-4 py-3">
+              <div className="text-[10px] text-[#6b7385] uppercase tracking-wide font-semibold">{k.label}</div>
+              <div className={`text-lg font-semibold mt-0.5 ${k.color}`}>{k.value}</div>
+            </div>
+          ))}
+          <div className="col-span-3 text-[11px] text-[#6b7385] -mt-1">
+            {ultimo.label} · {ultimo.n} cliente{ultimo.n !== 1 ? "s" : ""} con presupuesto registrado
+          </div>
+        </div>
+      )}
+
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
         <path d={linePath("media")} fill="none" stroke="#1C2B4B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         <path d={linePath("mediana")} fill="none" stroke="#C4956A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -175,20 +194,13 @@ function BudgetTrendChart({ data, max }: {
           <g key={i}>
             {d.media != null && (
               <g className="hover:opacity-75 transition">
-                <circle cx={x(i)} cy={y(d.media)} r="4.5" fill="#1C2B4B" />
-                {/* Etiqueta siempre visible — no solo al pasar el mouse */}
-                <text x={x(i)} y={y(d.media) - 9} textAnchor="middle" style={{ fontSize: 10, fontWeight: 600, fill: "#1C2B4B" }}>
-                  {fmtCorto(d.media)}
-                </text>
+                <circle cx={x(i)} cy={y(d.media)} r="4" fill="#1C2B4B" />
                 <title>{`Media ${d.label}: ${fmtMXN(d.media)} (n=${d.n})`}</title>
               </g>
             )}
             {d.mediana != null && (
               <g className="hover:opacity-75 transition">
-                <circle cx={x(i)} cy={y(d.mediana)} r="4.5" fill="#C4956A" />
-                <text x={x(i)} y={y(d.mediana) + 17} textAnchor="middle" style={{ fontSize: 10, fontWeight: 600, fill: "#8C6040" }}>
-                  {fmtCorto(d.mediana)}
-                </text>
+                <circle cx={x(i)} cy={y(d.mediana)} r="4" fill="#C4956A" />
                 <title>{`Mediana ${d.label}: ${fmtMXN(d.mediana)} (n=${d.n})`}</title>
               </g>
             )}
@@ -196,22 +208,29 @@ function BudgetTrendChart({ data, max }: {
         ))}
       </svg>
 
-      <div className="grid gap-1 mt-1" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
+      <div className="flex items-center gap-5 text-xs text-[#6b7385] mt-1">
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-navy inline-block" />Media</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gold inline-block" />Mediana</span>
+      </div>
+
+      <div className="grid gap-1 mt-2 mb-4" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
         {data.map((d, i) => (
-          <div key={i} className="text-center">
-            <span className="text-[9px] text-[#6b7385] block">{d.label}</span>
-            <span className="text-[9px] text-navy/70 font-medium block truncate" title={d.moda ? `Rango más común: ${d.moda}` : "Sin datos"}>
-              {d.moda || "—"}
-            </span>
-          </div>
+          <div key={i} className="text-center text-[10px] text-[#6b7385]">{d.label}</div>
         ))}
       </div>
 
-      <div className="flex items-center gap-5 mt-4 text-xs text-[#6b7385]">
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-navy inline-block" />Media</span>
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gold inline-block" />Mediana</span>
-        <span className="flex items-center gap-1.5 text-navy/70"><span className="text-[9px] uppercase tracking-wide font-semibold">Moda</span> rango más común por mes (debajo de cada punto)</span>
+      <div>
+        <div className="text-[10px] text-[#6b7385] uppercase tracking-wide font-semibold mb-2">Moda (rango más común) por mes</div>
+        <div className="flex flex-wrap gap-1.5">
+          {data.filter(d => d.moda).map(d => (
+            <span key={d.label} className="bg-stone text-navy text-xs font-medium px-3 py-1 rounded-full">
+              {d.label}: {d.moda}
+            </span>
+          ))}
+          {data.every(d => !d.moda) && <span className="text-xs text-[#6b7385]">Sin datos todavía</span>}
+        </div>
       </div>
+
     </div>
   );
 }
@@ -355,19 +374,40 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   // de BUDGET_RANGES) por mes, a partir del campo estructurado de presupuesto
   // (budget_min/budget_max) — es el dato que sí se llena de forma confiable
   // (91% de los clientes), no las notas de texto libre.
+  // Descarta valores debajo de $1,000: ya encontramos un caso real
+  // (budget_max=3.7) de alguien capturando "3.7 millones" directo como 3.7 —
+  // ningún presupuesto real de propiedad es así de chico, y ese solo dato
+  // distorsionaba por completo el mes en el que cayó. No es que se cuenten
+  // los clientes sin presupuesto como $0 (esos ya se excluían bien); es este
+  // tipo de error de captura el que había que filtrar.
+  const PRESUPUESTO_MINIMO_VALIDO = 1_000;
   const valorPresupuesto = (l: any): number | null => {
-    const vals = [l.budget_min, l.budget_max].filter((v: any) => typeof v === "number" && v > 0);
+    const vals = [l.budget_min, l.budget_max].filter((v: any) => typeof v === "number" && v >= PRESUPUESTO_MINIMO_VALIDO);
     return vals.length ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
   };
-  const presupuestoPorMes = rangosMensuales.map(({ inicio, fin, label }) => {
-    const valores = leads
-      .filter((l: any) => { const c = fechaLlegada(l); return c >= inicio && c <= fin; })
-      .map(valorPresupuesto)
-      .filter((v: unknown): v is number => v !== null)
-      .sort((a: number, b: number) => a - b);
-    return { label, media: mediaDe(valores), mediana: medianaDe(valores), moda: modaPorRango(valores, BUDGET_RANGES), n: valores.length };
-  });
-  const maxPresupuesto = Math.max(1, ...presupuestoPorMes.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
+  // Comprar (millones) y Rentar (miles) son escalas completamente distintas —
+  // promediarlas juntas no significa nada (mezclar 3M con 20k). Se calculan
+  // por separado, cada una con sus propios rangos para la moda.
+  const BUDGET_RANGES_RENTA = [
+    { label: "<15k",   min: 0,      max: 15_000 },
+    { label: "15-20k", min: 15_000, max: 20_000 },
+    { label: "20-25k", min: 20_000, max: 25_000 },
+    { label: "25-40k", min: 25_000, max: 40_000 },
+    { label: ">40k",   min: 40_000, max: Infinity },
+  ];
+  const calcularPresupuestoPorMes = (leadsFiltrados: any[], rangos: { label: string; min: number; max: number }[]) =>
+    rangosMensuales.map(({ inicio, fin, label }) => {
+      const valores = leadsFiltrados
+        .filter((l: any) => { const c = fechaLlegada(l); return c >= inicio && c <= fin; })
+        .map(valorPresupuesto)
+        .filter((v: unknown): v is number => v !== null)
+        .sort((a: number, b: number) => a - b);
+      return { label, media: mediaDe(valores), mediana: medianaDe(valores), moda: modaPorRango(valores, rangos), n: valores.length };
+    });
+  const presupuestoPorMesComprar = calcularPresupuestoPorMes(leads.filter((l: any) => l.search_operation === "Comprar"), BUDGET_RANGES);
+  const presupuestoPorMesRentar = calcularPresupuestoPorMes(leads.filter((l: any) => l.search_operation === "Rentar"), BUDGET_RANGES_RENTA);
+  const maxPresupuestoComprar = Math.max(1, ...presupuestoPorMesComprar.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
+  const maxPresupuestoRentar = Math.max(1, ...presupuestoPorMesRentar.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
 
   // Por presupuesto
   const byBudget = BUDGET_RANGES.map(r => ({
@@ -780,12 +820,20 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                   : <VBarChart data={byBudget} color="#1C2B4B" height={140} />}
               </div>
 
-              {/* Presupuesto promedio por periodo */}
+              {/* Presupuesto promedio por periodo — Comprar y Rentar por separado:
+                  son escalas de dinero muy distintas, mezclarlas no tiene sentido. */}
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo</h3>
-                {presupuestoPorMes.every(p => p.n === 0)
-                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
-                  : <BudgetTrendChart data={presupuestoPorMes} max={maxPresupuesto} />}
+                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo — Comprar</h3>
+                {presupuestoPorMesComprar.every(p => p.n === 0)
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico para clientes que buscan comprar.</div>
+                  : <BudgetTrendChart data={presupuestoPorMesComprar} max={maxPresupuestoComprar} />}
+              </div>
+
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo — Rentar</h3>
+                {presupuestoPorMesRentar.every(p => p.n === 0)
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico para clientes que buscan rentar.</div>
+                  : <BudgetTrendChart data={presupuestoPorMesRentar} max={maxPresupuestoRentar} />}
               </div>
 
               {/* Por estado geográfico */}

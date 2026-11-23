@@ -3,7 +3,7 @@
 // NUNCA usar select("*") en páginas públicas: la tabla incluye owner_name,
 // owner_email y owner_phone (datos personales del propietario, LFPDPPP).
 export const PUBLIC_PROPERTY_COLUMNS =
-  "id, title, type, operation, status, price, currency, zone, city, state, bedrooms, bathrooms, m2_construction, m2_land, parking, featured, created_at, property_images(url, position, is_cover)";
+  "id, title, type, operation, status, price, currency, zone, city, state, bedrooms, bathrooms, m2_construction, m2_land, parking, featured, created_at, lat, lng, property_images(url, position, is_cover)";
 
 // Ficha pública y PDF: todos los campos de la propiedad excepto los del propietario.
 export const PUBLIC_PROPERTY_DETAIL_COLUMNS =

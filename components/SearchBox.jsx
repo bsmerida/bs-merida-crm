@@ -44,7 +44,11 @@ export function SearchBox({ zones }) {
     if (!q || !autocompleteRef.current) { setPlaceResults(null); return; }
     debounceRef.current = setTimeout(() => {
       autocompleteRef.current.getPlacePredictions(
-        { input: q, componentRestrictions: { country: "mx" }, types: ["(regions)"] },
+        // "geocode" en vez de "(regions)": (regions) excluye calles y
+        // avenidas (son tipo "route" en Google) — "Paseo de Montejo" no
+        // aparecía como sugerencia por esto. "geocode" sí incluye calles,
+        // colonias y ciudades; solo excluye negocios/restaurantes (ruido).
+        { input: q, componentRestrictions: { country: "mx" }, types: ["geocode"] },
         (predictions) => {
           setPlaceResults((predictions || []).map(p => ({
             name: p.structured_formatting?.main_text || p.description,

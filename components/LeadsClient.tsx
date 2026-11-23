@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMXN } from "@/lib/utils";
+import { fechaYmdCorta } from "@/lib/time";
 import { media as mediaDe, mediana as medianaDe, modaPorRango } from "@/lib/stats-descriptivas";
 import { LeadsKanban } from "@/components/LeadsKanban";
 
@@ -136,6 +137,13 @@ function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
 }
 
 const fechaCorta = (s: string) => new Date(s).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+
+// Cuándo "llegó" el cliente de verdad para agrupar por periodo — lead_date si
+// se capturó (para histórico cargado en lote), si no created_at. Nunca usar
+// new Date("YYYY-MM-DD") solo para mostrar el día (se recorre un día en
+// Mérida); aquí sí es seguro porque solo se compara contra rangos de mes
+// completos, no se muestra la hora exacta.
+const fechaLlegada = (l: any): Date => new Date(l.lead_date || l.created_at);
 
 // Media y mediana de presupuesto por periodo (dos líneas, misma escala — nunca
 // doble eje). La moda (rango más repetido) es categórica, no un valor en la
@@ -335,7 +343,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
 
   // Leads por mes (últimos 6)
   const meses = rangosMensuales.map(({ inicio, fin, label }) => {
-    const count = leads.filter((l: any) => { const c = new Date(l.created_at); return c >= inicio && c <= fin; }).length;
+    const count = leads.filter((l: any) => { const c = fechaLlegada(l); return c >= inicio && c <= fin; }).length;
     const cerr = leads.filter((l: any) => {
       const c = new Date(l.last_contact_at || l.created_at);
       return l.status === "Cerrado ganado" && c >= inicio && c <= fin;
@@ -353,7 +361,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   };
   const presupuestoPorMes = rangosMensuales.map(({ inicio, fin, label }) => {
     const valores = leads
-      .filter((l: any) => { const c = new Date(l.created_at); return c >= inicio && c <= fin; })
+      .filter((l: any) => { const c = fechaLlegada(l); return c >= inicio && c <= fin; })
       .map(valorPresupuesto)
       .filter((v: unknown): v is number => v !== null)
       .sort((a: number, b: number) => a - b);
@@ -565,7 +573,7 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                         <td className="px-5 py-4 text-xs text-[#6b7385] max-w-[180px] truncate">{l.interest || "—"}</td>
                         <td className="px-5 py-4"><StatusBadge status={l.status} /></td>
                         <td className="px-5 py-4 text-sm text-[#6b7385]">{l.agent?.full_name || "Sin asignar"}</td>
-                        <td className="px-5 py-4 text-xs text-[#6b7385]">{fechaCorta(l.created_at)}</td>
+                        <td className="px-5 py-4 text-xs text-[#6b7385]">{l.lead_date ? fechaYmdCorta(l.lead_date) : fechaCorta(l.created_at)}</td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-3">
                             <Link href={`/admin/leads/${l.id}`} className="text-xs text-gold hover:underline">Ver →</Link>

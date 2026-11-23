@@ -84,7 +84,12 @@ export function SearchBox({ zones }) {
   function go() {
     const p = new URLSearchParams();
     if (type) p.set("type", type);
-    if (selected) p.set("zone", selected);
+    // Si el cliente escribió algo pero nunca hizo clic en una sugerencia
+    // (lo normal: escribir y darle directo a Buscar o Enter), "selected"
+    // queda vacío — antes eso borraba silenciosamente lo que escribió y
+    // mostraba todo sin filtro. Usamos el texto escrito como respaldo.
+    const zona = selected || query.trim();
+    if (zona) p.set("zone", zona);
     if (min) p.set("min", min);
     if (max) p.set("max", max);
     router.push((op === "Venta" ? "/comprar" : "/rentar") + (p.toString() ? "?" + p.toString() : ""));

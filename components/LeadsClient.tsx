@@ -141,11 +141,13 @@ const fechaCorta = (s: string) => new Date(s).toLocaleDateString("es-MX", { day:
 // doble eje). La moda (rango más repetido) es categórica, no un valor en la
 // misma escala de dinero, así que se muestra aparte como etiqueta por periodo
 // en vez de forzarla como una tercera línea numérica.
+const fmtCorto = (n: number) => (n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(1)}M` : `$${Math.round(n / 1000)}k`);
+
 function BudgetTrendChart({ data, max }: {
   data: { label: string; media: number | null; mediana: number | null; moda: string | null; n: number }[];
   max: number;
 }) {
-  const W = 600, H = 150, padX = 14, padTop = 12, padBottom = 10;
+  const W = 600, H = 190, padX = 14, padTop = 24, padBottom = 30;
   const plotW = W - padX * 2, plotH = H - padTop - padBottom;
   const n = data.length;
   const x = (i: number) => padX + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
@@ -164,14 +166,23 @@ function BudgetTrendChart({ data, max }: {
         {data.map((d, i) => (
           <g key={i}>
             {d.media != null && (
-              <circle cx={x(i)} cy={y(d.media)} r="4.5" fill="#1C2B4B" className="hover:opacity-75 transition">
+              <g className="hover:opacity-75 transition">
+                <circle cx={x(i)} cy={y(d.media)} r="4.5" fill="#1C2B4B" />
+                {/* Etiqueta siempre visible — no solo al pasar el mouse */}
+                <text x={x(i)} y={y(d.media) - 9} textAnchor="middle" style={{ fontSize: 10, fontWeight: 600, fill: "#1C2B4B" }}>
+                  {fmtCorto(d.media)}
+                </text>
                 <title>{`Media ${d.label}: ${fmtMXN(d.media)} (n=${d.n})`}</title>
-              </circle>
+              </g>
             )}
             {d.mediana != null && (
-              <circle cx={x(i)} cy={y(d.mediana)} r="4.5" fill="#C4956A" className="hover:opacity-75 transition">
+              <g className="hover:opacity-75 transition">
+                <circle cx={x(i)} cy={y(d.mediana)} r="4.5" fill="#C4956A" />
+                <text x={x(i)} y={y(d.mediana) + 17} textAnchor="middle" style={{ fontSize: 10, fontWeight: 600, fill: "#8C6040" }}>
+                  {fmtCorto(d.mediana)}
+                </text>
                 <title>{`Mediana ${d.label}: ${fmtMXN(d.mediana)} (n=${d.n})`}</title>
-              </circle>
+              </g>
             )}
           </g>
         ))}

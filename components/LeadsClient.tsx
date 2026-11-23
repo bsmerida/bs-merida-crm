@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMXN } from "@/lib/utils";
+import { media as mediaDe, mediana as medianaDe, modaPorRango } from "@/lib/stats-descriptivas";
 import { LeadsKanban } from "@/components/LeadsKanban";
 
 // bg/text/dot: para las etiquetas de estado (tablero y lista) — un color por
@@ -136,6 +137,66 @@ function polarToCartesian(cx: number, cy: number, r: number, angle: number) {
 
 const fechaCorta = (s: string) => new Date(s).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 
+// Media y mediana de presupuesto por periodo (dos líneas, misma escala — nunca
+// doble eje). La moda (rango más repetido) es categórica, no un valor en la
+// misma escala de dinero, así que se muestra aparte como etiqueta por periodo
+// en vez de forzarla como una tercera línea numérica.
+function BudgetTrendChart({ data, max }: {
+  data: { label: string; media: number | null; mediana: number | null; moda: string | null; n: number }[];
+  max: number;
+}) {
+  const W = 600, H = 150, padX = 14, padTop = 12, padBottom = 10;
+  const plotW = W - padX * 2, plotH = H - padTop - padBottom;
+  const n = data.length;
+  const x = (i: number) => padX + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
+  const y = (v: number) => padTop + plotH - (v / max) * plotH;
+
+  const linePath = (key: "media" | "mediana") => {
+    const pts = data.map((d, i) => (d[key] != null ? `${x(i)},${y(d[key] as number)}` : null)).filter(Boolean);
+    return pts.length > 1 ? `M ${pts.join(" L ")}` : "";
+  };
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
+        <path d={linePath("media")} fill="none" stroke="#1C2B4B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={linePath("mediana")} fill="none" stroke="#C4956A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {data.map((d, i) => (
+          <g key={i}>
+            {d.media != null && (
+              <circle cx={x(i)} cy={y(d.media)} r="4.5" fill="#1C2B4B" className="hover:opacity-75 transition">
+                <title>{`Media ${d.label}: ${fmtMXN(d.media)} (n=${d.n})`}</title>
+              </circle>
+            )}
+            {d.mediana != null && (
+              <circle cx={x(i)} cy={y(d.mediana)} r="4.5" fill="#C4956A" className="hover:opacity-75 transition">
+                <title>{`Mediana ${d.label}: ${fmtMXN(d.mediana)} (n=${d.n})`}</title>
+              </circle>
+            )}
+          </g>
+        ))}
+      </svg>
+
+      <div className="grid gap-1 mt-1" style={{ gridTemplateColumns: `repeat(${n}, 1fr)` }}>
+        {data.map((d, i) => (
+          <div key={i} className="text-center">
+            <span className="text-[9px] text-[#6b7385] block">{d.label}</span>
+            <span className="text-[9px] text-navy/70 font-medium block truncate" title={d.moda ? `Rango más común: ${d.moda}` : "Sin datos"}>
+              {d.moda || "—"}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-5 mt-4 text-xs text-[#6b7385]">
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-navy inline-block" />Media</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gold inline-block" />Mediana</span>
+        <span className="flex items-center gap-1.5 text-navy/70"><span className="text-[9px] uppercase tracking-wide font-semibold">Moda</span> rango más común por mes (debajo de cada punto)</span>
+      </div>
+    </div>
+  );
+}
+
 // En móvil, Figma no muestra el tablero (kanban) ni la tabla de Lista — una
 // sola lista de tarjetas filtrable por estado, para las dos pestañas.
 function subtituloLead(l: any) {
@@ -253,18 +314,41 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
   ).sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).slice(0, 8) as [string, number][];
   const maxSource = bySource[0]?.[1] as number || 1;
 
-  // Leads por mes (últimos 6)
+  // Últimos 6 meses — se reutiliza para "leads por mes" y "presupuesto por periodo"
   const now = new Date();
-  const meses = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-    const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-    const count = leads.filter((l: any) => { const c = new Date(l.created_at); return c >= d && c <= fin; }).length;
+  const rangosMensuales = Array.from({ length: 6 }, (_, i) => {
+    const inicio = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const fin = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 0, 23, 59, 59);
+    return { inicio, fin, label: inicio.toLocaleDateString("es-MX", { month: "short" }) };
+  });
+
+  // Leads por mes (últimos 6)
+  const meses = rangosMensuales.map(({ inicio, fin, label }) => {
+    const count = leads.filter((l: any) => { const c = new Date(l.created_at); return c >= inicio && c <= fin; }).length;
     const cerr = leads.filter((l: any) => {
       const c = new Date(l.last_contact_at || l.created_at);
-      return l.status === "Cerrado ganado" && c >= d && c <= fin;
+      return l.status === "Cerrado ganado" && c >= inicio && c <= fin;
     }).length;
-    return { label: d.toLocaleDateString("es-MX", { month: "short" }), value: count, cerr };
+    return { label, value: count, cerr };
   });
+
+  // Presupuesto promedio por periodo: media, mediana y moda (rango más común,
+  // de BUDGET_RANGES) por mes, a partir del campo estructurado de presupuesto
+  // (budget_min/budget_max) — es el dato que sí se llena de forma confiable
+  // (91% de los clientes), no las notas de texto libre.
+  const valorPresupuesto = (l: any): number | null => {
+    const vals = [l.budget_min, l.budget_max].filter((v: any) => typeof v === "number" && v > 0);
+    return vals.length ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
+  };
+  const presupuestoPorMes = rangosMensuales.map(({ inicio, fin, label }) => {
+    const valores = leads
+      .filter((l: any) => { const c = new Date(l.created_at); return c >= inicio && c <= fin; })
+      .map(valorPresupuesto)
+      .filter((v: unknown): v is number => v !== null)
+      .sort((a: number, b: number) => a - b);
+    return { label, media: mediaDe(valores), mediana: medianaDe(valores), moda: modaPorRango(valores, BUDGET_RANGES), n: valores.length };
+  });
+  const maxPresupuesto = Math.max(1, ...presupuestoPorMes.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
 
   // Por presupuesto
   const byBudget = BUDGET_RANGES.map(r => ({
@@ -675,6 +759,14 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                 {byBudget.every(b => b.value === 0)
                   ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
                   : <VBarChart data={byBudget} color="#1C2B4B" height={140} />}
+              </div>
+
+              {/* Presupuesto promedio por periodo */}
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo</h3>
+                {presupuestoPorMes.every(p => p.n === 0)
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
+                  : <BudgetTrendChart data={presupuestoPorMes} max={maxPresupuesto} />}
               </div>
 
               {/* Por estado geográfico */}

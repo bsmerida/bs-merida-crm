@@ -1,6 +1,7 @@
 // components/PropertiesMap.tsx
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { loadGoogleMaps } from "@/lib/googleMaps";
 
 type MapProperty = {
   id: string;
@@ -50,20 +51,6 @@ const MAP_STYLE = [
 ];
 
 declare global { interface Window { google: any } }
-
-let gmapsPromise: Promise<void> | null = null;
-function loadGoogleMaps(apiKey: string): Promise<void> {
-  if (gmapsPromise) return gmapsPromise;
-  gmapsPromise = new Promise((resolve) => {
-    if (window.google?.maps) { resolve(); return; }
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
-    script.async = true; script.defer = true;
-    script.onload = () => resolve();
-    document.head.appendChild(script);
-  });
-  return gmapsPromise;
-}
 
 function makePinSvg(label: string, color: string): string {
   const w = Math.max(label.length * 7 + 20, 50);

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { PropertyCardV3 } from "@/components/PropertyCardV3";
+import { zonaCoincide } from "@/lib/validation";
 
 type Prop = any;
 const POR_PAGINA = 24;
@@ -42,7 +43,7 @@ function ZoneAutocomplete({ zones, value, onChange }: { zones: string[]; value: 
             type="text"
             value={query}
             placeholder="Zona o ciudad"
-            onChange={e => { setQuery(e.target.value); onChange("Todas"); setOpen(true); }}
+            onChange={e => { const v = e.target.value; setQuery(v); onChange(v || "Todas"); setOpen(true); }}
             onFocus={() => setOpen(true)}
             onKeyDown={e => { if (e.key === "Escape") setOpen(false); }}
             className="flex-1 min-w-0 text-navy text-[17px] bg-transparent focus:outline-none placeholder:text-navy/50"
@@ -167,7 +168,11 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
   const filtered = useMemo(() => {
     let result = props.filter((p: Prop) => {
       const matchType  = filterType === "Todos" || p.type === filterType;
-      const matchZone  = filterZone === "Todas" || p.zone === filterZone || p.city === filterZone;
+      // Antes exigía que filterZone fuera EXACTAMENTE una zona ya detectada en
+      // los datos (el dropdown); escribir algo libre como "norte de Mérida"
+      // nunca encontraba nada. zonaCoincide compara por palabra, así que
+      // también funciona con lo que el cliente escriba sin elegir del listado.
+      const matchZone  = filterZone === "Todas" || zonaCoincide(filterZone, [p.zone, p.city, p.state]);
       const matchBeds  = filterBeds === "0"  || (filterBeds === "4" ? p.bedrooms  >= 4 : p.bedrooms  === Number(filterBeds));
       const matchBaths = filterBaths === "0" || (filterBaths === "3" ? p.bathrooms >= 3 : p.bathrooms === Number(filterBaths));
       const matchMin   = !priceMin || p.price >= Number(priceMin);

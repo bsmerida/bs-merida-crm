@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PropertiesMap } from "@/components/PropertiesMap";
+import { normalizeSearch, zonaCoincide } from "@/lib/validation";
 
 type MapaProp = {
   id: string; title: string; price: number; operation: string; type: string;
@@ -40,8 +41,11 @@ export function MapaExplorer({ properties }: { properties: MapaProp[] }) {
   const filtered = useMemo(() => {
     return properties.filter(p => {
       const matchOp = operation === "Todas" || p.operation === operation;
-      const q = query.trim().toLowerCase();
-      const matchQuery = !q || [p.zone, p.city, p.title].filter(Boolean).some(s => s!.toLowerCase().includes(q));
+      // zonaCoincide para zona/ciudad (compara por palabra: "norte de Mérida"
+      // encuentra "Temozón Norte" aunque el orden no coincida); el título se
+      // sigue buscando como antes, por substring simple.
+      const matchQuery = !query.trim() || zonaCoincide(query, [p.zone, p.city]) ||
+        (p.title && normalizeSearch(p.title).includes(normalizeSearch(query)));
       return matchOp && matchQuery;
     });
   }, [properties, query, operation]);

@@ -2,8 +2,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "./Icon";
+import { loadGoogleMaps } from "@/lib/googleMaps";
 
 const TYPES = ["Casa", "Departamento", "Terreno", "Oficina", "Local", "Bodega"];
+const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
 
 const fmtMoney = (n) => "$" + Number(n).toLocaleString("es-MX");
 
@@ -16,12 +18,48 @@ export function SearchBox({ zones }) {
   const [min, setMin]           = useState("");
   const [max, setMax]           = useState("");
   const [activeField, setActiveField] = useState(null); // "ubicacion" | "tipo" | "presupuesto" | null
+  const [placeResults, setPlaceResults] = useState(null); // null = Places no listo/sin texto: usar zones locales
   const inputRef                = useRef(null);
   const boxRef                  = useRef(null);
+  const autocompleteRef         = useRef(null);
+  const debounceRef             = useRef(null);
+
+  // Las zonas conocidas por nuestro inventario son una lista cerrada; con
+  // Google Places el cliente puede escribir cualquier colonia real de
+  // Yucatán o Nuevo León, exista o no todavía una propiedad ahí — como en
+  // Inmuebles24/EasyBroker.
+  useEffect(() => {
+    if (!MAPS_KEY) return; // sin llave configurada, se queda con las zonas locales
+    loadGoogleMaps(MAPS_KEY).then(() => {
+      autocompleteRef.current = new window.google.maps.places.AutocompleteService();
+    });
+  }, []);
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    const q = query.trim();
+    if (!q || !autocompleteRef.current) { setPlaceResults(null); return; }
+    debounceRef.current = setTimeout(() => {
+      autocompleteRef.current.getPlacePredictions(
+        { input: q, componentRestrictions: { country: "mx" }, types: ["(regions)"] },
+        (predictions) => {
+          setPlaceResults((predictions || []).map(p => ({
+            name: p.structured_formatting?.main_text || p.description,
+            subtitle: p.structured_formatting?.secondary_text || "",
+            isCity: false,
+            isPlace: true,
+          })));
+        }
+      );
+    }, 250);
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
 
   const suggestions = query.trim() === ""
     ? zones
-    : zones.filter(z => z.name.toLowerCase().includes(query.toLowerCase()));
+    : placeResults !== null
+      ? placeResults
+      : zones.filter(z => z.name.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     function handle(e) {
@@ -102,15 +140,19 @@ export function SearchBox({ zones }) {
                   className={"w-full text-left px-3 py-2.5 rounded-[20px] flex items-center gap-3 transition-colors " +
                     (selected === z.name ? "bg-cream" : "hover:bg-cream")}>
                   <span className="bg-stone w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0">
-                    <Icon name={z.isCity ? "pin" : "home"} className="w-4 h-4 text-navy" />
+                    <Icon name={z.isPlace || z.isCity ? "pin" : "home"} className="w-4 h-4 text-navy" />
                   </span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-navy text-[15px] font-medium truncate">{z.name}</span>
                     {z.subtitle && <span className="block text-[#6b7385] text-xs truncate">{z.subtitle}</span>}
                   </span>
-                  <span className="text-navy text-xs font-medium shrink-0">
-                    {z.count > 0 ? `${z.count} propiedad${z.count !== 1 ? "es" : ""}` : "Sin propiedades"}
-                  </span>
+                  {/* Las sugerencias de Google Places no traen conteo de propiedades
+                      (no son zonas de nuestro inventario, pueden no tener nada todavía) */}
+                  {!z.isPlace && (
+                    <span className="text-navy text-xs font-medium shrink-0">
+                      {z.count > 0 ? `${z.count} propiedad${z.count !== 1 ? "es" : ""}` : "Sin propiedades"}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

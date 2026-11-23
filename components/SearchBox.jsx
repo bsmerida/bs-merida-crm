@@ -19,9 +19,11 @@ export function SearchBox({ zones }) {
   const [max, setMax]           = useState("");
   const [activeField, setActiveField] = useState(null); // "ubicacion" | "tipo" | "presupuesto" | null
   const [placeResults, setPlaceResults] = useState(null); // null = Places no listo/sin texto: usar zones locales
+  const [coords, setCoords]     = useState(null); // {lat,lng} del lugar elegido en Places, para sugerir cercanas si no hay resultados exactos
   const inputRef                = useRef(null);
   const boxRef                  = useRef(null);
   const autocompleteRef         = useRef(null);
+  const geocoderRef             = useRef(null);
   const debounceRef             = useRef(null);
 
   // Las zonas conocidas por nuestro inventario son una lista cerrada; con
@@ -32,6 +34,7 @@ export function SearchBox({ zones }) {
     if (!MAPS_KEY) return; // sin llave configurada, se queda con las zonas locales
     loadGoogleMaps(MAPS_KEY).then(() => {
       autocompleteRef.current = new window.google.maps.places.AutocompleteService();
+      geocoderRef.current = new window.google.maps.Geocoder();
     });
   }, []);
 
@@ -48,6 +51,7 @@ export function SearchBox({ zones }) {
             subtitle: p.structured_formatting?.secondary_text || "",
             isCity: false,
             isPlace: true,
+            placeId: p.place_id,
           })));
         }
       );
@@ -73,11 +77,24 @@ export function SearchBox({ zones }) {
     setSelected(z.name);
     setQuery(z.name);
     setActiveField(null);
+    setCoords(null);
+    // Coordenadas del lugar elegido: si la zona exacta no tiene propiedades,
+    // la página de resultados puede sugerir las más cercanas de verdad en
+    // vez de propiedades destacadas al azar en otra parte de la ciudad.
+    if (z.isPlace && z.placeId && geocoderRef.current) {
+      geocoderRef.current.geocode({ placeId: z.placeId }, (results, status) => {
+        if (status === "OK" && results?.[0]) {
+          const loc = results[0].geometry.location;
+          setCoords({ lat: loc.lat(), lng: loc.lng() });
+        }
+      });
+    }
   }
 
   function clear() {
     setSelected("");
     setQuery("");
+    setCoords(null);
     inputRef.current?.focus();
   }
 
@@ -87,6 +104,7 @@ export function SearchBox({ zones }) {
     if (selected) p.set("zone", selected);
     if (min) p.set("min", min);
     if (max) p.set("max", max);
+    if (coords) { p.set("lat", String(coords.lat)); p.set("lng", String(coords.lng)); }
     router.push((op === "Venta" ? "/comprar" : "/rentar") + (p.toString() ? "?" + p.toString() : ""));
   }
 

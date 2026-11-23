@@ -2,6 +2,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { PropertyCardV3 } from "@/components/PropertyCardV3";
 import { zonaCoincide } from "@/lib/validation";
+import { masCercanas } from "@/lib/geo";
 
 type Prop = any;
 const POR_PAGINA = 24;
@@ -133,7 +134,14 @@ function leerGuardado(operation: string): ListaGuardada | null {
   try { return JSON.parse(sessionStorage.getItem(storageKey(operation)) || "null"); } catch { return null; }
 }
 
-export function PropertyListWithFilters({ props, operation, initialType, initialZone, initialMin, initialMax }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; initialMin?: string; initialMax?: string; }) {
+export function PropertyListWithFilters({ props, operation, initialType, initialZone, initialMin, initialMax, initialLat, initialLng }: { props: Prop[]; operation: "Venta" | "Renta"; initialType?: string; initialZone?: string; initialMin?: string; initialMax?: string; initialLat?: string; initialLng?: string; }) {
+  // Coordenadas de la zona que escribió el cliente en el buscador del Home
+  // (si eligió una sugerencia de Google Places) — solo para sugerir
+  // propiedades realmente cercanas si esa zona exacta no tiene resultados.
+  const coords = useMemo(
+    () => (initialLat && initialLng ? { lat: Number(initialLat), lng: Number(initialLng) } : null),
+    [initialLat, initialLng]
+  );
   const guardado = useRef(leerGuardado(operation)).current;
   const [filterType, setFilterType] = useState(guardado?.filterType ?? (initialType || "Todos"));
   const [filterZone, setFilterZone] = useState(guardado?.filterZone ?? (initialZone || "Todas"));
@@ -185,6 +193,23 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
     if (sortBy === "price_desc") result = [...result].sort((a,b) => b.price - a.price);
     return result;
   }, [props, filterType, filterZone, filterBeds, filterBaths, priceMin, priceMax, sortBy, selectedAmenities]);
+
+  // Sin resultados exactos en la zona pedida: en vez de mostrar propiedades
+  // destacadas al azar (podían salir en otra ciudad), se sugieren las más
+  // cercanas de verdad por coordenadas — solo si el cliente eligió la zona
+  // desde una sugerencia de Google Places (así sabemos dónde está).
+  const cercanas = useMemo(() => {
+    if (filtered.length > 0 || !coords) return [];
+    const candidatas = props.filter((p: Prop) => {
+      const matchType  = filterType === "Todos" || p.type === filterType;
+      const matchBeds  = filterBeds === "0"  || (filterBeds === "4" ? p.bedrooms  >= 4 : p.bedrooms  === Number(filterBeds));
+      const matchBaths = filterBaths === "0" || (filterBaths === "3" ? p.bathrooms >= 3 : p.bathrooms === Number(filterBaths));
+      const matchMin   = !priceMin || p.price >= Number(priceMin);
+      const matchMax   = !priceMax || p.price <= Number(priceMax);
+      return matchType && matchBeds && matchBaths && matchMin && matchMax;
+    });
+    return masCercanas(candidatas, coords.lat, coords.lng);
+  }, [filtered.length, coords, props, filterType, filterBeds, filterBaths, priceMin, priceMax]);
 
   useEffect(() => {
     // No reiniciar al restaurar desde sessionStorage al montar: solo cuando
@@ -391,7 +416,10 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
           <div>
             <h3 className="font-serif text-navy text-4xl md:text-5xl">Sin resultados.</h3>
             <p className="text-[#6b7385] text-base md:text-lg mt-3 max-w-xl">
-              No encontramos propiedades con esos filtros. Prueba ampliar el presupuesto o la zona, o pídele a Sofía que te ayude.
+              {filterZone !== "Todas"
+                ? `No encontramos propiedades en "${filterZone}".`
+                : "No encontramos propiedades con esos filtros."}{" "}
+              Prueba ampliar el presupuesto o la zona, o pídele a Sofía que te ayude.
             </p>
           </div>
           <div className="flex gap-2.5 flex-wrap justify-center">
@@ -403,13 +431,26 @@ export function PropertyListWithFilters({ props, operation, initialType, initial
               Hablar con Sofía
             </button>
           </div>
-          {props.length > 0 && (
+          {cercanas.length > 0 ? (
             <div className="w-full mt-4">
-              <p className="font-serif text-navy text-2xl mb-5">Propiedades que podrían interesarte</p>
+              <p className="font-serif text-navy text-2xl mb-5">Propiedades cerca de &ldquo;{filterZone}&rdquo;</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {props.slice(0, 3).map((p: Prop) => <PropertyCardV3 key={p.id} p={p} coverUrl={p.cover} />)}
+                {cercanas.map((p: Prop) => <PropertyCardV3 key={p.id} p={p} coverUrl={p.cover} />)}
               </div>
             </div>
+          ) : (
+            // Sin coordenadas de la zona pedida (no se buscó eligiendo una
+            // sugerencia de Places) no sabemos qué tan "cerca" está nada, así
+            // que no se inventa cercanía — se sugiere del inventario general,
+            // pero solo cuando el motivo de 0 resultados no fue la zona.
+            filterZone === "Todas" && props.length > 0 && (
+              <div className="w-full mt-4">
+                <p className="font-serif text-navy text-2xl mb-5">Propiedades que podrían interesarte</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {props.slice(0, 3).map((p: Prop) => <PropertyCardV3 key={p.id} p={p} coverUrl={p.cover} />)}
+                </div>
+              </div>
+            )
           )}
         </div>
       ) : (

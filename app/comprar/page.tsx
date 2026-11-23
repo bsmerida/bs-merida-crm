@@ -7,7 +7,7 @@ import { PropertyListWithFilters } from "@/components/PropertyListWithFilters";
 
 export const metadata = { title: "Propiedades en Venta — Duclaud" };
 
-export default async function ComprarPage({ searchParams }: { searchParams: { type?: string; zone?: string; min?: string; max?: string } }) {
+export default async function ComprarPage({ searchParams }: { searchParams: { type?: string; zone?: string; min?: string; max?: string; lat?: string; lng?: string } }) {
   const supabase = createClient();
   const wa = process.env.NEXT_PUBLIC_BUSINESS_WHATSAPP || "529997466272";
   let query = supabase.from("properties")
@@ -36,7 +36,8 @@ export default async function ComprarPage({ searchParams }: { searchParams: { ty
       <section className="px-5 md:px-8 pb-16">
         <PropertyListWithFilters props={props} operation="Venta"
           initialType={searchParams.type} initialZone={searchParams.zone}
-          initialMin={searchParams.min} initialMax={searchParams.max} />
+          initialMin={searchParams.min} initialMax={searchParams.max}
+          initialLat={searchParams.lat} initialLng={searchParams.lng} />
       </section>
 
       <section className="rounded-[32px] md:rounded-[48px] bg-navy px-6 md:px-16 py-14 md:py-24 flex flex-col items-center gap-4 md:gap-5 text-center">

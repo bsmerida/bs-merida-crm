@@ -377,15 +377,29 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
     const vals = [l.budget_min, l.budget_max].filter((v: any) => typeof v === "number" && v >= PRESUPUESTO_MINIMO_VALIDO);
     return vals.length ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : null;
   };
-  const presupuestoPorMes = rangosMensuales.map(({ inicio, fin, label }) => {
-    const valores = leads
-      .filter((l: any) => { const c = new Date(l.created_at); return c >= inicio && c <= fin; })
-      .map(valorPresupuesto)
-      .filter((v: unknown): v is number => v !== null)
-      .sort((a: number, b: number) => a - b);
-    return { label, media: mediaDe(valores), mediana: medianaDe(valores), moda: modaPorRango(valores, BUDGET_RANGES), n: valores.length };
-  });
-  const maxPresupuesto = Math.max(1, ...presupuestoPorMes.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
+  // Comprar (millones) y Rentar (miles) son escalas completamente distintas —
+  // promediarlas juntas no significa nada (mezclar 3M con 20k). Se calculan
+  // por separado, cada una con sus propios rangos para la moda.
+  const BUDGET_RANGES_RENTA = [
+    { label: "<15k",   min: 0,      max: 15_000 },
+    { label: "15-20k", min: 15_000, max: 20_000 },
+    { label: "20-25k", min: 20_000, max: 25_000 },
+    { label: "25-40k", min: 25_000, max: 40_000 },
+    { label: ">40k",   min: 40_000, max: Infinity },
+  ];
+  const calcularPresupuestoPorMes = (leadsFiltrados: any[], rangos: { label: string; min: number; max: number }[]) =>
+    rangosMensuales.map(({ inicio, fin, label }) => {
+      const valores = leadsFiltrados
+        .filter((l: any) => { const c = new Date(l.created_at); return c >= inicio && c <= fin; })
+        .map(valorPresupuesto)
+        .filter((v: unknown): v is number => v !== null)
+        .sort((a: number, b: number) => a - b);
+      return { label, media: mediaDe(valores), mediana: medianaDe(valores), moda: modaPorRango(valores, rangos), n: valores.length };
+    });
+  const presupuestoPorMesComprar = calcularPresupuestoPorMes(leads.filter((l: any) => l.search_operation === "Comprar"), BUDGET_RANGES);
+  const presupuestoPorMesRentar = calcularPresupuestoPorMes(leads.filter((l: any) => l.search_operation === "Rentar"), BUDGET_RANGES_RENTA);
+  const maxPresupuestoComprar = Math.max(1, ...presupuestoPorMesComprar.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
+  const maxPresupuestoRentar = Math.max(1, ...presupuestoPorMesRentar.flatMap(p => [p.media ?? 0, p.mediana ?? 0]));
 
   // Por presupuesto
   const byBudget = BUDGET_RANGES.map(r => ({
@@ -798,12 +812,20 @@ export function LeadsClient({ leads: initialLeads, isAdmin = true }: { leads: Le
                   : <VBarChart data={byBudget} color="#1C2B4B" height={140} />}
               </div>
 
-              {/* Presupuesto promedio por periodo */}
+              {/* Presupuesto promedio por periodo — Comprar y Rentar por separado:
+                  son escalas de dinero muy distintas, mezclarlas no tiene sentido. */}
               <div className="bg-white rounded-[28px] shadow-float p-6">
-                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo</h3>
-                {presupuestoPorMes.every(p => p.n === 0)
-                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico. Llena los campos “Presupuesto mínimo/máximo” en cada cliente.</div>
-                  : <BudgetTrendChart data={presupuestoPorMes} max={maxPresupuesto} />}
+                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo — Comprar</h3>
+                {presupuestoPorMesComprar.every(p => p.n === 0)
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico para clientes que buscan comprar.</div>
+                  : <BudgetTrendChart data={presupuestoPorMesComprar} max={maxPresupuestoComprar} />}
+              </div>
+
+              <div className="bg-white rounded-[28px] shadow-float p-6">
+                <h3 className="font-serif text-navy text-[28px] mb-5">Presupuesto promedio por periodo — Rentar</h3>
+                {presupuestoPorMesRentar.every(p => p.n === 0)
+                  ? <div className="text-sm text-[#6b7385] text-center py-4">Sin datos de presupuesto numérico para clientes que buscan rentar.</div>
+                  : <BudgetTrendChart data={presupuestoPorMesRentar} max={maxPresupuestoRentar} />}
               </div>
 
               {/* Por estado geográfico */}

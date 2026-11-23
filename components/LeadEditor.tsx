@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESTADOS_LEAD } from "@/lib/utils";
+import { fechaYmdLarga } from "@/lib/time";
 import { Select } from "@/components/Select";
 
 const TIPOS_ACTIVIDAD = ["llamada", "whatsapp", "email", "visita", "nota"];
@@ -34,11 +35,16 @@ export function LeadEditor({
   const router = useRouter();
   const supabase = createClient();
 
+  const hoyYmd = new Date().toISOString().slice(0, 10);
   const [form, setForm] = useState({
     name:         lead.name || "",
     phone:        lead.phone || "",
     email:        lead.email || "",
     status:       lead.status || "Nuevo",
+    // Fecha real en que llegó el cliente — distinta de "created_at" (cuándo
+    // se guardó en el sistema). Para capturar histórico en lote sin que
+    // todo se vea como si hubiera llegado hoy.
+    lead_date:    lead.lead_date || lead.created_at?.slice(0, 10) || hoyYmd,
     agent_id:     lead.agent_id || "",
     interest:     lead.interest || "",
     budget_text:  lead.budget_text || "",
@@ -111,6 +117,7 @@ export function LeadEditor({
       phone:        form.phone || null,
       email:        form.email || null,
       status:       form.status,
+      lead_date:    form.lead_date || null,
       agent_id:     form.agent_id || null,
       interest:     form.interest || null,
       budget_text:  form.budget_text || null,
@@ -248,6 +255,7 @@ export function LeadEditor({
                 ]} />
             </div></div>
             <div><label className="text-xs text-[#6b7385]">Presupuesto (texto)</label><div className="mt-1.5"><input value={form.budget_text} onChange={e => set("budget_text", e.target.value)} placeholder="Ej. 3-5M" className={inp} /></div></div>
+            <div><label className="text-xs text-[#6b7385]">Fecha de llegada <span className="text-[#6b7385]">(para capturar histórico)</span></label><div className="mt-1.5"><input type="date" value={form.lead_date} onChange={e => set("lead_date", e.target.value)} className={inp} /></div></div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-4">
@@ -426,7 +434,8 @@ export function LeadEditor({
             <h3 className="font-serif text-navy text-[28px] mb-1">Resumen del registro</h3>
             <div className="text-xs text-[#6b7385] space-y-2">
               <div className="flex justify-between"><span>Origen</span><span className="text-navy font-medium">{lead.source || "—"}</span></div>
-              <div className="flex justify-between"><span>Registrado</span><span className="text-navy">{new Date(lead.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+              <div className="flex justify-between"><span>Fecha de llegada</span><span className="text-navy font-medium">{form.lead_date ? fechaYmdLarga(form.lead_date) : "—"}</span></div>
+              <div className="flex justify-between"><span>Registrado en el sistema</span><span className="text-navy">{new Date(lead.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</span></div>
               <div className="flex justify-between"><span>Último contacto</span><span className="text-navy">{lead.last_contact_at ? new Date(lead.last_contact_at).toLocaleDateString("es-MX") : "—"}</span></div>
               {lead.utm_data && Object.keys(lead.utm_data).length > 0 && (
                 <div className="pt-2 border-t border-stone">

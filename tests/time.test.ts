@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDaysYmd, isVisitInNextHourWindow, meridaParts, meridaSlotToDate } from "@/lib/time";
+import { addDaysYmd, fechaYmdCorta, fechaYmdLarga, isVisitInNextHourWindow, meridaParts, meridaSlotToDate } from "@/lib/time";
 
 describe("meridaParts", () => {
   it("convierte UTC a hora de Mérida (UTC-6)", () => {
@@ -37,5 +37,15 @@ describe("fechaMerida", () => {
     const { fechaMerida } = await import("@/lib/time");
     expect(fechaMerida("2026-11-14T01:30:00Z")).toBe("13/11/2026");
     expect(fechaMerida("2026-11-14T06:30:00Z")).toBe("14/11/2026");
+  });
+});
+
+describe("fechaYmdLarga / fechaYmdCorta", () => {
+  it("no recorren el día (bug real: new Date(ymd) cae al día anterior en Mérida)", () => {
+    expect(fechaYmdLarga("2026-03-01")).toBe("1 de marzo de 2026");
+    expect(fechaYmdCorta("2026-03-01")).toMatch(/^1 mar/);
+  });
+  it("cruza fin de año sin problema", () => {
+    expect(fechaYmdLarga("2026-12-31")).toBe("31 de diciembre de 2026");
   });
 });

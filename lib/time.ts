@@ -36,3 +36,16 @@ export function isVisitInNextHourWindow(visit: Date, now: Date): boolean {
 export function fechaMerida(instante: string | Date): string {
   return new Date(instante).toLocaleDateString("es-MX", { timeZone: MERIDA_TZ });
 }
+
+// Fecha larga (13 de noviembre de 2026) de un YYYY-MM-DD sin componente de
+// hora (ej. leads.lead_date). No usa new Date(ymd) directo porque lo toma
+// como medianoche UTC y en Mérida cae el día anterior — mediodía UTC es
+// seguro para cualquier huso horario dentro de ±12h, como ya hace addDaysYmd.
+export function fechaYmdLarga(ymd: string): string {
+  return new Date(`${ymd}T12:00:00Z`).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+}
+
+// Igual que fechaYmdLarga pero corta (13 nov.), para tablas.
+export function fechaYmdCorta(ymd: string): string {
+  return new Date(`${ymd}T12:00:00Z`).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+}

@@ -102,7 +102,7 @@ export function SearchBox({ zones }) {
     inputRef.current?.focus();
   }
 
-  function go() {
+  async function go() {
     const p = new URLSearchParams();
     if (type) p.set("type", type);
     // Si el cliente escribió algo pero nunca hizo clic en una sugerencia
@@ -113,7 +113,22 @@ export function SearchBox({ zones }) {
     if (zona) p.set("zone", zona);
     if (min) p.set("min", min);
     if (max) p.set("max", max);
-    if (coords) { p.set("lat", String(coords.lat)); p.set("lng", String(coords.lng)); }
+
+    // "coords" solo se llena si hiciste clic en una sugerencia de Places.
+    // Si tecleaste y le diste Enter/Buscar directo (el caso más común), acá
+    // se geocodifica lo escrito de todas formas — si no, la zona pedida
+    // nunca tiene coordenadas y la página de resultados no puede sugerir
+    // nada cercano aunque sí exista algo a unas cuadras.
+    let coordsFinales = coords;
+    if (!coordsFinales && zona && geocoderRef.current) {
+      coordsFinales = await new Promise(resolve => {
+        geocoderRef.current.geocode({ address: zona, componentRestrictions: { country: "mx" } }, (results, status) => {
+          resolve(status === "OK" && results?.[0] ? results[0].geometry.location : null);
+        });
+      }).then(loc => (loc ? { lat: loc.lat(), lng: loc.lng() } : null));
+    }
+    if (coordsFinales) { p.set("lat", String(coordsFinales.lat)); p.set("lng", String(coordsFinales.lng)); }
+
     router.push((op === "Venta" ? "/comprar" : "/rentar") + (p.toString() ? "?" + p.toString() : ""));
   }
 

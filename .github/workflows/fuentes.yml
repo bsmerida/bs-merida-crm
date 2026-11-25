@@ -37,6 +37,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Ghostscript (comprimir brochures pesados)
+        run: which gs || (sudo apt-get update -y && sudo apt-get install -y ghostscript)
       - name: Revisar fuentes
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

@@ -187,6 +187,16 @@ describe("rechazar", () => {
     expect(res.status).toBe(200);
     expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ paso: "extractor", leccion: "La lista de precios ya no incluye este modelo" });
   });
+
+  it("sin marcar \"específico de esta fuente\", la lección aplica a todas (fuente_id null)", async () => {
+    await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "Siempre vienen con marca de agua" });
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ fuente_id: null });
+  });
+
+  it("marcando \"específico de esta fuente\", la lección solo se guarda para esa fuente", async () => {
+    await patch(NUEVA, { accion: "rechazar", motivo: "Datos", feedback: "Este proveedor pone el precio en USD sin avisar", especificoDeFuente: true });
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ fuente_id: "F-0010" });
+  });
 });
 
 describe("cambios de archivos", () => {

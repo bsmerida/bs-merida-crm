@@ -166,7 +166,7 @@ export async function aprobarBorrador(
 
 export async function rechazarBorrador(
   db: Db, borrador: Borrador,
-  entrada: { motivo?: unknown; feedback?: unknown; rehacer?: unknown },
+  entrada: { motivo?: unknown; feedback?: unknown; rehacer?: unknown; especificoDeFuente?: unknown },
   userId: string,
 ) {
   const motivo = MOTIVOS_RECHAZO.includes(entrada.motivo as MotivoRechazo) ? (entrada.motivo as MotivoRechazo) : null;
@@ -178,11 +178,17 @@ export async function rechazarBorrador(
   if (feedback.length < 15 || feedback.toLowerCase() === motivo.toLowerCase()) {
     throw new ErrorBorrador("Escribe qué estuvo mal con más detalle: el agente usa este texto para aprender, no le sirve solo repetir el motivo.");
   }
+  // Si marca "es normal de este proveedor", la lección solo se le vuelve a
+  // mostrar al agente cuando procese esa misma fuente — si no, aplica a
+  // todas (como antes).
+  const fuenteLeccion = entrada.especificoDeFuente === true ? borrador.fuente_id : null;
 
   await tomar(db, borrador.id, {
     estado: "Rechazado", motivo_rechazo: motivo, feedback, revisado_por: userId, revisado_en: new Date().toISOString(),
   });
-  await db.from("agente_lecciones").insert({ paso: PASO_POR_MOTIVO[motivo], leccion: feedback, borrador_id: borrador.id, creado_por: userId });
+  await db.from("agente_lecciones").insert({
+    paso: PASO_POR_MOTIVO[motivo], leccion: feedback, borrador_id: borrador.id, creado_por: userId, fuente_id: fuenteLeccion,
+  });
   // "Volver a intentar": la próxima corrida vuelve a procesar ese desarrollo con la lección nueva.
   if (entrada.rehacer === true && borrador.desarrollo_id) {
     await db.from("fuente_desarrollos").update({ firma: null }).eq("id", borrador.desarrollo_id);

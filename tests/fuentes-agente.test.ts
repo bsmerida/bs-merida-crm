@@ -215,6 +215,7 @@ describe("documentos", () => {
     const herramientaSinGs = {
       paginas: async () => { throw new Error("gs no encontrado"); },
       comprimir: async () => { throw new Error("gs no encontrado"); },
+      dividir: async () => { throw new Error("gs no encontrado"); },
     };
     const r = await prepararDocumentos(
       [{ i: 0, archivo: { nombre: "brochure.pdf", ruta: "", mime: "application/pdf" } }],
@@ -231,6 +232,7 @@ describe("documentos", () => {
     const herramienta = {
       paginas: async () => 5,
       comprimir: async (_entrada: string, salida: string) => { await writeFile(salida, liviano); },
+      dividir: async () => { throw new Error("no debería intentar dividir: ya cupo comprimido"); },
     };
     const r = await prepararDocumentos(
       [{ i: 0, archivo: { nombre: "brochure.pdf", ruta: "", mime: "application/pdf" } }],
@@ -241,13 +243,14 @@ describe("documentos", () => {
     expect(Buffer.from(doc.source.data, "base64").toString()).toBe(liviano.toString());
   });
 
-  it("si incluso comprimido sigue pesando mucho, lo omite", async () => {
+  it("si es una sola página y ni comprimida cabe, no hay forma de dividirla: la omite", async () => {
     const pesado = Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(MAX_PDF + MB)]);
     const sigueGrande = Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(MAX_PDF + MB / 2)]);
     const conector = { descargar: async () => ({ buffer: pesado, mime: "application/pdf" }) };
     const herramienta = {
-      paginas: async () => 5,
+      paginas: async () => 1,
       comprimir: async (_entrada: string, salida: string) => { await writeFile(salida, sigueGrande); },
+      dividir: async () => { throw new Error("no se puede dividir una sola página"); },
     };
     const r = await prepararDocumentos(
       [{ i: 0, archivo: { nombre: "catalogo.pdf", ruta: "", mime: "application/pdf" } }],
@@ -257,20 +260,33 @@ describe("documentos", () => {
     expect(r.omitidos).toEqual(["catalogo.pdf (muy pesado para leerlo)"]);
   });
 
-  it("omite un PDF con más páginas de las que la API de Claude acepta, sin intentar comprimirlo", async () => {
-    const conector = { descargar: async () => ({ buffer: Buffer.from("%PDF-1.4 chico"), mime: "application/pdf" }) };
-    let seIntentoComprimir = false;
+  it("un PDF con más páginas de las que la API de Claude acepta se divide en partes, no se omite", async () => {
+    const original = Buffer.from("%PDF-1.4 catalogo escaneado completo");
+    const conector = { descargar: async () => ({ buffer: original, mime: "application/pdf" }) };
+    let llamadasDividir = 0;
     const herramienta = {
       paginas: async () => 140,
-      comprimir: async () => { seIntentoComprimir = true; },
+      comprimir: async () => { throw new Error("un PDF chico no debería necesitar comprimirse"); },
+      dividir: async (_entrada: string, salida: string, desde: number, hasta: number) => {
+        llamadasDividir++;
+        await writeFile(salida, Buffer.from(`parte ${desde}-${hasta}`));
+      },
     };
     const r = await prepararDocumentos(
       [{ i: 0, archivo: { nombre: "catalogo-escaneado.pdf", ruta: "", mime: "application/pdf" } }],
       conector, herramienta,
     );
-    expect(r.leidos).toEqual([]);
-    expect(r.omitidos).toEqual(["catalogo-escaneado.pdf (demasiadas páginas: 140)"]);
-    expect(seIntentoComprimir).toBe(false);
+    expect(r.leidos).toEqual([0]);
+    expect(r.omitidos).toEqual([]);
+    expect(llamadasDividir).toBe(2);
+    const docs = r.bloques.filter((b: any) => b.type === "document");
+    expect(docs.map((d: any) => d.title)).toEqual([
+      "catalogo-escaneado.pdf (parte 1/2)",
+      "catalogo-escaneado.pdf (parte 2/2)",
+    ]);
+    expect(docs.map((d: any) => Buffer.from(d.source.data, "base64").toString())).toEqual([
+      "parte 1-70", "parte 71-140",
+    ]);
   });
 });
 

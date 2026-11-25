@@ -36,6 +36,7 @@ type Edicion = { datos: Record<string, any>; fotos: string[]; aceptados: string[
 
 const MOTIVOS = [
   { valor: "Datos", etiqueta: "Datos incorrectos" },
+  { valor: "Disponibilidad", etiqueta: "Ya no está disponible" },
   { valor: "Fotos", etiqueta: "Fotos" },
   { valor: "Texto", etiqueta: "Título o descripción" },
   { valor: "Coincidencia", etiqueta: "No es esa propiedad" },
@@ -432,13 +433,17 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
             <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={3}
               placeholder="Ej. El precio de la lista es con descuento de contado; usa el precio de lista. / No uses fotos con texto encima."
               className={inp} />
+            <div className="text-xs text-[#6b7385] -mt-1">
+              Explica qué estuvo mal con tus palabras — el agente usa este texto para no repetir el error. Escribir solo el motivo (ej. &ldquo;Fotos&rdquo;) no le sirve.
+            </div>
             <label className="flex items-center gap-2 text-sm text-[#6b7385]">
               <input type="checkbox" checked={rehacer} onChange={e => setRehacer(e.target.checked)} className="accent-navy" />
               Volver a intentarlo en la próxima revisión con este comentario
             </label>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setRechazando(false)} className="px-4 py-2 rounded-full text-sm text-[#6b7385] hover:text-navy">Cancelar</button>
-              <button onClick={rechazar} disabled={enviando || !motivo || feedback.trim().length < 5}
+              <button onClick={rechazar}
+                disabled={enviando || !motivo || feedback.trim().length < 15 || feedback.trim().toLowerCase() === motivo.toLowerCase()}
                 className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white">
                 {enviando ? "Guardando…" : "Rechazar"}
               </button>

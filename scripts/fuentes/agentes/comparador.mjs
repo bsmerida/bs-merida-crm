@@ -1,7 +1,7 @@
 // Especialista 4 · Comparador.
 // El código busca candidatos en el inventario; la IA solo decide cuando hay
 // candidatos. Si duda, prefiere "ninguna" (nunca actualiza a ciegas).
-import { MODELO, S } from "../lib/ia.mjs";
+import { MODELO_RAPIDO, S } from "../lib/ia.mjs";
 import { candidatos } from "../lib/candidatos.mjs";
 
 const SCHEMA = S.obj({
@@ -58,7 +58,11 @@ export function prepararComparar({ desarrollo, modelos, claves, inventario, vinc
   return {
     resultado, preguntas,
     pedido: {
-      paso: "comparador", modelo: MODELO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "low",
+      // Decidir cuál de unos pocos candidatos ya filtrados por código es el
+      // mismo modelo es una tarea de clasificación simple; no necesita el
+      // modelo principal, y leerComparar() ya valida que la respuesta sea
+      // uno de los candidatos reales (nunca se acepta algo inventado).
+      paso: "comparador", modelo: MODELO_RAPIDO, system: SYSTEM, schema: SCHEMA, maxTokens: 4000, effort: "low",
       contenido: [{ type: "text", text: `${lecciones.length ? `Indicaciones del equipo:\n- ${lecciones.join("\n- ")}\n\n` : ""}${texto}` }],
     },
   };

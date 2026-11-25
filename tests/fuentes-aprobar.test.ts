@@ -167,6 +167,11 @@ describe("rechazar", () => {
     expect((await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "" })).status).toBe(400);
   });
 
+  it("no acepta un comentario que solo repite el motivo — no le enseña nada al agente", async () => {
+    expect((await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "Fotos" })).status).toBe(400);
+    expect((await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "no disponible" })).status).toBe(400);
+  });
+
   it("guarda la lección para el paso que se equivocó y puede pedir que se rehaga", async () => {
     const res = await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "No uses flyers con precios", rehacer: true });
     expect(res.status).toBe(200);
@@ -175,6 +180,12 @@ describe("rechazar", () => {
     expect(reset.payload).toEqual({ firma: null });
     expect(reset.filters).toContainEqual(["id", DESARROLLO]);
     expect(writes("properties")).toHaveLength(0);
+  });
+
+  it("\"Disponibilidad\" le llega directo al extractor, no se diluye en lecciones generales", async () => {
+    const res = await patch(NUEVA, { accion: "rechazar", motivo: "Disponibilidad", feedback: "La lista de precios ya no incluye este modelo" });
+    expect(res.status).toBe(200);
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ paso: "extractor", leccion: "La lista de precios ya no incluye este modelo" });
   });
 });
 

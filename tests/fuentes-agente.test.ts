@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { writeFile } from "node:fs/promises";
 import * as XLSX from "xlsx";
 import { cambiosPropuestos, campoDesarrollo, claveModelo, datosPropiedad, faltantes } from "../scripts/fuentes/lib/borrador.mjs";
 import { candidatos, palabrasClave } from "../scripts/fuentes/lib/candidatos.mjs";
 import { costoUsd, crearIA, PresupuestoAgotado } from "../scripts/fuentes/lib/ia.mjs";
-import { hojaATexto, prepararDocumentos } from "../scripts/fuentes/lib/documentos.mjs";
+import { hojaATexto, prepararDocumentos, MAX_PDF } from "../scripts/fuentes/lib/documentos.mjs";
 import { comparar } from "../scripts/fuentes/agentes/comparador.mjs";
 import { segmentar } from "../scripts/fuentes/agentes/segmentador.mjs";
 import { clasificar } from "../scripts/fuentes/agentes/clasificador.mjs";
+
+const MB = 1024 * 1024;
 
 // IA simulada: devuelve respuestas fijas por paso y registra lo que se le pidió.
 function iaFalsa(respuestas: Record<string, unknown>) {
@@ -196,12 +199,94 @@ describe("documentos", () => {
     const r = await prepararDocumentos([
       { i: 0, archivo: { nombre: "ok.pdf", ruta: "", mime: "application/pdf" } },
       { i: 1, archivo: { nombre: "falso.pdf", ruta: "", mime: "application/pdf" } },
-      { i: 2, archivo: { nombre: "enorme.pdf", ruta: "", mime: "application/pdf", tamano: 50 * 1024 * 1024 } },
+      { i: 2, archivo: { nombre: "enorme.pdf", ruta: "", mime: "application/pdf", tamano: 100 * 1024 * 1024 } },
       { i: 3, archivo: { nombre: "plano.dwg", ruta: "", mime: "application/octet-stream" } },
     ], conector);
     expect(r.leidos).toEqual([0]);
     expect(r.bloques.some((b: any) => b.type === "document")).toBe(true);
     expect(r.omitidos.join(" ")).toMatch(/no es un PDF válido.*muy pesado.*formato no compatible/);
+  });
+
+  it("sin Ghostscript (ej. máquina local) sigue el camino de siempre: manda el PDF tal cual si cabe", async () => {
+    const conector = {
+      descargar: async () => ({ buffer: Buffer.from("%PDF-1.4 chico"), mime: "application/pdf" }),
+      miniatura: async () => ({ buffer: Buffer.from("jpg"), mime: "image/jpeg" }),
+    };
+    const herramientaSinGs = {
+      paginas: async () => { throw new Error("gs no encontrado"); },
+      comprimir: async () => { throw new Error("gs no encontrado"); },
+      dividir: async () => { throw new Error("gs no encontrado"); },
+    };
+    const r = await prepararDocumentos(
+      [{ i: 0, archivo: { nombre: "brochure.pdf", ruta: "", mime: "application/pdf" } }],
+      conector, herramientaSinGs,
+    );
+    expect(r.leidos).toEqual([0]);
+    expect(r.omitidos).toEqual([]);
+  });
+
+  it("comprime un brochure pesado y lo manda si queda bajo el límite", async () => {
+    const pesado = Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(MAX_PDF + MB)]);
+    const liviano = Buffer.from("%PDF-1.4 ya comprimido");
+    const conector = { descargar: async () => ({ buffer: pesado, mime: "application/pdf" }) };
+    const herramienta = {
+      paginas: async () => 5,
+      comprimir: async (_entrada: string, salida: string) => { await writeFile(salida, liviano); },
+      dividir: async () => { throw new Error("no debería intentar dividir: ya cupo comprimido"); },
+    };
+    const r = await prepararDocumentos(
+      [{ i: 0, archivo: { nombre: "brochure.pdf", ruta: "", mime: "application/pdf" } }],
+      conector, herramienta,
+    );
+    expect(r.leidos).toEqual([0]);
+    const doc = r.bloques.find((b: any) => b.type === "document") as any;
+    expect(Buffer.from(doc.source.data, "base64").toString()).toBe(liviano.toString());
+  });
+
+  it("si es una sola página y ni comprimida cabe, no hay forma de dividirla: la omite", async () => {
+    const pesado = Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(MAX_PDF + MB)]);
+    const sigueGrande = Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(MAX_PDF + MB / 2)]);
+    const conector = { descargar: async () => ({ buffer: pesado, mime: "application/pdf" }) };
+    const herramienta = {
+      paginas: async () => 1,
+      comprimir: async (_entrada: string, salida: string) => { await writeFile(salida, sigueGrande); },
+      dividir: async () => { throw new Error("no se puede dividir una sola página"); },
+    };
+    const r = await prepararDocumentos(
+      [{ i: 0, archivo: { nombre: "catalogo.pdf", ruta: "", mime: "application/pdf" } }],
+      conector, herramienta,
+    );
+    expect(r.leidos).toEqual([]);
+    expect(r.omitidos).toEqual(["catalogo.pdf (muy pesado para leerlo)"]);
+  });
+
+  it("un PDF con más páginas de las que la API de Claude acepta se divide en partes, no se omite", async () => {
+    const original = Buffer.from("%PDF-1.4 catalogo escaneado completo");
+    const conector = { descargar: async () => ({ buffer: original, mime: "application/pdf" }) };
+    let llamadasDividir = 0;
+    const herramienta = {
+      paginas: async () => 140,
+      comprimir: async () => { throw new Error("un PDF chico no debería necesitar comprimirse"); },
+      dividir: async (_entrada: string, salida: string, desde: number, hasta: number) => {
+        llamadasDividir++;
+        await writeFile(salida, Buffer.from(`parte ${desde}-${hasta}`));
+      },
+    };
+    const r = await prepararDocumentos(
+      [{ i: 0, archivo: { nombre: "catalogo-escaneado.pdf", ruta: "", mime: "application/pdf" } }],
+      conector, herramienta,
+    );
+    expect(r.leidos).toEqual([0]);
+    expect(r.omitidos).toEqual([]);
+    expect(llamadasDividir).toBe(2);
+    const docs = r.bloques.filter((b: any) => b.type === "document");
+    expect(docs.map((d: any) => d.title)).toEqual([
+      "catalogo-escaneado.pdf (parte 1/2)",
+      "catalogo-escaneado.pdf (parte 2/2)",
+    ]);
+    expect(docs.map((d: any) => Buffer.from(d.source.data, "base64").toString())).toEqual([
+      "parte 1-70", "parte 71-140",
+    ]);
   });
 });
 

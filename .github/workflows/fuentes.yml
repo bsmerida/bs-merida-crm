@@ -17,6 +17,10 @@ on:
         description: 'Tope de costo de IA en USD para esta corrida'
         required: false
         default: '15'
+      forzar:
+        description: 'Re-procesar aunque los archivos no hayan cambiado (usar junto con "fuente" para no disparar el costo)'
+        type: boolean
+        default: false
 
 # Nunca dos corridas a la vez (evita borradores duplicados).
 concurrency:
@@ -53,8 +57,10 @@ jobs:
           FUENTE: ${{ inputs.fuente }}
           SOLO_REVISAR: ${{ inputs.solo_revisar }}
           FUENTES_MAX_COSTO_USD: ${{ inputs.max_costo || '15' }}
+          FORZAR: ${{ inputs.forzar }}
         run: |
           ARGS=()
           if [ -n "$FUENTE" ]; then ARGS+=(--fuente "$FUENTE"); fi
           if [ "$SOLO_REVISAR" = "true" ]; then ARGS+=(--solo-revisar); fi
+          if [ "$FORZAR" = "true" ]; then ARGS+=(--forzar); fi
           node scripts/revisar-fuentes.mjs "${ARGS[@]}"

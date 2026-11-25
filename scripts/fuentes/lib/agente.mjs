@@ -122,7 +122,7 @@ const mensaje = (e) => (e instanceof Error ? e.message : String(e));
 
 // ── Todas las fuentes activas de la corrida ────────────────────────────────
 // revisadas: [{ fuente, archivos, cambios, conector }] (salida del paso 1).
-export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, log = console.log }) {
+export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, forzar = false, log = console.log }) {
   const resumen = { desarrollos: 0, borradores: 0, errores: [] };
 
   // Fase 0 · segmentar las fuentes nuevas o con cambios
@@ -156,7 +156,7 @@ export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, 
       const archivos = dentroDe(r.archivos, desarrollo.ruta);
       if (!archivos.length) continue;                    // la carpeta ya no existe: se conserva el historial
       const firma = firmaDocumentos(archivos);
-      if (desarrollo.firma === firma && desarrollo.estado !== "Error") continue;
+      if (!forzar && desarrollo.firma === firma && desarrollo.estado !== "Error") continue;
       if (trabajos.length >= maxDesarrollos) { log(`  · tope de ${maxDesarrollos} desarrollos por corrida; el resto sigue en la próxima`); break; }
       trabajos.push({ ...r, desarrollo, archivos, firma, vinculos: ctx.vinculos(r.fuente.id) });
     }

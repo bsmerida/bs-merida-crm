@@ -5,6 +5,9 @@
 //   node scripts/revisar-fuentes.mjs --fuente F-0008    # solo una fuente
 //   node scripts/revisar-fuentes.mjs --solo-revisar     # sin IA: solo detecta cambios de archivos
 //   node scripts/revisar-fuentes.mjs --max-desarrollos 5 --max-costo 3
+//   node scripts/revisar-fuentes.mjs --forzar           # re-procesa aunque los archivos no hayan cambiado
+//                                                        # (ej. para re-intentar desarrollos que antes se
+//                                                        # omitieron por un bug ya corregido, no por un cambio real)
 //
 // Paso 0 (si hay FUENTES_EXCEL_URL): lee el Excel de fuentes en Drive y agrega
 //   las fuentes con ID nuevo, apagadas. Si falla, se sigue con las ya registradas.
@@ -93,7 +96,7 @@ async function main() {
     try {
       ia = crearIA({ maxCostoUsd: MAX_COSTO_USD, log: (m) => console.log(m) });
       const ctx = await cargarContexto(db);
-      const res = await procesarFuentes(db, ia, { revisadas: activas, ctx, maxDesarrollos: MAX_DESARROLLOS });
+      const res = await procesarFuentes(db, ia, { revisadas: activas, ctx, maxDesarrollos: MAX_DESARROLLOS, forzar: bandera("forzar") });
       resumen.desarrollos = res.desarrollos;
       resumen.borradores = res.borradores;
       errores.push(...res.errores);

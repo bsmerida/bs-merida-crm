@@ -36,7 +36,7 @@ export async function cargarContexto(db) {
       "bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, description, is_published, updated_at").order("id")),
     leerTodo(() => db.from("property_images").select("property_id, url, is_cover").order("property_id").order("url")),
     leerTodo(() => db.from("propiedad_fuentes").select("fuente_id, clave_modelo, property_id").order("fuente_id").order("clave_modelo")),
-    db.from("agente_lecciones").select("paso, leccion").eq("activa", true).order("created_at", { ascending: false }).limit(200),
+    db.from("agente_lecciones").select("paso, leccion, fuente_id").eq("activa", true).order("created_at", { ascending: false }).limit(200),
     db.from("propiedad_borradores").select("datos, datos_finales, extra").eq("estado", "Aprobado")
       .not("datos_finales", "is", null).order("revisado_en", { ascending: false }).limit(40),
     db.from("properties").select("title, description, is_published").order("updated_at", { ascending: false }).limit(200),
@@ -45,7 +45,11 @@ export async function cargarContexto(db) {
   const fotosPorPropiedad = new Map();
   for (const i of imagenes) fotosPorPropiedad.set(i.property_id, (fotosPorPropiedad.get(i.property_id) || 0) + 1);
 
-  const porPaso = (paso) => (lecciones.data || []).filter(l => l.paso === paso || l.paso === "general").slice(0, 25).map(l => l.leccion);
+  // fuente_id null = aplica a todas las fuentes; si tiene valor, solo a esa
+  // (ej. una manía de formato de un proveedor en particular).
+  const porPaso = (paso, fuenteId) => (lecciones.data || [])
+    .filter(l => (l.paso === paso || l.paso === "general") && (!l.fuente_id || l.fuente_id === fuenteId))
+    .slice(0, 25).map(l => l.leccion);
 
   // Correcciones que hizo una persona al aprobar (lo propuesto vs lo guardado).
   const correccionesTexto = [];
@@ -129,7 +133,7 @@ export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, 
   }
   if (porSegmentar.length) {
     log("Fase 0 · segmentar carpetas");
-    const res = await ia.lote(porSegmentar.map(r => () => pedidoSegmentar(r.fuente, r.archivos, ctx.porPaso("general"))));
+    const res = await ia.lote(porSegmentar.map(r => () => pedidoSegmentar(r.fuente, r.archivos, ctx.porPaso("general", r.fuente.id))));
     for (let k = 0; k < porSegmentar.length; k++) {
       const { fuente, archivos } = porSegmentar[k];
       if (res[k].error) { resumen.errores.push(`${fuente.id} (segmentar): ${mensaje(res[k].error)}`); continue; }
@@ -182,7 +186,7 @@ export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, 
       if (!bloques.length) { t.nota = `No se pudo leer ningún documento (${omitidos.join("; ")})`; return null; }
       return pedidoExtraer({
         fuente: t.fuente, desarrollo: t.desarrollo, bloques,
-        lecciones: ctx.porPaso("extractor"), correcciones: ctx.correccionesDatos,
+        lecciones: ctx.porPaso("extractor", t.fuente.id), correcciones: ctx.correccionesDatos,
       });
     }));
     activos.forEach((t, k) => {
@@ -204,7 +208,7 @@ export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, 
       t.claves = t.modelos.map(m => claveModelo(t.dev, m));
       t.comp = prepararComparar({
         desarrollo: t.dev, modelos: t.modelos, claves: t.claves, inventario: ctx.inventario,
-        vinculos: t.vinculos, lecciones: ctx.porPaso("comparador"),
+        vinculos: t.vinculos, lecciones: ctx.porPaso("comparador", t.fuente.id),
       });
     }
     res = await ia.lote(activos.map(t => () => t.comp.pedido), { ignorarTope: true });
@@ -237,7 +241,7 @@ export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, 
         fabricas.push(async () => {
           t.prepFotos = await prepararFotos({
             desarrollo: t.dev, modelos: t.idxFotos.map(i => t.modelos[i]), candidatas, conector: t.conector,
-            referencias: ctx.referencias, lecciones: ctx.porPaso("fotos"),
+            referencias: ctx.referencias, lecciones: ctx.porPaso("fotos", t.fuente.id),
           });
           return t.prepFotos.pedido;
         });
@@ -247,7 +251,7 @@ export async function procesarFuentes(db, ia, { revisadas, ctx, maxDesarrollos, 
         fabricas.push(() => pedidoRedactar({
           desarrollo: t.dev, modelos: t.idxTexto.map(i => t.modelos[i]),
           ejemplosTitulos: ctx.ejemplosTitulos, ejemplosDescripciones: ctx.ejemplosDescripciones,
-          lecciones: ctx.porPaso("redactor"), correcciones: ctx.correccionesTexto,
+          lecciones: ctx.porPaso("redactor", t.fuente.id), correcciones: ctx.correccionesTexto,
         }));
       }
     }

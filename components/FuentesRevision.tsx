@@ -36,6 +36,7 @@ type Edicion = { datos: Record<string, any>; fotos: string[]; aceptados: string[
 
 const MOTIVOS = [
   { valor: "Datos", etiqueta: "Datos incorrectos" },
+  { valor: "Disponibilidad", etiqueta: "Ya no está disponible" },
   { valor: "Fotos", etiqueta: "Fotos" },
   { valor: "Texto", etiqueta: "Título o descripción" },
   { valor: "Coincidencia", etiqueta: "No es esa propiedad" },
@@ -73,6 +74,8 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
   const [rechazando, setRechazando] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [dondeCorrecto, setDondeCorrecto] = useState(""); // solo para "Datos incorrectos"
+  const [especificoDeFuente, setEspecificoDeFuente] = useState(false);
   const [rehacer, setRehacer] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
@@ -130,7 +133,7 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
   const quitarActual = (texto: string, href?: string) => {
     setLista(l => l.filter(x => x.id !== b.id));
     setI(x => Math.max(0, Math.min(x, lista.length - 2)));
-    setRechazando(false); setMotivo(""); setFeedback(""); setRehacer(true);
+    setRechazando(false); setMotivo(""); setFeedback(""); setDondeCorrecto(""); setEspecificoDeFuente(false); setRehacer(true);
     setAviso({ texto, href });
     router.refresh();
   };
@@ -167,7 +170,12 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
   };
 
   const rechazar = async () => {
-    const r = await enviar({ accion: "rechazar", motivo, feedback, rehacer });
+    // "¿Dónde está el dato correcto?" se suma al comentario — así el extractor
+    // sabe no solo qué estuvo mal, sino en qué documento sí viene bien.
+    const feedbackFinal = dondeCorrecto.trim()
+      ? `${feedback.trim()} Dato correcto en: ${dondeCorrecto.trim()}`
+      : feedback;
+    const r = await enviar({ accion: "rechazar", motivo, feedback: feedbackFinal, rehacer, especificoDeFuente });
     if (r) quitarActual("✓ Rechazado. El agente aprenderá de tu comentario.");
   };
 
@@ -185,6 +193,7 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
     </div>
   );
   const extra = b.extra || {};
+  const nombreProveedor = proveedores[b.fuente_id] || extra.proveedor || "este proveedor";
 
   return (
     <div className="bg-white rounded-[28px] shadow-float overflow-hidden">
@@ -432,13 +441,32 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
             <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={3}
               placeholder="Ej. El precio de la lista es con descuento de contado; usa el precio de lista. / No uses fotos con texto encima."
               className={inp} />
+            <div className="text-xs text-[#6b7385] -mt-1">
+              Explica qué estuvo mal con tus palabras — el agente usa este texto para no repetir el error. Escribir solo el motivo (ej. &ldquo;Fotos&rdquo;) no le sirve.
+            </div>
+
+            {motivo === "Datos" && (
+              <div>
+                <input value={dondeCorrecto} onChange={e => setDondeCorrecto(e.target.value)}
+                  placeholder="¿Dónde está el dato correcto? Ej. 'En la lista de precios de agosto' / 'En la ficha técnica, no el brochure'"
+                  className={inp} />
+                <div className="text-xs text-[#6b7385] mt-1">Opcional, pero ayuda mucho: así el agente sabe en qué documento confiar la próxima vez.</div>
+              </div>
+            )}
+
+            <label className="flex items-center gap-2 text-sm text-[#6b7385]">
+              <input type="checkbox" checked={especificoDeFuente} onChange={e => setEspecificoDeFuente(e.target.checked)} className="accent-navy" />
+              Esto es normal de <strong className="text-navy">{nombreProveedor}</strong> (no le pasa a los demás proveedores)
+            </label>
+
             <label className="flex items-center gap-2 text-sm text-[#6b7385]">
               <input type="checkbox" checked={rehacer} onChange={e => setRehacer(e.target.checked)} className="accent-navy" />
               Volver a intentarlo en la próxima revisión con este comentario
             </label>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setRechazando(false)} className="px-4 py-2 rounded-full text-sm text-[#6b7385] hover:text-navy">Cancelar</button>
-              <button onClick={rechazar} disabled={enviando || !motivo || feedback.trim().length < 5}
+              <button onClick={rechazar}
+                disabled={enviando || !motivo || feedback.trim().length < 15 || feedback.trim().toLowerCase() === motivo.toLowerCase()}
                 className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white">
                 {enviando ? "Guardando…" : "Rechazar"}
               </button>

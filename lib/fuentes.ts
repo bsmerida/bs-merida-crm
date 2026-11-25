@@ -6,12 +6,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { TIPOS_PROPIEDAD, OPERACIONES, ESTADOS_PROPIEDAD } from "@/lib/utils";
 import { portalesValidos } from "@/lib/portales";
 
-export const MOTIVOS_RECHAZO = ["Datos", "Fotos", "Texto", "Coincidencia", "Otro"] as const;
+export const MOTIVOS_RECHAZO = ["Datos", "Disponibilidad", "Fotos", "Texto", "Coincidencia", "Otro"] as const;
 export type MotivoRechazo = (typeof MOTIVOS_RECHAZO)[number];
 
-// Cada motivo enseña al especialista que cometió el error.
+// Cada motivo enseña al especialista que cometió el error. "Disponibilidad"
+// va al extractor (es quien decide todas_vendidas/unidades_disponibles) —
+// antes cualquier "ya no está disponible" caía en "Otro" → general, mezclado
+// con notas de todo tipo y sin llegarle directo a quien puede corregirlo.
 export const PASO_POR_MOTIVO: Record<MotivoRechazo, string> = {
-  Datos: "extractor", Fotos: "fotos", Texto: "redactor", Coincidencia: "comparador", Otro: "general",
+  Datos: "extractor", Disponibilidad: "extractor", Fotos: "fotos", Texto: "redactor", Coincidencia: "comparador", Otro: "general",
 };
 
 // Mismos campos que guarda el formulario de propiedades (lista blanca).
@@ -163,18 +166,29 @@ export async function aprobarBorrador(
 
 export async function rechazarBorrador(
   db: Db, borrador: Borrador,
-  entrada: { motivo?: unknown; feedback?: unknown; rehacer?: unknown },
+  entrada: { motivo?: unknown; feedback?: unknown; rehacer?: unknown; especificoDeFuente?: unknown },
   userId: string,
 ) {
   const motivo = MOTIVOS_RECHAZO.includes(entrada.motivo as MotivoRechazo) ? (entrada.motivo as MotivoRechazo) : null;
   if (!motivo) throw new ErrorBorrador("Elige el motivo del rechazo.");
   const feedback = String(entrada.feedback ?? "").trim().slice(0, 1000);
-  if (feedback.length < 5) throw new ErrorBorrador("Escribe qué estuvo mal: el agente lo usa para aprender.");
+  // Antes el mínimo era 5 caracteres — pasaban cosas como "Fotos" u "Otros"
+  // (literal el nombre de la categoría), que como "lección" no le enseña
+  // nada al agente. Se exige una explicación de verdad.
+  if (feedback.length < 15 || feedback.toLowerCase() === motivo.toLowerCase()) {
+    throw new ErrorBorrador("Escribe qué estuvo mal con más detalle: el agente usa este texto para aprender, no le sirve solo repetir el motivo.");
+  }
+  // Si marca "es normal de este proveedor", la lección solo se le vuelve a
+  // mostrar al agente cuando procese esa misma fuente — si no, aplica a
+  // todas (como antes).
+  const fuenteLeccion = entrada.especificoDeFuente === true ? borrador.fuente_id : null;
 
   await tomar(db, borrador.id, {
     estado: "Rechazado", motivo_rechazo: motivo, feedback, revisado_por: userId, revisado_en: new Date().toISOString(),
   });
-  await db.from("agente_lecciones").insert({ paso: PASO_POR_MOTIVO[motivo], leccion: feedback, borrador_id: borrador.id, creado_por: userId });
+  await db.from("agente_lecciones").insert({
+    paso: PASO_POR_MOTIVO[motivo], leccion: feedback, borrador_id: borrador.id, creado_por: userId, fuente_id: fuenteLeccion,
+  });
   // "Volver a intentar": la próxima corrida vuelve a procesar ese desarrollo con la lección nueva.
   if (entrada.rehacer === true && borrador.desarrollo_id) {
     await db.from("fuente_desarrollos").update({ firma: null }).eq("id", borrador.desarrollo_id);

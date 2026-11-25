@@ -54,6 +54,7 @@ Reglas:
 - type debe ser uno de: ${TIPOS.join(", ")}. Town houses y villas son "Casa"; lotes y macrolotes son "Terreno"; consultorios y locales comerciales son "Local".
 - Usa mayúscula inicial en nombres y amenidades (no todo en mayúsculas).
 - Si los documentos dicen que el desarrollo está agotado, devuelve los modelos con todas_vendidas = "si".
+- Revisa con cuidado señales explícitas de que un modelo ya no está disponible, aunque no diga "agotado": palabras como "VENDIDO", "APARTADO", "RESERVADO", "YA NO DISPONIBLE" junto al modelo, o una lista de disponibilidad donde ese modelo no aparece entre las unidades vigentes. Si TODAS las unidades de ese modelo están así, todas_vendidas = "si"; si solo algunas, ajusta unidades_disponibles al número real que sí sigue en venta. Nunca lo infieras de que un archivo o carpeta ya no existe — solo de lo que el documento dice explícitamente.
 - Si hay memoria descriptiva o ficha técnica con el detalle de con qué se entrega la propiedad (carpintería, cancelería, cisterna, biodigestor, tinaco, calentador, acabados), captúralo en acabados_entrega. No lo confundas con amenidades del desarrollo (alberca, gimnasio): acabados_entrega es específico de cómo se entrega cada unidad.
 - Si algún documento dice qué créditos o formas de pago acepta el desarrollo, captúralo en creditos_aceptados. Es un dato interno para el equipo de ventas, no para el anuncio público.`;
 

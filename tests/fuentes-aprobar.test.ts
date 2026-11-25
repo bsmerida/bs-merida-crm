@@ -167,6 +167,11 @@ describe("rechazar", () => {
     expect((await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "" })).status).toBe(400);
   });
 
+  it("no acepta un comentario que solo repite el motivo — no le enseña nada al agente", async () => {
+    expect((await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "Fotos" })).status).toBe(400);
+    expect((await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "no disponible" })).status).toBe(400);
+  });
+
   it("guarda la lección para el paso que se equivocó y puede pedir que se rehaga", async () => {
     const res = await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "No uses flyers con precios", rehacer: true });
     expect(res.status).toBe(200);
@@ -175,6 +180,22 @@ describe("rechazar", () => {
     expect(reset.payload).toEqual({ firma: null });
     expect(reset.filters).toContainEqual(["id", DESARROLLO]);
     expect(writes("properties")).toHaveLength(0);
+  });
+
+  it("\"Disponibilidad\" le llega directo al extractor, no se diluye en lecciones generales", async () => {
+    const res = await patch(NUEVA, { accion: "rechazar", motivo: "Disponibilidad", feedback: "La lista de precios ya no incluye este modelo" });
+    expect(res.status).toBe(200);
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ paso: "extractor", leccion: "La lista de precios ya no incluye este modelo" });
+  });
+
+  it("sin marcar \"específico de esta fuente\", la lección aplica a todas (fuente_id null)", async () => {
+    await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "Siempre vienen con marca de agua" });
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ fuente_id: null });
+  });
+
+  it("marcando \"específico de esta fuente\", la lección solo se guarda para esa fuente", async () => {
+    await patch(NUEVA, { accion: "rechazar", motivo: "Datos", feedback: "Este proveedor pone el precio en USD sin avisar", especificoDeFuente: true });
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ fuente_id: "F-0010" });
   });
 });
 

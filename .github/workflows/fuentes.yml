@@ -3,6 +3,7 @@ name: Agente de fuentes
 on:
   schedule:
     - cron: '0 12 * * *'        # 6:00 en Mérida (UTC-6, sin horario de verano)
+    - cron: '0 20 * * *'        # 14:00 en Mérida — segunda corrida para avanzar el backlog más rápido
   workflow_dispatch:            # Botón "Run workflow" para correrlo a mano
     inputs:
       fuente:

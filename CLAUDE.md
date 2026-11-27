@@ -18,7 +18,7 @@ Nunca `source .env.local` en la terminal: imprime las llaves. Usa `node --env-fi
 |---|---|---|
 | Hosting | Vercel → www.duclaud.com.mx (cada merge a `main` despliega) | — (pendiente) |
 | Base de datos | Supabase de Duclaud (la de `.env.local`) | `duclaud-pruebas` (pendiente de crear) |
-| Tareas programadas | GitHub Actions: `fuentes.yml` (diario 6:00 Mérida), `notificaciones.yml` (cada hora) | — |
+| Tareas programadas | GitHub Actions: `fuentes.yml` (6:00 y 14:00 Mérida), `notificaciones.yml` (cada hora) | — |
 
 - Todo lo de producción es irreversible: solo lectura salvo autorización explícita.
 - La conexión MCP de Supabase de esta máquina es de **otra cuenta (HotPot Factor)**: no usarla para Duclaud.

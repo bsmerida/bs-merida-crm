@@ -172,10 +172,13 @@ export async function rechazarBorrador(
   const motivo = MOTIVOS_RECHAZO.includes(entrada.motivo as MotivoRechazo) ? (entrada.motivo as MotivoRechazo) : null;
   if (!motivo) throw new ErrorBorrador("Elige el motivo del rechazo.");
   const feedback = String(entrada.feedback ?? "").trim().slice(0, 1000);
+  // "Ya no está disponible" es un dato puntual de esta propiedad (se vendió,
+  // ya no está en la lista), no un patrón que se repita — no tiene lección
+  // generalizable que enseñarle al agente, así que no le exigimos explicación.
   // Antes el mínimo era 5 caracteres — pasaban cosas como "Fotos" u "Otros"
   // (literal el nombre de la categoría), que como "lección" no le enseña
-  // nada al agente. Se exige una explicación de verdad.
-  if (feedback.length < 15 || feedback.toLowerCase() === motivo.toLowerCase()) {
+  // nada al agente. Para los demás motivos sí se exige una explicación de verdad.
+  if (motivo !== "Disponibilidad" && (feedback.length < 15 || feedback.toLowerCase() === motivo.toLowerCase())) {
     throw new ErrorBorrador("Escribe qué estuvo mal con más detalle: el agente usa este texto para aprender, no le sirve solo repetir el motivo.");
   }
   // Si marca "es normal de este proveedor", la lección solo se le vuelve a
@@ -186,9 +189,14 @@ export async function rechazarBorrador(
   await tomar(db, borrador.id, {
     estado: "Rechazado", motivo_rechazo: motivo, feedback, revisado_por: userId, revisado_en: new Date().toISOString(),
   });
-  await db.from("agente_lecciones").insert({
-    paso: PASO_POR_MOTIVO[motivo], leccion: feedback, borrador_id: borrador.id, creado_por: userId, fuente_id: fuenteLeccion,
-  });
+  // Para los demás motivos el feedback siempre tiene contenido (se validó arriba).
+  // Para "Disponibilidad" puede venir vacío (es opcional); si no escribió nada
+  // no hay lección que guardar.
+  if (feedback) {
+    await db.from("agente_lecciones").insert({
+      paso: PASO_POR_MOTIVO[motivo], leccion: feedback, borrador_id: borrador.id, creado_por: userId, fuente_id: fuenteLeccion,
+    });
+  }
   // "Volver a intentar": la próxima corrida vuelve a procesar ese desarrollo con la lección nueva.
   if (entrada.rehacer === true && borrador.desarrollo_id) {
     await db.from("fuente_desarrollos").update({ firma: null }).eq("id", borrador.desarrollo_id);

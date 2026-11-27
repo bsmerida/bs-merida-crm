@@ -188,6 +188,19 @@ describe("rechazar", () => {
     expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ paso: "extractor", leccion: "La lista de precios ya no incluye este modelo" });
   });
 
+  it("\"Disponibilidad\" no exige mínimo de caracteres: es un dato puntual, no una lección generalizable", async () => {
+    const res = await patch(NUEVA, { accion: "rechazar", motivo: "Disponibilidad", feedback: "Ya se vendió" });
+    expect(res.status).toBe(200);
+    expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ paso: "extractor", leccion: "Ya se vendió" });
+  });
+
+  it("\"Disponibilidad\" sin comentario (opcional): rechaza pero no guarda lección vacía", async () => {
+    const res = await patch(NUEVA, { accion: "rechazar", motivo: "Disponibilidad", feedback: "" });
+    expect(res.status).toBe(200);
+    expect(writes("agente_lecciones", "insert")).toHaveLength(0);
+    expect(writes("propiedad_borradores", "update")[0].payload).toMatchObject({ estado: "Rechazado", motivo_rechazo: "Disponibilidad" });
+  });
+
   it("sin marcar \"específico de esta fuente\", la lección aplica a todas (fuente_id null)", async () => {
     await patch(NUEVA, { accion: "rechazar", motivo: "Fotos", feedback: "Siempre vienen con marca de agua" });
     expect(writes("agente_lecciones", "insert")[0].payload).toMatchObject({ fuente_id: null });

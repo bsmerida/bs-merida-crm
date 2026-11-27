@@ -100,6 +100,27 @@ export function cambiosPropuestos(actual, propuesta) {
   return cambios;
 }
 
+const mismasFotos = (a, b) => {
+  const x = new Set((a || []).map(f => f.url)), y = new Set((b || []).map(f => f.url));
+  if (x.size !== y.size) return false;
+  for (const u of x) if (!y.has(u)) return false;
+  return true;
+};
+
+// Una propiedad "Nueva" (todavía sin property_id) que ya se rechazó no tiene
+// con qué comparar cambiosPropuestos (no hay "actual"). Sin este chequeo, si
+// nada cambió en los documentos el agente vuelve a mandar exactamente la
+// misma ficha cada corrida, ignorando el rechazo anterior. Se compara contra
+// el último borrador rechazado del mismo modelo: mismo precio/medidas y
+// mismas fotos (o sin fotos, igual que antes) = no hay nada nuevo que mostrar.
+export function sinCambioDesdeRechazo(previo, datos, fotos) {
+  const antes = previo.datos || {};
+  for (const campo of SIEMPRE) {
+    if (!iguales(antes[campo] ?? null, datos[campo] ?? null)) return false;
+  }
+  return mismasFotos(previo.fotos, fotos);
+}
+
 // Campos que la API acepta al aprobar (lista blanca, igual al formulario).
 export const CAMPOS_PROPIEDAD = [
   "title", "description", "type", "operation", "status", "price", "price_type", "currency",

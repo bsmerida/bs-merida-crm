@@ -13,7 +13,7 @@ import { leerFotos, prepararFotos } from "../agentes/fotografo.mjs";
 import { leerRedactar, pedidoRedactar } from "../agentes/redactor.mjs";
 import { esImagen, prepararDocumentos } from "./documentos.mjs";
 import { dentroDe, firmaArchivos } from "./inventario.mjs";
-import { cambiosPropuestos, claveModelo, datosPropiedad, faltantes, TIPOS } from "./borrador.mjs";
+import { cambiosPropuestos, claveModelo, datosPropiedad, faltantes, sinCambioDesdeRechazo, TIPOS } from "./borrador.mjs";
 
 const BUCKET = "property-images";
 const MIN_FOTOS_EXISTENTES = 5; // si la propiedad ya tiene 5+ fotos, no se le proponen más
@@ -30,7 +30,7 @@ async function leerTodo(q) {
 
 // ── Contexto compartido por toda la corrida ─────────────────────────────────
 export async function cargarContexto(db) {
-  const [inventario, imagenes, vinculos, lecciones, aprobados, ejemplos] = await Promise.all([
+  const [inventario, imagenes, vinculos, lecciones, aprobados, ejemplos, rechazadosNueva] = await Promise.all([
     leerTodo(() => db.from("properties").select(
       "id, title, type, operation, status, development, zone, address, city, state, price, price_type, currency, " +
       "bedrooms, bathrooms, m2_construction, m2_land, parking, amenities, description, is_published, updated_at").order("id")),
@@ -40,7 +40,16 @@ export async function cargarContexto(db) {
     db.from("propiedad_borradores").select("datos, datos_finales, extra").eq("estado", "Aprobado")
       .not("datos_finales", "is", null).order("revisado_en", { ascending: false }).limit(40),
     db.from("properties").select("title, description, is_published").order("updated_at", { ascending: false }).limit(200),
+    leerTodo(() => db.from("propiedad_borradores").select("fuente_id, clave_modelo, datos, fotos, created_at")
+      .eq("estado", "Rechazado").eq("accion", "Nueva").order("created_at", { ascending: false })),
   ]);
+
+  // Solo el más reciente por modelo (ya viene ordenado del más nuevo al más viejo).
+  const ultimoRechazoNueva = new Map();
+  for (const b of rechazadosNueva) {
+    const k = `${b.fuente_id}::${b.clave_modelo}`;
+    if (!ultimoRechazoNueva.has(k)) ultimoRechazoNueva.set(k, b);
+  }
 
   const fotosPorPropiedad = new Map();
   for (const i of imagenes) fotosPorPropiedad.set(i.property_id, (fotosPorPropiedad.get(i.property_id) || 0) + 1);
@@ -89,6 +98,7 @@ export async function cargarContexto(db) {
     inventario, fotosPorPropiedad, porPaso, referencias, ejemplosTitulos, ejemplosDescripciones,
     correccionesTexto: correccionesTexto.slice(0, 12), correccionesDatos: correccionesDatos.slice(0, 15),
     vinculos: (fuenteId) => new Map(vinculos.filter(v => v.fuente_id === fuenteId).map(v => [v.clave_modelo, v.property_id])),
+    ultimoRechazoNueva,
   };
 }
 
@@ -324,6 +334,17 @@ async function guardarBorradores(db, t, ctx, cacheFotos, costoTrabajo, log) {
       try { fotos.push(await subirFoto(db, t.conector, t.fuente, a, cacheFotos)); } catch (e) { log(`  · foto omitida (${a.nombre}): ${mensaje(e)}`); }
     }
     if (prop && !Object.keys(cambios).length && !fotos.length) continue; // la propiedad ya está al día
+
+    // "Nueva" no tiene propiedad con la que comparar; sin esto, si ya se
+    // rechazó y los documentos no cambiaron, se vuelve a mandar la misma
+    // ficha cada corrida ignorando el rechazo anterior.
+    if (!prop) {
+      const anterior = ctx.ultimoRechazoNueva.get(`${t.fuente.id}::${t.claves[i]}`);
+      if (anterior && sinCambioDesdeRechazo(anterior, datos, fotos)) {
+        log(`  · omitido (igual al que ya se rechazó, sin cambios desde entonces): ${m.modelo}`);
+        continue;
+      }
+    }
 
     const coincidencia = t.coincidencias[i];
     const dudas = [

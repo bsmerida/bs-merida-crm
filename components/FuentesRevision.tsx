@@ -144,6 +144,15 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
       const res = await fetch(`/api/fuentes/borradores/${b.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo),
       });
+      // 409: este borrador dejó de estar "Pendiente" mientras la pantalla
+      // estaba abierta — el caso típico es que el agente corrió de nuevo y
+      // lo reemplazó por una versión más reciente del mismo modelo. No es un
+      // error del usuario: se quita de su lista en vez de dejarlo trabado
+      // con un mensaje que no puede resolver con otro click.
+      if (res.status === 409) {
+        quitarActual("↻ Esta propiedad se actualizó con información más reciente — ya no es necesario revisar esta versión.");
+        return null;
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "No se pudo guardar");
       return data;

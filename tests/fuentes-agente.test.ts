@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { writeFile } from "node:fs/promises";
 import * as XLSX from "xlsx";
-import { cambiosPropuestos, campoDesarrollo, claveModelo, datosPropiedad, faltantes } from "../scripts/fuentes/lib/borrador.mjs";
+import { cambiosPropuestos, campoDesarrollo, claveModelo, datosPropiedad, faltantes, sinCambioDesdeRechazo } from "../scripts/fuentes/lib/borrador.mjs";
 import { candidatos, palabrasClave } from "../scripts/fuentes/lib/candidatos.mjs";
 import { costoUsd, crearIA, PresupuestoAgotado } from "../scripts/fuentes/lib/ia.mjs";
 import { hojaATexto, prepararDocumentos, MAX_PDF } from "../scripts/fuentes/lib/documentos.mjs";
@@ -83,6 +83,30 @@ describe("cambiosPropuestos", () => {
   it("propone pasar a Vendida solo si el documento lo dice", () => {
     expect(cambiosPropuestos(actual, datosPropiedad(kinora, { ...tipoA, todas_vendidas: "si" })).status)
       .toEqual({ antes: "Disponible", despues: "Vendida" });
+  });
+});
+
+describe("sinCambioDesdeRechazo", () => {
+  const datos = datosPropiedad(kinora, tipoA, { title: "T", description: "D" });
+
+  it("no hay nada nuevo que mostrar: mismo precio/medidas y sin fotos, igual que cuando se rechazó", () => {
+    const previo = { datos, fotos: [] };
+    expect(sinCambioDesdeRechazo(previo, datos, [])).toBe(true);
+  });
+
+  it("sí hay algo nuevo si ahora trae fotos que antes no tenía", () => {
+    const previo = { datos, fotos: [] };
+    expect(sinCambioDesdeRechazo(previo, datos, [{ url: "https://x/foto.jpg" }])).toBe(false);
+  });
+
+  it("sí hay algo nuevo si cambió el precio", () => {
+    const previo = { datos, fotos: [] };
+    expect(sinCambioDesdeRechazo(previo, { ...datos, price: (datos.price || 0) + 100_000 }, [])).toBe(false);
+  });
+
+  it("ignora diferencias de redondeo, igual que cambiosPropuestos", () => {
+    const previo = { datos, fotos: [{ url: "a" }] };
+    expect(sinCambioDesdeRechazo(previo, { ...datos, price: (datos.price || 0) + 1 }, [{ url: "a" }])).toBe(true);
   });
 });
 

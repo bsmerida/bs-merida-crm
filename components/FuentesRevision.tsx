@@ -439,10 +439,14 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
               ))}
             </div>
             <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={3}
-              placeholder="Ej. El precio de la lista es con descuento de contado; usa el precio de lista. / No uses fotos con texto encima."
+              placeholder={motivo === "Disponibilidad"
+                ? "Opcional. Ej. Ya se vendió / ya no aparece en la lista de precios."
+                : "Ej. El precio de la lista es con descuento de contado; usa el precio de lista. / No uses fotos con texto encima."}
               className={inp} />
             <div className="text-xs text-[#6b7385] -mt-1">
-              Explica qué estuvo mal con tus palabras — el agente usa este texto para no repetir el error. Escribir solo el motivo (ej. &ldquo;Fotos&rdquo;) no le sirve.
+              {motivo === "Disponibilidad"
+                ? "Opcional: si sabes por qué ya no está (ej. \"ya no aparece en la lista de precios\"), ayuda al agente a detectarlo solo la próxima vez."
+                : <>Explica qué estuvo mal con tus palabras — el agente usa este texto para no repetir el error. Escribir solo el motivo (ej. &ldquo;Fotos&rdquo;) no le sirve.</>}
             </div>
 
             {motivo === "Datos" && (
@@ -466,7 +470,8 @@ export function FuentesRevision({ borradores, proveedores, fotosActuales = {} }:
             <div className="flex gap-2 justify-end">
               <button onClick={() => setRechazando(false)} className="px-4 py-2 rounded-full text-sm text-[#6b7385] hover:text-navy">Cancelar</button>
               <button onClick={rechazar}
-                disabled={enviando || !motivo || feedback.trim().length < 15 || feedback.trim().toLowerCase() === motivo.toLowerCase()}
+                disabled={enviando || !motivo || (motivo !== "Disponibilidad" &&
+                  (feedback.trim().length < 15 || feedback.trim().toLowerCase() === motivo.toLowerCase()))}
                 className="px-5 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white">
                 {enviando ? "Guardando…" : "Rechazar"}
               </button>

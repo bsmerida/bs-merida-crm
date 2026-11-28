@@ -14,6 +14,7 @@ import { leerRedactar, pedidoRedactar } from "../agentes/redactor.mjs";
 import { esImagen, prepararDocumentos } from "./documentos.mjs";
 import { dentroDe, firmaArchivos } from "./inventario.mjs";
 import { cambiosPropuestos, claveModelo, datosPropiedad, faltantes, sinCambioDesdeRechazo, TIPOS } from "./borrador.mjs";
+import { MAX_ORIGINAL, procesarImagen } from "./imagen.mjs";
 
 const BUCKET = "property-images";
 const MIN_FOTOS_EXISTENTES = 5; // si la propiedad ya tiene 5+ fotos, no se le proponen más
@@ -107,14 +108,9 @@ async function subirFoto(db, conector, fuente, archivo, cache) {
   if (cache.has(archivo.archivo_id)) return cache.get(archivo.archivo_id);
   const nombre = createHash("sha1").update(archivo.archivo_id).digest("hex").slice(0, 20);
   const ruta = `fuentes/${fuente.id}/${nombre}.jpg`;
-  let img;
-  try {
-    img = await conector.miniatura(archivo, 2000); // JPEG de hasta 2000 px, listo para web
-  } catch {
-    const original = await conector.descargar(archivo);
-    if (!/^image\/(jpeg|png|webp)$/.test(original.mime) || original.buffer.length > 8 * 1024 * 1024) throw new Error("imagen no compatible");
-    img = original;
-  }
+  const original = await conector.descargar(archivo);
+  if (!/^image\/(jpeg|png|webp)$/.test(original.mime) || original.buffer.length > MAX_ORIGINAL) throw new Error("imagen no compatible");
+  const img = await procesarImagen(original.buffer);
   const { error } = await db.storage.from(BUCKET).upload(ruta, img.buffer, { contentType: img.mime, upsert: true });
   if (error) throw new Error(`Storage: ${error.message}`);
   const url = db.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl;

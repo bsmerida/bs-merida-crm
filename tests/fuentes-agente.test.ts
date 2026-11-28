@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { writeFile } from "node:fs/promises";
+import sharp from "sharp";
 import * as XLSX from "xlsx";
 import { cambiosPropuestos, campoDesarrollo, claveModelo, datosPropiedad, faltantes, sinCambioDesdeRechazo } from "../scripts/fuentes/lib/borrador.mjs";
 import { candidatos, palabrasClave } from "../scripts/fuentes/lib/candidatos.mjs";
 import { costoUsd, crearIA, PresupuestoAgotado } from "../scripts/fuentes/lib/ia.mjs";
 import { hojaATexto, prepararDocumentos, MAX_PDF } from "../scripts/fuentes/lib/documentos.mjs";
+import { ANCHO_MAX_FOTO, procesarImagen } from "../scripts/fuentes/lib/imagen.mjs";
 import { comparar } from "../scripts/fuentes/agentes/comparador.mjs";
 import { segmentar } from "../scripts/fuentes/agentes/segmentador.mjs";
 import { clasificar } from "../scripts/fuentes/agentes/clasificador.mjs";
@@ -107,6 +109,20 @@ describe("sinCambioDesdeRechazo", () => {
   it("ignora diferencias de redondeo, igual que cambiosPropuestos", () => {
     const previo = { datos, fotos: [{ url: "a" }] };
     expect(sinCambioDesdeRechazo(previo, { ...datos, price: (datos.price || 0) + 1 }, [{ url: "a" }])).toBe(true);
+  });
+});
+
+describe("procesarImagen", () => {
+  const imagenDe = (ancho: number, alto: number) =>
+    sharp({ create: { width: ancho, height: alto, channels: 3, background: { r: 120, g: 140, b: 160 } } }).png().toBuffer();
+
+  it("reduce una foto grande al ancho máximo, sin agrandar las chicas", async () => {
+    const grande = await procesarImagen(await imagenDe(4000, 3000));
+    expect((await sharp(grande.buffer).metadata()).width).toBe(ANCHO_MAX_FOTO);
+    expect(grande.mime).toBe("image/jpeg");
+
+    const chica = await procesarImagen(await imagenDe(400, 300));
+    expect((await sharp(chica.buffer).metadata()).width).toBe(400); // no se agranda
   });
 });
 
